@@ -55,8 +55,8 @@ def test_removing_a_path_removes_it_from_the_diagram(app_db, tmp_path):
     alt.write_text(yaml.safe_dump(cfg), encoding="utf-8")
     c = TestClient(create_app(str(app_db), str(alt), models_dir=None), base_url="http://127.0.0.1:8000")
     full = TestClient(create_app(str(app_db), models_dir=None), base_url="http://127.0.0.1:8000")
-    assert "handed_over to returned" in full.get("/pipeline").text
-    assert "handed_over to returned" not in c.get("/pipeline").text
+    assert "Handed over to Returned" in full.get("/pipeline").text
+    assert "Handed over to Returned" not in c.get("/pipeline").text
 
 
 def test_specialist_departments_lists_only_their_handovers(client, app_db):

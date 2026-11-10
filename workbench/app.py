@@ -268,9 +268,10 @@ def create_app(db_path="data/workbench.db", config_path="config/pipeline.yaml", 
             states = dict(stats.by_stage(conn))
             stages = [(s, states.get(s, 0)) for s in cfg["stages"] if s != "accepted"]  # accepted is closed, so not an open count
             title = "How cases move between stages"
-            summary = "Cases that took each path: " + ", ".join(f"{p['from']} to {p['to']} {p['count']} ({p['kind']})" for p in paths) + "."
-            flow = charts.band_flow(by(p["from"] for p in paths), by(p["to"] for p in paths),
-                                    [(p["from"], p["to"], p["count"], href(p), p["kind"]) for p in paths], title=title, summary=summary)
+            nm = lambda n: STATE_NAME.get(n, n.capitalize())  # noqa: E731
+            summary = "Cases that took each path: " + ", ".join(f"{nm(p['from'])} to {nm(p['to'])} {p['count']} ({p['kind']})" for p in paths) + "."
+            flow = charts.band_flow([nm(n) for n in by(p["from"] for p in paths)], [nm(n) for n in by(p["to"] for p in paths)],
+                                    [(nm(p["from"]), nm(p["to"]), p["count"], href(p), p["kind"]) for p in paths], title=title, summary=summary)
             dept_title = "Open complaints by department"
             by_dept = [(r["department"], r["open"]) for r in stats.by_department(conn)]
             more = [(dept_title, charts.bars(by_dept, title=dept_title, summary=stats.sentence("bars", {"title": dept_title, "items": by_dept}) if by_dept else "")),

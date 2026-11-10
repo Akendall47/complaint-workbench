@@ -169,6 +169,6 @@ button.primary:disabled{background:#c9c9d3;color:#4a4a55;cursor:not-allowed}
 .legend{list-style:none;display:flex;flex-wrap:wrap;gap:6px 20px;padding:0;margin:8px 0}
 .key{display:inline-block;width:34px;margin-right:8px;vertical-align:middle;border-top:4px solid var(--indigo-dark)}
 .key.urgent{border-top-style:dashed}
-.key.returned{border-top-style:dotted}
+.key.returned{border-top-style:dotted;background:none;padding:0;border-radius:0}
 .chart-svg .band.urgent{stroke-dasharray:10 5}
 .chart-svg .band.returned,.chart-svg .band.second_return{stroke-dasharray:2 4}
