@@ -364,3 +364,50 @@ def test_split_note_units():
     assert split_note("cost a+b (c)? now", [(1, "a+b (c)?")]) == [("cost ", None), ("a+b (c)?", 1), (" now", None)]
     assert split_note("nothing here", [(1, "absent quote")]) == [("nothing here", None)]
     assert split_note("A  b\nc", [(1, "a b c")]) == [("A  b\nc", 1)]
+
+
+def test_money_text_formats_numbers_and_leaves_other_text_alone():
+    from workbench.case_view import money_text
+    assert money_text("2318.11") == ("2,318.11", True)
+    assert money_text("£2,318.1") == ("2,318.10", True)  # a leading pound sign is not doubled
+    assert money_text("about two grand") == ("about two grand", False)  # as typed, no pound sign
+    assert money_text("") == ("", False)
+
+
+def test_money_field_shows_separators_and_no_pound_for_text(client, app_db):
+    cid = pick(app_db)
+    sql(app_db, "UPDATE cases SET handover_json=? WHERE id=?", '{"amount_disputed": "2318.11"}', cid, write=True)
+    assert 'value="2,318.11"' in client.get(f"/cases/{cid}?step=2").text
+    sql(app_db, "UPDATE cases SET handover_json=? WHERE id=?", '{"amount_disputed": "a lot"}', cid, write=True)
+    html = client.get(f"/cases/{cid}?step=2").text
+    assert 'value="a lot"' in html and not re.search(r'<span class="money">£</span>\s*<input name="f_amount_disputed"', html)
+
+
+def test_restart_adds_no_claims_for_rejected_or_emptied_drafts(big_db_file, tmp_path):
+    import shutil
+    from workbench.app import create_app
+    db = tmp_path / "w.db"
+    shutil.copy(big_db_file, db)
+    create_app(str(db), models_dir=None)  # first start loads every recording
+    ids = [r[0] for r in sql(db, "SELECT id FROM cases ORDER BY id") if (REC / f"{r[0]}.json").exists()][:2]
+    sql(db, "DELETE FROM claims WHERE case_id IN (?,?)", *ids, write=True)
+    sql(db, "UPDATE cases SET draft_state='rejected' WHERE id=?", ids[0], write=True)
+    sql(db, "UPDATE cases SET draft_state='available' WHERE id=?", ids[1], write=True)  # every claim removed, row state kept
+    sql(db, "INSERT INTO claims(case_id, seq, text, status) VALUES (?,1,'gone','removed')", ids[1], write=True)
+    before = sql(db, "SELECT COUNT(*) FROM claims")
+    create_app(str(db), models_dir=None)
+    assert sql(db, "SELECT COUNT(*) FROM claims") == before
+
+
+def test_department_set_after_startup_loads_the_draft(client, app_db):
+    cid = pick(app_db)
+    sql(app_db, "UPDATE cases SET department=NULL, draft_state='none' WHERE id=?", cid, write=True)
+    sql(app_db, "DELETE FROM claims WHERE case_id=?", cid, write=True)
+    assert post(client, app_db, cid, "department", department="Fraud claims").status_code == 200
+    assert sql(app_db, "SELECT COUNT(*) FROM claims WHERE case_id=?", cid)[0][0] > 0
+
+
+def test_404_fragment_takes_focus_and_bar_text_is_not_a_live_region(client, app_db):
+    r = client.post("/cases/AB-2026-99999/approve", data={"version": 0}, headers=HX)
+    assert 'id="case" tabindex="-1"' in r.text
+    assert 'id="bar-text" role=' not in client.get(f"/cases/{pick(app_db)}").text

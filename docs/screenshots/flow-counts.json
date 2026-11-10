@@ -1,5 +1,6 @@
 {
  "clicks": 8,
  "keystrokes": 59,
- "case_id": "AB-2026-00768"
+ "case_id": "AB-2026-00768",
+ "note": "Queue opened by filtered URL; filter clicks not counted"
 }

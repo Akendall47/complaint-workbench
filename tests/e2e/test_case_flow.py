@@ -164,7 +164,7 @@ def test_full_flow(base, dbfile, browser):
     expect(page.locator("#bar-text")).to_contain_text("Waiting for")
     assert db_value(dbfile, "SELECT state FROM cases WHERE id=?", cid) == "handed_over"
     SHOTS.mkdir(parents=True, exist_ok=True)
-    (SHOTS / "flow-counts.json").write_text(json.dumps({"clicks": n.clicks, "keystrokes": n.keys, "case_id": cid}, indent=1) + "\n")
+    (SHOTS / "flow-counts.json").write_text(json.dumps({"clicks": n.clicks, "keystrokes": n.keys, "case_id": cid, "note": "Queue opened by filtered URL; filter clicks not counted"}, indent=1) + "\n")
     print("FLOW COUNTS", n.clicks, "clicks", n.keys, "keystrokes", cid)
 
     # specialist: same page, same URL; returns; handler sees it Returned
@@ -178,7 +178,6 @@ def test_full_flow(base, dbfile, browser):
     page.get_by_role("button", name="Return", exact=True).click()
     expect(page.locator("#bar-text")).to_contain_text("Nothing for you")
     switch(page, "Handler")
-    page.goto(base + "/queue")
     page.goto(base + "/queue?owner=me&state=returned&department=Fraud+claims")
     row = page.locator(f'tr[data-case="{cid}"]')  # not first: an older returned case of H1 is above it
     assert "Returned" in row.inner_text()

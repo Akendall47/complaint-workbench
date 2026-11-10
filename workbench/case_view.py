@@ -44,6 +44,12 @@ def _detail(raw: str) -> dict:
         return {}
 
 
+def money_text(v: str) -> tuple[str, bool]:
+    """A money value as shown: numbers get thousands separators and two decimals, anything else stays as typed."""
+    n = (v or "").strip().removeprefix("£").replace(",", "")
+    return (f"{float(n):,.2f}", True) if re.fullmatch(r"\d+(\.\d+)?", n) else (v, False)
+
+
 def build(conn, cfg, case_id, actor, step=1, all_=False, unmasked=False) -> dict | None:
     c = conn.execute("SELECT * FROM cases WHERE id = ?", (case_id,)).fetchone()
     if c is None:
@@ -75,9 +81,12 @@ def build(conn, cfg, case_id, actor, step=1, all_=False, unmasked=False) -> dict
     fields, missing = [], []
     if dept:
         missing = missing_fields(c["department"], saved, cfg)
-        fields = [{"name": f, "label": f.replace("_", " ").capitalize(), "value": saved.get(f) or suggested.get(f, ""),
-                   "money": f in MONEY, "missing": f in missing, "suggested": not saved.get(f) and f in suggested}
-                  for f in sorted(dept["required_fields"], key=lambda f: f not in missing)]
+        fields = []
+        for f in sorted(dept["required_fields"], key=lambda f: f not in missing):
+            raw = saved.get(f) or suggested.get(f, "")
+            text, num = money_text(raw) if f in MONEY else (raw, False)
+            fields.append({"name": f, "label": f.replace("_", " ").capitalize(), "value": text, "money": f in MONEY and (num or not raw),
+                           "missing": f in missing, "suggested": not saved.get(f) and f in suggested})
     ok, why = cases.can_approve(conn, case_id)
     reviewed = sum(x["status"] in ("confirmed", "edited") for x in claims)
     all_notes = " ".join(n["body"] for n in raw_notes)

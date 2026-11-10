@@ -1,5 +1,6 @@
 """Every change a person can make to a case. Each function is one transaction: the case change, the event
-and the audit row commit together or not at all. Nothing else (a draft, a recording, note text) changes a case."""
+and the audit row commit together or not at all. Nothing else (a draft, a recording, note text) changes a case.
+Claims are loaded from recordings at startup by drafts.store_claims; no audit row, no version bump."""
 import json
 from datetime import date
 from typing import NamedTuple

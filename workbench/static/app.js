@@ -42,5 +42,5 @@
   function hideHint() { if (hint) hint.hidden = true; }
   var dismiss = document.getElementById('hint-dismiss');
   if (dismiss) dismiss.addEventListener('click', hideHint);
-  document.addEventListener('keydown', hideHint, { once: true });
+  document.addEventListener('keydown', function (e) { if (e.key !== 'Tab' && e.key !== 'Shift') hideHint(); });
 })();

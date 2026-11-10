@@ -1,5 +1,5 @@
 <div class="bottom-bar" role="region" aria-label="Next action">
-  <p id="bar-text" role="status">{{ v.next_action }}</p>
+  <p id="bar-text">{{ v.next_action }}</p>
   {% if v.all or v.step == 3 %}{% if v.has_decision %}<a class="primary button" href="#decide">Go to decide</a>{% endif %}{% endif %}
   {% if not v.all and v.step < 3 %}<a class="primary button" href="/cases/{{ v.id }}?step={{ v.step + 1 }}">Next: {{ "handover" if v.step == 1 else "decide" }}</a>{% endif %}
 </div>
