@@ -15,6 +15,7 @@ Ankura AI by Design internship build task, Scenario 1: a fictional bank with a g
 - [[05-ankura-solution-sets]]
 - [[06-interface-design]]
 - [[07-ux-evidence]]
+- [[08-verification]]
 
 Each note states what was verified and what was not. Anything marked UNVERIFIED is checked against a primary source before it appears in the deck or the report.
 
