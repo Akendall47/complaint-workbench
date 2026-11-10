@@ -1,4 +1,6 @@
-from hypothesis import HealthCheck, given, settings, strategies as st
+import re
+
+from hypothesis import HealthCheck, assume, given, settings, strategies as st
 
 from workbench.masking import mask
 
@@ -40,7 +42,8 @@ def test_dates_and_money_survive(p):
 
 
 def test_long_digit_run(p):
-    assert mask("ref 123456789012345678901234 end", {}, p) == "ref [NUMBER] end"
+    assert mask("ref 123456789 end", {}, p) == "ref [NUMBER] end"
+    assert mask("ref 123456789012345678901234 end", {}, p) == "ref [CARD] end"  # open-ended card pattern takes it first
 
 
 def test_email_pattern_is_fast(p):
@@ -55,8 +58,42 @@ def test_known_value_whitespace_runs(p):
     assert mask("Ann \n Smith at 1 High Street,  Leeds", known, p) == "[NAME] at [ADDRESS]"
 
 
-def test_short_known_value_skipped(p):
-    assert mask("an ox", {"name": "an"}, p) == "an ox"
+def test_short_known_value_masked_as_word(p):
+    assert mask("Al said Alert", {"name": "Al"}, p) == "[NAME] said Alert"
+
+
+def test_known_value_not_matched_inside_token(p):
+    out = mask("Ann Smith said NAM", {"name": "Ann Smith", "address": "NAM"}, p)
+    assert out == "[NAME] said [ADDRESS]"
+    assert mask("Ann Smith and AME", {"name": "Ann Smith", "address": "AME"}, p) == "[NAME] and [ADDRESS]"
+
+
+def test_clause_digits_not_sheltered(p):
+    assert "4929" not in mask("POL-4929123456789012", {}, p)
+
+
+def test_ref_then_card_digits(p):
+    out = mask("AB-2026-00417 4929 1234 5678 9012", {}, p)
+    assert "AB-2026-00417" in out and "4929" not in out
+
+
+def test_long_local_part(p):
+    assert mask("x " + "a" * 90 + "@bank.co.uk y", {}, p) == "x [EMAIL] y"
+
+
+def test_separated_28_digits(p):
+    out = mask("n " + " ".join(["1234"] * 7), {}, p)
+    assert not any(c.isdigit() for c in out)
+
+
+def test_adjacent_dates_survive(p):
+    for t in ["10-11-2026 12-11-2026", "10.11.2026 14.30"]:
+        assert mask(t, {}, p) == t
+
+
+def test_private_use_chars_stripped(p):
+    out = mask(chr(0xE000) + "see AB-2026-00417", {}, p)
+    assert out == "see AB-2026-00417"
 
 
 def test_sort_code_then_account(p):
@@ -78,12 +115,23 @@ def _embed(prefix, secret, suffix):
 _sep = st.sampled_from([" ", ".", "-"])
 _pad = st.text(alphabet="abcdefghij .,\n!?;:()", max_size=20)
 _card = st.integers(13, 19).flatmap(lambda n: st.text("0123456789", min_size=n, max_size=n))
-_sort = st.builds("{}{}{}{}{}".format, st.integers(10, 99), _sep, st.integers(10, 99), _sep, st.integers(10, 99))
+_sort = st.builds("{:02d}{}{:02d}{}{:02d}".format, st.integers(0, 99), _sep, st.integers(0, 99), _sep, st.integers(0, 99))
 _run = st.integers(20, 30).flatmap(lambda n: st.text("0123456789", min_size=n, max_size=n))
 
 
+@st.composite
+def _grouped(draw):
+    groups = draw(st.lists(st.text("0123456789", min_size=2, max_size=5), min_size=3, max_size=15))
+    assume(13 <= sum(map(len, groups)) <= 30)
+    seps = draw(st.lists(_sep, min_size=len(groups) - 1, max_size=len(groups) - 1))
+    out = groups[0] + "".join(a + b for a, b in zip(seps, groups[1:]))
+    # A run that starts like a date is a known miss (see docs/test-results.md).
+    assume(not re.match(r"\d{1,2}[ .-]\d{1,2}[ .-]\d{4}", out))
+    return out
+
+
 @settings(deadline=None, suppress_health_check=[HealthCheck.function_scoped_fixture])
-@given(_pad, _pad, st.one_of(_card, st.text("0123456789", min_size=8, max_size=8), _sort, _run))
+@given(_pad, _pad, st.one_of(_card, st.text("0123456789", min_size=8, max_size=8), _sort, _run, _grouped()))
 def test_secret_digits_never_survive(p, a, b, secret):
     # Padding has no digits, so any digit run left in the output came from the secret.
     out = mask(f"{a}{secret}{b}", {}, p)
