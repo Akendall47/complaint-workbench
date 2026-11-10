@@ -15,3 +15,8 @@ def conn():
 @pytest.fixture
 def cfg():
     return load_config()
+
+
+@pytest.fixture
+def p(cfg):
+    return cfg["masking"]
