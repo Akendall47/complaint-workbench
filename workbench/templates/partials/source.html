@@ -1,0 +1,8 @@
+{% macro source_link(card) %}
+{% set s = content.cards[card] %}
+<details class="source">
+  <summary>Where these numbers come from</summary>
+  <p><b>This prototype:</b> {{ s.prototype }}</p>
+  <p><b>A real bank:</b> {{ s.real_bank }}</p>
+</details>
+{% endmacro %}

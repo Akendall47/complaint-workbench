@@ -1,0 +1,10 @@
+{% macro help_panel(view) %}
+{% set v = content.views[view] %}
+<div id="help" class="popover" role="dialog" aria-labelledby="help-title" hidden>
+  <h2 id="help-title">How this page works</h2>
+  <p>{{ v.purpose }}</p>
+  <ol>{% for s in v.steps %}<li>{{ s }}</li>{% endfor %}</ol>
+  <p class="small muted">{{ v.layout_reason }}</p>
+  <button type="button" data-close="help">Close</button>
+</div>
+{% endmacro %}

@@ -1,0 +1,65 @@
+# Help-panel text per view and "Where these numbers come from" text per card. Plain British English.
+views:
+  overview:
+    purpose: See how the complaints team is doing this morning.
+    steps:
+      - Read the headline figures at the top.
+      - Check Needs attention today and the unusual rise card.
+      - Select a figure or a chart bar to open the matching cases in the Queue.
+    layout_reason: Grouped under plain headings so the morning check takes a minute.
+  queue:
+    purpose: Pick the next case to work on. The case closest to its deadline comes first.
+    steps:
+      - Read down the list. Cases past their deadline are at the top.
+      - Use Filters to narrow the list, or the tabs to see unassigned cases.
+      - Select Assign to me on a case with no owner.
+      - Select a case number to open the case.
+    layout_reason: One table sorted by deadline, so the most urgent work is always the first row.
+  case:
+    purpose: Check the summary, complete the handover and decide.
+    steps:
+      - Check each claim in the summary against the source note.
+      - Complete the handover fields.
+      - Approve and send, or reject the draft.
+    layout_reason: One step at a time by default. The one-screen switch shows everything for experienced handlers.
+  departments:
+    purpose: See one team's workload and the handovers waiting for it.
+    steps:
+      - Choose a department.
+      - Accept a handover, or return it with a reason.
+      - Check which fields are most often missing.
+    layout_reason: One department at a time so the list stays short.
+  team:
+    purpose: Share out work fairly across the team.
+    steps:
+      - Read each person's open cases against the team average.
+      - Assign unassigned cases to someone with room.
+    layout_reason: A table, not a league. It is for sharing out work, not ranking people.
+  pipeline:
+    purpose: See where cases sit between receipt and acceptance.
+    steps:
+      - Follow the bands from left to right.
+      - Select a stage to open its cases in the Queue.
+    layout_reason: A flow shows how cases move and where they come back.
+  policies:
+    purpose: Search and read the bank's policy clauses.
+    steps:
+      - Type a few words.
+      - Read the clause. Its number links back to this page.
+    layout_reason: Search first, because most people arrive with a question.
+  audit:
+    purpose: See every action, who took it and when.
+    steps:
+      - Read the chain check at the top.
+      - Filter by case or by person.
+    layout_reason: Newest first, because the latest action is usually the one you want.
+  settings:
+    purpose: Read the few settings that shape the results.
+    steps:
+      - Read the rules in plain words.
+      - Check where the data comes from.
+    layout_reason: Read-only, so nobody changes a rule by accident.
+cards:
+  queue:
+    prototype: Cases and their deadlines come from the SQLite table cases. Days left counts business days to the deadline, with bank holidays from the configuration file. The date is fixed at 10 November 2026.
+    real_bank: The complaints case management system, refreshed about every 15 minutes.

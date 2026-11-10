@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% from "partials/help.html" import help_panel %}
+{% from "partials/source.html" import source_link %}
+{% block title %}Queue{% endblock %}
+{% block purpose %}{{ content.views.queue.purpose }}{% endblock %}
+{% block help %}{{ help_panel("queue") }}{% endblock %}
+{% block content %}
+{% if message %}<p class="notice" role="alert">{{ message }}</p>{% endif %}
+<section class="table-card">
+  <div class="toolbar">
+    <nav class="segmented" aria-label="Whose cases">
+      {% for k, label in [("me", "Mine"), ("unassigned", "Unassigned"), ("all", "All")] %}
+      <a href="{{ link(owner=k) }}"{% if f.owner == k %} aria-current="true"{% endif %}>{{ label }}</a>
+      {% endfor %}
+    </nav>
+    {% if filtered %}<a class="clear" href="/queue?owner={{ f.owner }}">Clear filters</a>{% endif %}
+    <details class="filters">
+      <summary>Filters</summary>
+      <form method="get" action="/queue" class="filter-form">
+        <input type="hidden" name="owner" value="{{ f.owner }}">
+        <label>Department <select name="department"><option value="">Any</option>{% for d in sel.departments %}<option{% if f.department == d %} selected{% endif %}>{{ d }}</option>{% endfor %}</select></label>
+        <label>Type <select name="type"><option value="">Any</option>{% for d in sel.types %}<option{% if f.type == d %} selected{% endif %}>{{ d }}</option>{% endfor %}</select></label>
+        <label>State <select name="state"><option value="">Open</option>{% for d in sel.states %}<option value="{{ d }}"{% if f.state == d %} selected{% endif %}>{{ state_name[d] }}</option>{% endfor %}</select></label>
+        <label>Deadline <select name="due"><option value="">Any</option><option value="past"{% if f.due == "past" %} selected{% endif %}>Past deadline</option><option value="soon"{% if f.due == "soon" %} selected{% endif %}>Due soon</option></select></label>
+        <label class="check"><input type="checkbox" name="urgent" value="1"{% if f.urgent %} checked{% endif %}> Urgent only</label>
+        <button type="submit">Apply</button>
+      </form>
+    </details>
+  </div>
+  {% if rows %}
+  <div class="table-wrap">
+    <table class="case-table">
+      <thead><tr><th scope="col">Case</th><th scope="col">Days left</th><th scope="col">Type</th><th scope="col">Department</th><th scope="col">State</th><th scope="col">Owner</th></tr></thead>
+      <tbody>
+      {% for r in rows %}{% set c = r.c %}
+      <tr class="case-row" data-case="{{ c.id }}" data-days="{{ r.days }}">
+        <td><a class="plain-id" href="/cases/{{ c.id }}">{{ c.id }}</a>{% if c.urgent %} <span class="urgent-tag">Urgent</span>{% endif %}
+          <a class="more" href="{{ link(expand='' if r.open else c.id, page=page_no if page_no > 1 else '') }}" aria-expanded="{{ 'true' if r.open else 'false' }}">{{ 'Hide details' if r.open else 'Details' }}</a></td>
+        <td class="{{ 'deadline-past' if r.days < 0 else '' }}">{% if r.days < 0 %}{{ -r.days }} past{% else %}{{ r.days }}{% endif %}</td>
+        <td>{{ c.type or "–" }}</td>
+        <td>{{ c.department or "Needs routing" }}</td>
+        <td><span class="status-label">{{ state_name[c.state] }}</span></td>
+        <td>{% if c.owner_id %}{{ c.owner_id }}{% else %}
+          <form method="post" action="/cases/{{ c.id }}/assign"><input type="hidden" name="version" value="{{ c.version }}"><input type="hidden" name="next" value="{{ here }}"><button type="submit">Assign to me</button></form>{% endif %}</td>
+      </tr>
+      {% if r.open %}
+      <tr class="detail-row"><td colspan="6">
+        <dl>
+          <dt>Received</dt><dd>{{ c.received_at[:10] }} by {{ c.source or "unknown" }}</dd>
+          <dt>Deadline</dt><dd>{{ c.deadline }}</dd>
+          {% if r.detail.reasons %}<dt>Urgent because</dt><dd>{{ r.detail.reasons | join(", ") }}</dd>{% endif %}
+          <dt>Next</dt><dd>{{ r.detail.next }}</dd>
+        </dl>
+      </td></tr>
+      {% endif %}
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if pages > 1 %}
+  <p class="pager">
+    {% if page_no > 1 %}<a href="{{ link(page=page_no - 1) }}">Previous</a>{% endif %}
+    Page {{ page_no }} of {{ pages }}
+    {% if page_no < pages %}<a href="{{ link(page=page_no + 1) }}">Next</a>{% endif %}
+  </p>
+  {% endif %}
+  {% else %}
+  <p class="empty">No cases match these filters. <a href="/queue?owner=all">Clear filters</a></p>
+  {% endif %}
+</section>
+{{ source_link("queue") }}
+{% endblock %}

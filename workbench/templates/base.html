@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+{# htmx 2.0.4 vendored in static/htmx.min.js from https://github.com/bigskysoftware/htmx/releases/download/v2.0.4/htmx.min.js
+   SHA-256 e209dda5c8235479f3166defc7750e1dbcd5a5c1808b7792fc2e6733768fb447. Nothing loads from the network. #}
+{% from "partials/help.html" import help_panel %}
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="htmx-config" content='{"includeIndicatorStyles": false}'>
+<title>{% block title %}{% endblock %} · Alder Bank complaints</title>
+<link rel="stylesheet" href="/static/app.css">
+<script src="/static/htmx.min.js" defer></script>
+<script src="/static/app.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<aside class="sidebar">
+  <div class="brand">Alder Bank</div>
+  <div class="product">Complaints workbench</div>
+  <nav aria-label="Main">
+    <ul class="app-nav">
+      {% for n in nav %}
+      <li>{% if n.href %}<a class="nav-link" href="{{ n.href }}"{% if n.current %} aria-current="page"{% endif %}>{{ n.label }}{% if n.sub %} <small>{{ n.sub }}</small>{% endif %}{% if n.home %} <small class="home">Home</small>{% endif %}</a>
+      {% else %}<span class="nav-link off">Case <small>none open</small></span>{% endif %}</li>
+      {% endfor %}
+    </ul>
+  </nav>
+  <div class="sidebar-foot">
+    <form class="role-form" hx-post="/role" hx-swap="none" method="post" action="/role">
+      <p class="role-label" id="role-label">View as (demo)</p>
+      <div class="role-switch" role="group" aria-labelledby="role-label">
+        {% for r, sid in roles.items() %}<button type="submit" name="role" value="{{ r }}" aria-pressed="{{ 'true' if actor.role == r else 'false' }}">{{ role_name[r] }}</button>{% endfor %}
+      </div>
+    </form>
+    {% include "partials/role_notice.html" %}
+  </div>
+</aside>
+<div class="app-main">
+  <header class="topbar">
+    {% include "partials/deadline_strip.html" %}
+    <button type="button" class="help-button" data-open="help" aria-expanded="false" aria-controls="help">How this page works</button>
+  </header>
+  <main id="main" class="page" tabindex="-1">
+    <p id="hint" class="hint" hidden>New here? Select “How this page works” at the top right.</p>
+    <div class="page-heading">
+      <div>
+        <h1 class="view-title">{% block title_h %}{{ self.title() }}{% endblock %}</h1>
+        <p>{% block purpose %}{% endblock %}</p>
+      </div>
+    </div>
+    {% block help %}{% endblock %}
+    {% block content %}{% endblock %}
+  </main>
+  <footer class="footer">Prototype built for the Ankura AI by Design task. Not an Ankura product. All data synthetic. See Settings, Data sources.</footer>
+</div>
+</body>
+</html>

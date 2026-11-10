@@ -48,3 +48,33 @@ def built(db):
     """Models trained once on the shared generated database (80% split, seed 7)."""
     from workbench.classify import build
     return build(db, load_config())
+
+
+@pytest.fixture(scope="session")
+def app_db_file(tmp_path_factory):
+    """A small generated database on disk (200 cases) for web tests. Copy it before changing anything."""
+    path = tmp_path_factory.mktemp("appdb") / "workbench.db"
+    c = connect(path)
+    init_db(c)
+    generate(c, n=200, seed=7, cfg=load_config())
+    c.commit()
+    c.close()
+    return path
+
+
+@pytest.fixture
+def app_db(app_db_file, tmp_path):
+    """A private copy of the 200-case database, so a test may change it."""
+    import shutil
+    from workbench import audit
+    dst = tmp_path / "workbench.db"
+    shutil.copy(app_db_file, dst)
+    yield dst
+    audit.set_clock(None)  # create_app pins the demo clock
+
+
+@pytest.fixture
+def client(app_db):
+    from fastapi.testclient import TestClient
+    from workbench.app import create_app
+    return TestClient(create_app(str(app_db), models_dir=None))
