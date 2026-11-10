@@ -1,6 +1,8 @@
 import re
 import sqlite3
 
+from markupsafe import Markup, escape
+
 
 def _fts_query(q: str, joiner: str) -> str:
     # Each whitespace-separated token becomes one quoted phrase, so FTS operators and punctuation are inert.
@@ -25,3 +27,12 @@ def search_policies(conn: sqlite3.Connection, q: str, k: int = 5, sections: list
         return rows
     fts = _fts_query(q, "OR")
     return conn.execute(sql, (fts, *extra, k)).fetchall() if fts else []
+
+
+def highlight(text: str, q: str) -> Markup:
+    """The text escaped, with the query words wrapped in <mark>. Each piece is escaped before any markup is added."""
+    words = sorted({w for w in q.split() if re.search(r"\w", w)}, key=len, reverse=True)[:20]
+    if not words:
+        return Markup(escape(text))
+    parts = re.split("(" + "|".join(re.escape(w) for w in words) + ")", text, flags=re.I)
+    return Markup("".join(f"<mark>{escape(p)}</mark>" if i % 2 else str(escape(p)) for i, p in enumerate(parts)))

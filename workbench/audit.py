@@ -50,3 +50,14 @@ def verify_chain(conn: sqlite3.Connection) -> int | None:
         prev, last = r["hash"], r["id"]
     seq = conn.execute("SELECT seq FROM sqlite_sequence WHERE name='audit'").fetchone()
     return last + 1 if seq and seq["seq"] != last else None
+
+
+def describe(detail_json: str | None) -> str:
+    """Plain text for the Detail column: the reason if there is one, else key: value pairs. The caller escapes it."""
+    try:
+        d = json.loads(detail_json or "{}")
+    except ValueError:
+        return ""
+    if not isinstance(d, dict):
+        return str(d)
+    return str(d["reason"]) if d.get("reason") else "; ".join(f"{k}: {v}" for k, v in d.items() if v not in (None, ""))

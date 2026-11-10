@@ -11,6 +11,9 @@ from workbench.urgency import is_urgent
 PAYMENT_TYPES = ("Payment scam", "Fraud or security")  # the types the generator treats as payment complaints
 
 
+MAX_TEXT = 5000  # characters; the form limits its text box to this too
+
+
 class IntakeError(ValueError):
     pass
 
@@ -19,13 +22,13 @@ def _norm(s: str) -> str:
     return " ".join(s.casefold().split())
 
 
-def receive(conn: sqlite3.Connection, *, text: str, source: str, cfg: dict, models: dict) -> str:
+def receive(conn: sqlite3.Connection, *, text: str, source: str, cfg: dict, models: dict, actor_id: str = "system", role: str = "system") -> str:
     if not text or not text.strip():
         raise IntakeError("Enter the complaint text.")
     if source not in cfg["sources"]:
         raise IntakeError("Choose where the complaint came from.")
-    if len(text) > 5000:
-        raise IntakeError("Complaint text is too long. The limit is 5,000 characters.")
+    if len(text) > MAX_TEXT:
+        raise IntakeError(f"Complaint text is too long. The limit is {MAX_TEXT:,} characters.")
     text = text.strip()
     key = _norm(text)
     dep, ty = predict(models["department"], text), predict(models["type"], text)
@@ -50,8 +53,8 @@ def receive(conn: sqlite3.Connection, *, text: str, source: str, cfg: dict, mode
              int(is_urgent(case, text, today, cfg)), case["deadline"], dup))
         conn.execute("INSERT INTO notes(case_id, seq, author, written_at, body) VALUES (?,?,?,?,?)", (cid, 1, "customer", now, text))
         conn.execute("INSERT INTO events(case_id, at, kind, from_state, to_state, actor_id) VALUES (?,?,?,?,?,?)",
-                     (cid, now, "received", None, "new", "system"))
-        audit.append(conn, actor_id="system", role="system", action="received", case_id=cid,
+                     (cid, now, "received", None, "new", actor_id))
+        audit.append(conn, actor_id=actor_id, role=role, action="received", case_id=cid,
                      detail={"source": source, "duplicate_of": dup, "department": routed})
         conn.commit()
     except Exception:

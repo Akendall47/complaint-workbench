@@ -10,16 +10,13 @@ from workbench.config import load_config
 from workbench.deadlines import business_days_left
 
 NAV = ["/", "/queue", "/departments", "/team", "/pipeline", "/policies", "/audit", "/settings"]
-BUILT = {"/", "/queue", "/departments", "/team", "/pipeline"}
 
 
-@pytest.mark.parametrize("path", [pytest.param(p, marks=[] if p in BUILT else pytest.mark.xfail(reason="view not built yet", strict=True))
-                                  for p in NAV])
+@pytest.mark.parametrize("path", NAV)
 def test_navigation_link_returns_200(client, path):
     assert client.get(path).status_code == 200
 
 
-@pytest.mark.xfail(strict=True, reason="Settings is built in Task 11, with the data-sources anchor")
 def test_settings_has_the_data_sources_anchor(client):
     assert 'id="data-sources"' in client.get("/settings").text
 

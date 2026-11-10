@@ -20,6 +20,8 @@ from fastapi.templating import Jinja2Templates
 from . import audit, case_view, cases, charts, drafts, stats
 from .cases import Actor, NotAllowed, StaleCase
 from .classify import MODELS_DIR, ensure_models
+from .intake import MAX_TEXT, IntakeError, receive
+from .search import highlight, search_policies
 from .config import load_config
 from .db import connect
 from .deadlines import business_days_left, due_soon_edge
@@ -267,6 +269,64 @@ def create_app(db_path="data/workbench.db", config_path="config/pipeline.yaml", 
             more = [(dept_title, charts.bars(by_dept, title=dept_title, summary=stats.sentence("bars", {"title": dept_title, "items": by_dept}) if by_dept else "")),
                     ("When complaints arrive", charts.heatmap(stats.heatmap(conn), title="Complaints received by weekday and hour", summary="Darker cells are busier hours."))]
             return page(request, conn, "pipeline.html", stages=stages, stage_name=STATE_NAME, moves=moves, back=back, handovers=ho, more=more)
+
+    # ---- Policy library, Audit log, Settings ----
+    @app.get("/policies", response_class=HTMLResponse)
+    def policies(request: Request):
+        q = request.query_params.get("q", "").strip()[:200]
+        with db() as conn:
+            found = search_policies(conn, q, k=100 if not q else 20)
+            groups: dict = {}
+            for r in found:
+                groups.setdefault(r["section"], []).append({"id": r["id"], "title": r["title"], "snippet": highlight(r["snippet"], q)})
+            return page(request, conn, "policies.html", q=q, groups=groups, n=len(found))
+
+    def audit_ctx(conn, q) -> dict:
+        case, actor = q.get("case", ""), q.get("actor", "")
+        people = [r[0] for r in conn.execute("SELECT id FROM staff ORDER BY id")] + ["system"]  # intake writes as "system"
+        where, args = [], []
+        bad = (case and not CASE_ID.match(case)) or (actor and actor not in people)
+        if case:
+            where.append("case_id = ?"); args.append(case)  # noqa: E702
+        if actor:
+            where.append("actor_id = ?"); args.append(actor)  # noqa: E702
+        w = (" WHERE " + " AND ".join(where)) if where else ""
+        total = 0 if bad else conn.execute(f"SELECT COUNT(*) FROM audit{w}", args).fetchone()[0]
+        pages = max(1, -(-total // PER_PAGE))
+        pg = to_int(q.get("page"), 1)
+        pg = min(max(1, pg), pages)
+        got = [] if bad else conn.execute(f"SELECT * FROM audit{w} ORDER BY id DESC LIMIT ? OFFSET ?", (*args, PER_PAGE, (pg - 1) * PER_PAGE)).fetchall()
+        broken = audit.verify_chain(conn)
+        everything = conn.execute("SELECT COUNT(*) FROM audit").fetchone()[0]
+        keep = {k: v for k, v in (("case", case), ("actor", actor)) if v}
+        return {"rows": [{**dict(r), "what": audit.describe(r["detail_json"])} for r in got], "people": people, "case": case, "actor": actor,
+                "page_no": pg, "pages": pages, "chain": "Chain verified: " + f"{everything:,} entries" if broken is None else f"Chain broken at entry {broken}",
+                "chain_ok": broken is None, "link": lambda p: "/audit?" + urlencode({**keep, "page": p})}
+
+    @app.get("/audit", response_class=HTMLResponse)
+    def audit_log(request: Request):
+        allowed = current_actor(request).role == "team_lead"  # a notice, not a 403 page, for everyone else
+        with db() as conn:
+            return page(request, conn, "audit.html", allowed=allowed, **(audit_ctx(conn, request.query_params) if allowed else {}))
+
+    def settings_page(request, status=200, **ctx):
+        with db() as conn:
+            return page(request, conn, "settings.html", status=status, **{"max_text": MAX_TEXT, "text": "", "source": "", **ctx})
+
+    @app.get("/settings", response_class=HTMLResponse)
+    def settings(request: Request):
+        return settings_page(request)
+
+    @app.post("/intake", response_class=HTMLResponse)
+    def intake(request: Request, text: str = Form(""), source: str = Form("")):
+        actor = current_actor(request)
+        try:
+            with db() as conn:
+                models = ensure_models(conn, cfg, models_dir if models_dir is not None else MODELS_DIR)
+                cid = receive(conn, text=text, source=source, cfg=cfg, models=models, actor_id=actor.id, role=actor.role)
+        except IntakeError as e:
+            return settings_page(request, status=400, error=str(e), text=text, source=source)
+        return settings_page(request, added=cid)
 
     def back_to(nxt: str) -> str:
         return safe_path(nxt) or "/queue"

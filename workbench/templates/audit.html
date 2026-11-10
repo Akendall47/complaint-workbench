@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% from "partials/help.html" import help_panel %}
+{% block title %}Audit log{% endblock %}
+{% block strip %}{% include "partials/deadline_strip.html" %}{% endblock %}
+{% block purpose %}{{ content.views.audit.purpose }}{% endblock %}
+{% block hint %}{% endblock %}
+{% block help %}{{ help_panel("audit") }}{% endblock %}
+{% block content %}
+{% if not allowed %}
+<p class="notice" role="status">The audit log is for the Team lead. Switch to Team lead (bottom left) to see it.</p>
+{% else %}
+<p class="chain {{ 'ok' if chain_ok else 'bad' }}" role="status"><b>{{ chain }}</b></p>
+<section class="table-card">
+  <form method="get" action="/audit" class="filter-form">
+    <label>Case <input name="case" value="{{ case }}" maxlength="14" placeholder="AB-2026-00001"></label>
+    <label>Person <select name="actor"><option value="">Anyone</option>{% for p in people %}<option{% if actor == p %} selected{% endif %}>{{ p }}</option>{% endfor %}</select></label>
+    <button type="submit">Filter</button>
+    {% if case or actor %}<a class="clear" href="/audit">Clear filters</a>{% endif %}
+  </form>
+  {% if rows %}
+  <div class="table-wrap">
+    <table class="case-table">
+      <thead><tr><th scope="col">When</th><th scope="col">Who</th><th scope="col">Case</th><th scope="col">Action</th><th scope="col">Detail</th></tr></thead>
+      <tbody>
+      {% for r in rows %}
+      <tr><td>{{ r.at.replace("T", " ") }}</td><td>{{ r.actor_id }} <span class="muted">{{ r.role }}</span></td>
+        <td>{% if r.case_id %}<a class="plain-id" href="/cases/{{ r.case_id }}">{{ r.case_id }}</a>{% else %}–{% endif %}</td>
+        <td>{{ r.action }}</td><td>{{ r.what }}</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if pages > 1 %}
+  <nav class="pager" aria-label="Pages">
+    {% if page_no > 1 %}<a href="{{ link(page_no - 1) }}">Newer</a>{% endif %}
+    Page {{ page_no }} of {{ pages }}
+    {% if page_no < pages %}<a href="{{ link(page_no + 1) }}">Older</a>{% endif %}
+  </nav>
+  {% endif %}
+  {% else %}<p class="empty">No entries match these filters.</p>{% endif %}
+</section>
+{% endif %}
+{% endblock %}

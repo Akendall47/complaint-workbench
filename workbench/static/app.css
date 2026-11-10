@@ -166,3 +166,12 @@ button.primary:disabled{background:#c9c9d3;color:#4a4a55;cursor:not-allowed}
 .stage{flex:1;display:grid;gap:2px;padding:14px 16px;border-radius:14px;background:#f1f1f6;text-align:center;text-decoration:none;color:var(--ink)}
 .stage b{font-size:28px;font-variant-numeric:tabular-nums}
 .stages .arrow{color:var(--muted);font-size:20px}
+.search-bar{display:grid;gap:6px;margin-bottom:16px}
+.search-row{display:flex;gap:8px;max-width:640px}
+.clauses{list-style:none;padding:0;margin:8px 0 0;display:grid;gap:10px}
+.clauses li{scroll-margin-top:72px}
+.clauses li:target{background:var(--tint);border-radius:8px}
+mark{background:#fff0b3;color:var(--ink);border-radius:3px}
+.chain{padding:10px 16px;border-radius:12px;background:white;margin:0 0 16px}
+.chain.bad{background:var(--tint);color:var(--accent-dark)}
+.intake-form{display:grid;gap:8px;max-width:640px}
