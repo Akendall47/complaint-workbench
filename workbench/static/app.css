@@ -53,7 +53,7 @@ a.nav-link[aria-current=page]{background:white;color:var(--ink);font-weight:600;
 .toolbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
 .segmented{display:flex;padding:4px;border-radius:13px;background:#e3e3ea;gap:2px}
 .segmented a{padding:6px 14px;border-radius:10px;color:var(--ink);text-decoration:none;font-size:14px;min-height:34px;display:flex;align-items:center}
-.segmented a[aria-current=true]{background:white;font-weight:600;box-shadow:var(--shadow)}
+.segmented a[aria-current=page]{background:white;font-weight:600;box-shadow:var(--shadow)}
 .filters summary{padding:8px 14px;border-radius:10px;background:#ececf1;font-size:14px;font-weight:500;list-style:none}
 .filter-form{display:flex;gap:12px;flex-wrap:wrap;align-items:end;margin-top:12px}
 .filter-form label{display:grid;gap:4px;font-size:14px;color:var(--muted)}
