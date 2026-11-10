@@ -23,3 +23,30 @@ Each note states what was verified and what was not. Anything marked UNVERIFIED 
 - The product uses AI to find, summarise and draft. A person approves everything.
 - AI answers for the synthetic cases are recorded in advance from an open model running locally, so a reviewer needs no API key.
 - Deliverables: a working prototype, a five-slide deck, a LaTeX technical sheet as an optional appendix, and this vault.
+
+## Maps
+
+Four ways into the same notes.
+
+- [[by-brief-requirement]]: the brief's five considerations
+- [[by-ankura-solution-set]]: AI Strategy, Governance Engineering, Workforce AI Transformation
+- [[threats-and-controls]]: each threat and the control that answers it
+- [[evidence-status]]: verified, unverified, and our own reasoning
+
+## Decisions (folder `decisions/`)
+
+One note per design decision: who made it, why, the evidence, the cost, and what would change it.
+
+[[person-approves-everything]] · [[use-cheapest-tool-per-job]] · [[route-with-small-classifier]] · [[search-with-sqlite-fts5]] · [[mask-before-the-model]] · [[check-citations-word-for-word]] · [[limit-what-the-model-can-do]] · [[record-ai-answers-in-advance]] · [[use-local-open-model]] · [[synthetic-data-only]] · [[hash-chain-the-audit-log]] · [[lock-approve-until-claims-checked]] · [[flags-not-confidence-percentages]] · [[require-reason-to-reject]] · [[dashboard-first-left-navigation]] · [[minimal-style-effective-wins]] · [[three-roles-with-switcher]] · [[five-case-states]] · [[add-complaint-type-label]] · [[urgent-by-stated-rules]] · [[pipeline-defined-in-configuration]] · [[one-configuration-file]] · [[respond-under-100-ms]] · [[server-rendered-stack]] · [[build-with-closed-loop]] · [[stated-non-goals]] · [[verify-before-quoting]] · [[deliverables-and-cut-order]]
+
+## Features (folder `features/`)
+
+One note per view or control in the product.
+
+[[overview-dashboard]] · [[complaint-map]] · [[departments-view]] · [[queue-view]] · [[case-view]] · [[pipeline-view]] · [[policy-library]] · [[audit-log-view]] · [[settings-view]] · [[role-switcher]] · [[per-claim-confirmation]] · [[reject-with-reason]] · [[urgent-flag]] · [[complaint-type-filter]] · [[masked-data-with-logged-unmask]]
+
+## Concepts (folder `concepts/`)
+
+One short note per idea in the research or design. Each has a status in its frontmatter: verified, partly unverified, or reasoning.
+
+[[prompt-injection]] · [[automation-bias]] · [[cognitive-forcing]] · [[citation-check]] · [[human-approval]] · [[hash-chained-audit-log]] · [[pii-masking]] · [[on-premises-model]] · [[concentration-risk]] · [[bm25-retrieval]] · [[tf-idf-routing-classifier]] · [[cheapest-tool-per-job]] · [[recorded-ai-output]] · [[schema-constrained-output]] · [[complaint-deadlines]] · [[summary-resolution]] · [[final-response]] · [[vulnerable-customers]] · [[urgency-rules]] · [[complaint-type]] · [[band-flow-diagram]] · [[returned-case-loop]] · [[handover-pack]] · [[token-cost]] · [[cross-model-review]] · [[closed-build-loop]] · [[glanceable-dashboard]] · [[colour-not-alone]] · [[response-time-limits]] · [[aesthetic-usability-effect]] · [[synthetic-data]] · [[left-navigation]] · [[bars-not-pies]] · [[heatmap-caveat]] · [[check-this-flag]] · [[least-privilege-model]] · [[hallucinated-policy]] · [[automated-decision-making]] · [[novice-uplift-and-deskilling]] · [[governance-built-in]] · [[routine-confirmation-dialogs]] · [[accessibility-baseline]] · [[server-rendered-fragments]] · [[value-case-assumption]] · [[adversarial-test-cases]]

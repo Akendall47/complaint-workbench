@@ -51,3 +51,5 @@ Does not work: pie, donut, gauge and 3D charts; colour as the only signal or for
 - Any evidence on sparklines, comparison with a previous period, cards, whitespace, or low density hurting expert users.
 - Evidence on confidence percentages, on citations specifically, and on requiring a reason for rejection. These three are our own design reasoning.
 - Colour-blindness prevalence (about 1 in 12 men, 1 in 200 women) comes from a charity site, not a peer-reviewed source.
+
+See also: [[automation-bias]], [[cognitive-forcing]], [[band-flow-diagram]], [[glanceable-dashboard]], [[colour-not-alone]], [[response-time-limits]], [[aesthetic-usability-effect]], [[left-navigation]], [[bars-not-pies]], [[heatmap-caveat]], [[check-this-flag]], [[routine-confirmation-dialogs]], [[accessibility-baseline]]

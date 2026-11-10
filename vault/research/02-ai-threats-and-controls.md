@@ -43,3 +43,5 @@ Prompt-injection classifiers are not relied on: EchoLeak bypassed Microsoft's ow
 
 - ICO draft guidance on automated decision-making, 31 March 2026: human involvement must be active, not tokenistic, with authority to override. https://www.freeths.co.uk/insights-events/legal-articles/2026/ico-consults-on-updated-automated-decision-making-and-profiling-guidance/
 - Design implication (inference): show source passages beside each claim, and log edits and rejections.
+
+See also: [[prompt-injection]], [[citation-check]], [[human-approval]], [[hash-chained-audit-log]], [[pii-masking]], [[schema-constrained-output]], [[least-privilege-model]], [[hallucinated-policy]], [[automated-decision-making]], [[adversarial-test-cases]]

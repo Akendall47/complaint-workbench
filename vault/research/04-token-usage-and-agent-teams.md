@@ -49,3 +49,5 @@ Per agent and per model tier, record:
 5. Defects caught by cross-model review.
 6. Wall-clock time per task.
 7. Cost per accepted task.
+
+See also: [[tf-idf-routing-classifier]], [[cheapest-tool-per-job]], [[token-cost]], [[cross-model-review]], [[closed-build-loop]]

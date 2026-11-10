@@ -45,3 +45,5 @@ Research agent report, 2026-11-10. Read in full: NN/g response times, WCAG targe
 ## Design history
 
 - 2026-11-10: first mockup rejected by the project owner as poor design. A redesign was commissioned from Codex.
+
+See also: [[automation-bias]], [[cognitive-forcing]], [[colour-not-alone]], [[response-time-limits]], [[check-this-flag]], [[accessibility-baseline]], [[server-rendered-fragments]]

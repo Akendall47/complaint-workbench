@@ -44,3 +44,5 @@ Research agent report, 2026-11-10. Only the AI by Design page was fetched in ful
 | Role and workflow change | Workforce Transformation | Before-and-after responsibilities, novice and expert impact, training plan |
 | Assumptions, limits, trade-offs | Governance and Strategy | Explicit assumptions, data limits, named trade-offs |
 | AI tools used and assessment | Tool-agnostic | Candid review of each tool: where it helped, where it failed, how output was checked |
+
+See also: [[hash-chained-audit-log]], [[novice-uplift-and-deskilling]], [[governance-built-in]]

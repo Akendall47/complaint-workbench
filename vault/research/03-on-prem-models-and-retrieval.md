@@ -41,3 +41,5 @@ Research agent report, 2026-11-10. Much of it comes from blogs; primary sources 
 - Model: Qwen3.5-9B at Q4_K_M, Gemma 4 E4B as fallback.
 - Server: Ollama, for the simplest Windows install and schema-enforced JSON.
 - Retrieval: SQLite FTS5 with BM25 first. Add vectors only if measured recall needs it.
+
+See also: [[citation-check]], [[on-premises-model]], [[concentration-risk]], [[bm25-retrieval]], [[cheapest-tool-per-job]], [[recorded-ai-output]], [[schema-constrained-output]]
