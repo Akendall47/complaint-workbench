@@ -159,19 +159,19 @@ DEPT_C = {
                              "I have asked for a payment holiday and heard nothing.",
                              "I want the charges frozen while I sort out my budget.",
                              "I cannot keep up with the monthly payments."],
-    "Bereavement": ["My husband passed away last month and I am trying to close his accounts.",
+    "Bereavement": ["Someone close to me passed away last month and I am trying to close their accounts.",
                     "I have sent the death certificate twice already.",
-                    "I am the executor and nobody will talk to me.",
-                    "I keep being asked to repeat that my mother has died.",
-                    "Her account is still being charged fees.",
-                    "My father's accounts are frozen and the funeral bills are waiting."],
+                    "I am dealing with the estate and nobody will talk to me.",
+                    "I keep being asked to repeat that the account holder has died.",
+                    "Their account is still being charged fees.",
+                    "The accounts are frozen and the funeral bills are waiting."],
     "Data protection": ["I asked for a copy of all the information you hold about me.",
                         "You shared my details with someone who should not have them.",
                         "My personal details were sent to the wrong address.",
                         "I want my data corrected and the old record removed.",
                         "I made a subject access request and have not had a reply.",
                         "I want to know who has looked at my account records."],
-    "Mis-selling review": ["I want my case about the sale reviewed.", "I believe the product was mis-sold to me.",
+    "Mis-selling review": ["I want my case about the sale reviewed.", "I believe the product was wrongly sold to me.",
                            "I want to be compensated for what I lost.", "I was not given the paperwork at the time.",
                            "I want the sale checked against what I was told.", "The product did not match my needs."],
     "General service": ["I want this put right and an apology.",
@@ -181,13 +181,13 @@ DEPT_C = {
                         "I have been a customer for many years and have not had this problem before."],
 }
 DEPT_S = {
-    "Fraud claims": ["Fraud team checks needed on the transactions.", "Card details and merchant noted for the dispute.",
+    "Fraud claims": ["Specialist checks needed on the transactions.", "Card details and merchant noted for the dispute.",
                      "Customer advised to keep any messages and emails received.", "Recovery steps explained to the customer.",
                      "Refund decision depends on the investigation."],
     "Financial difficulty": ["Customer income and spending discussed in detail.", "Explained the options for a repayment plan.",
                              "Collections activity paused while we review.", "Referred for a financial support assessment.",
                              "Customer is worried about the arrears."],
-    "Bereavement": ["Spoke to the family member in a sensitive manner.", "Bereavement process explained to the caller.",
+    "Bereavement": ["Spoke to the family member in a sensitive manner.", "The process after a death was explained to the caller.",
                     "Accounts held in the deceased's name flagged.", "Probate and executor documents requested.",
                     "Family should not have to repeat the details again."],
     "Data protection": ["Subject access request logged and clock started.", "Identity check needed before releasing any data.",
@@ -210,6 +210,7 @@ FILLER_S = ["Complaint logged and acknowledged.", "Customer was polite and clear
 FACT_DATE = ["This happened on {v}.", "It all started on {v}.", "The date I am talking about is {v}."]
 FACT_AMT = ["The amount was {v}.", "It cost me {v}.", "We are talking about {v}."]
 LEADS = ["", "", "Noted: ", "Confirmed with the customer: ", "For the record: "]
+REL_C = ["I am the {v} of the person who has died.", "As the {v} of the person who died, I am dealing with their accounts."]
 VULN_C = ["I have mentioned this before: {t}.", "I want you to know this: {t}."]
 VULN_S = ["Customer's words on the call: \"{t}\".", "Flagged on the call: {t}.", "On the call the customer raised: {t}."]
 DETAIL_C = ["My name is {name}, my account number is {acct} and my sort code is {sc}.",
@@ -223,7 +224,7 @@ DETAIL_S = ["Spoke to {name} on {phone} and checked account {acct}, sort code {s
 
 # field -> (staff-note template, value generator(rng, received_date)).
 BOOL_PAIRS = {
-    "vulnerability_noted": ("yes, health condition", "none recorded"),
+    "vulnerability_noted": ("yes, flagged in the notes", "none recorded"),
     "payment_plan_offered": ("yes, twelve month plan", "not offered"),
     "death_certificate_seen": ("yes, original seen", "not yet seen"),
     "identity_verified": ("yes, passport and utility bill", "not yet verified"),
@@ -302,6 +303,39 @@ for _f, _t in {"vulnerability_noted": "Vulnerability noted on file: {v}.", "paym
                "death_certificate_seen": "Death certificate seen: {v}.", "identity_verified": "Identity verified: {v}.",
                "loss_explained": "Loss explained to the customer: {v}."}.items():
     FIELD[_f] = (_t, (lambda f: lambda r, d: BOOL_PAIRS[f][r.random() < 0.5])(_f))
+LABELS = {  # three phrasings per field; each keeps the value verbatim
+    "amount_disputed": ["Amount in dispute is {v}.", "Customer disputes {v} in total.", "The disputed amount comes to {v}."],
+    "date_of_transaction": ["Transaction took place on {v}.", "The payment in question was made on {v}.", "Transaction date given as {v}."],
+    "merchant_name": ["Merchant on the statement: {v}.", "The payment went to {v}.", "Merchant named by the customer is {v}."],
+    "card_last_four": ["Card ending {v}.", "Last four digits of the card: {v}.", "The card involved ends in {v}."],
+    "police_reference": ["Police reference given: {v}.", "Reported to the police, reference {v}.", "Crime reference supplied is {v}."],
+    "monthly_income": ["Monthly income stated as {v}.", "Customer says they bring in {v} a month.", "Income each month: {v}."],
+    "monthly_outgoings": ["Monthly outgoings come to {v}.", "Customer spends about {v} a month.", "Outgoings each month: {v}."],
+    "total_arrears": ["Total arrears at the moment are {v}.", "Arrears now stand at {v}.", "The customer owes {v} in arrears."],
+    "vulnerability_noted": ["Vulnerability noted on file: {v}.", "Vulnerability check result: {v}.", "Wellbeing flag on the account: {v}."],
+    "payment_plan_offered": ["Payment plan offered: {v}.", "Repayment plan status: {v}.", "On a payment plan, the position is: {v}."],
+    "date_of_death": ["Date of death: {v}.", "The account holder died on {v}.", "Death occurred on {v}."],
+    "executor_name": ["Executor is {v}.", "The named executor is {v}.", "Executor details: {v}."],
+    "relationship_to_deceased": ["Caller's relationship to the deceased: {v}.", "The caller is the {v} of the deceased.",
+                                 "Relationship to the account holder: {v}."],
+    "accounts_affected": ["Accounts affected: {v}.", "Products held in the deceased's name: {v}.", "The estate includes {v}."],
+    "death_certificate_seen": ["Death certificate seen: {v}.", "Certificate check: {v}.", "Proof of death status: {v}."],
+    "data_requested": ["Data requested: {v}.", "The customer wants {v}.", "Request covers {v}."],
+    "request_date": ["Request received on {v}.", "The request was made on {v}.", "Request date logged as {v}."],
+    "identity_verified": ["Identity verified: {v}.", "Identity check result: {v}.", "ID status: {v}."],
+    "systems_searched": ["Systems searched: {v}.", "Searches covered {v}.", "We looked in: {v}."],
+    "product_name": ["Product in question: {v}.", "The customer bought the {v}.", "Product named is {v}."],
+    "date_of_sale": ["Sold on {v}.", "The sale date was {v}.", "Date of sale given as {v}."],
+    "sale_channel": ["Sale channel: {v}.", "How it was sold: {v}.", "The sale was made through: {v}."],
+    "adviser_name": ["Adviser named as {v}.", "The customer says the adviser was {v}.", "Adviser on the sale: {v}."],
+    "amount_lost": ["Amount lost so far: {v}.", "Customer reports a loss of {v}.", "Losses stated as {v}."],
+    "loss_explained": ["Loss explained to the customer: {v}.", "Explanation of the loss: {v}.", "Has the loss been explained? {v}."],
+    "issue_summary": ["Issue in short: {v}.", "Summary of the problem: {v}.", "The complaint is about {v}."],
+    "date_of_incident": ["Date of incident: {v}.", "It happened on {v}.", "Incident date recorded as {v}."],
+    "branch_or_channel": ["Raised at: {v}.", "The problem arose at {v}.", "Place or channel involved: {v}."],
+    "customer_outcome_wanted": ["Customer wants: {v}.", "Outcome the customer is after: {v}.", "They would like {v}."],
+}
+FIELD = {k: (LABELS[k], g) for k, (_, g) in FIELD.items()}
 DATE_FIELD = {"Fraud claims": "date_of_transaction", "Bereavement": "date_of_death", "Data protection": "request_date",
               "Mis-selling review": "date_of_sale", "General service": "date_of_incident"}
 AMOUNT_FIELD = {"Fraud claims": "amount_disputed", "Financial difficulty": "total_arrears", "Mis-selling review": "amount_lost"}
@@ -388,6 +422,10 @@ def _complaint(rng, c, mode=None):
     td = _text_dept(rng, c)
     mid = [rng.choice(FACT_DATE).format(v=f["date"]), rng.choice(FACT_AMT).format(v=f["amount"]), SRC_PHRASE[c["source"]]]
     mid += rng.sample(TYPE_C[c["type"]], 2) + [rng.choice(DEPT_C[td])]
+    if rng.random() < 0.10:  # one sentence from another type, so type is learnable but not perfect
+        mid.append(rng.choice(TYPE_C[rng.choice([k for k in TYPE_C if k != c["type"] and k != "Other"])]))
+    if c["dept"] == "Bereavement":
+        mid.append(rng.choice(REL_C).format(v=c["truth"]["relationship_to_deceased"]))
     rng.shuffle(mid)
     if c["vuln"] and rng.random() < 0.5:
         mid.append(rng.choice(VULN_C).format(t=c["vuln"]))
@@ -418,7 +456,7 @@ def _complaint(rng, c, mode=None):
 def _staff_lines(rng, c, omitted):
     td = _text_dept(rng, c)
     skip = {c["datef"], c["amountf"]}
-    lines = [rng.choice(LEADS) + FIELD[k][0].format(v=v) for k, v in c["truth"].items() if k not in omitted and k not in skip]
+    lines = [rng.choice(LEADS) + rng.choice(FIELD[k][0]).format(v=v) for k, v in c["truth"].items() if k not in omitted and k not in skip]
     lines += [rng.choice(TYPE_S[c["type"]]), rng.choice(DEPT_S[td]), rng.choice(FILLER_S)]
     if c["amb"] and rng.random() < 0.7:
         lines.append(rng.choice(DEPT_S[c["amb"]]))
@@ -523,12 +561,12 @@ def generate(conn: sqlite3.Connection, *, n: int = 1600, seed: int = 7, cfg: dic
         elif st == "handed_over":
             rc = 1 if rng.random() < .12 else 0
         elif st == "returned":
-            rc = 1 if rng.random() < .8 else 2
+            rc = 1 if rng.random() < .9 else 2
         elif st == "accepted":
             rc = 1 if rng.random() < .08 else 0
-        owner = None if i in unowned else (spec if st in ("handed_over", "accepted") else handler)
+        owner = None if i in unowned else ("T1" if rc >= 2 else SPECIALIST.get(c["dept"], handler) if st in ("handed_over", "accepted") else handler)
         # events
-        t, ho_at, acc_at, ret = c["rt"], None, None, 0
+        t, ho_at, acc_at = c["rt"], None, None
         for k, s in enumerate(_history(st, rc)):
             if k:
                 lo, hi = DELAY_H["in_review" if s == "in_review" else s]
@@ -545,10 +583,19 @@ def generate(conn: sqlite3.Connection, *, n: int = 1600, seed: int = 7, cfg: dic
         # customer and truth
         c["cust"] = _customer(rng)
         fields = cfg["departments"][c["dept"]]["required_fields"]
+        # urgency wording first: the vulnerability truth follows it
+        c["vuln"] = None
+        if rng.random() < 0.12:
+            kinds = dept_terms.get(c["dept"]) if rng.random() < .7 else None
+            pool = [t for k, t in all_terms if kinds is None or k in kinds]
+            c["vuln"] = rng.choice(pool)
         c["truth"] = {f: FIELD[f][1](rng, c["rt"].date()) for f in fields}
+        if "vulnerability_noted" in c["truth"]:
+            hit = c["vuln"] in cfg["urgent"]["vulnerability_terms"] + cfg["urgent"]["hardship_terms"]
+            c["truth"]["vulnerability_noted"] = BOOL_PAIRS["vulnerability_noted"][0 if hit else 1]
         omit = set()
-        if rng.random() < 0.30:
-            omit = set(rng.sample(fields, 1 if rng.random() < .6 else 2))
+        if rng.random() < 0.30:  # the relationship is always stated in note 1, so it is never omitted
+            omit = set(rng.sample([f for f in fields if f != "relationship_to_deceased"], 1 if rng.random() < .6 else 2))
         c["datef"], c["amountf"] = DATE_FIELD.get(c["dept"]), AMOUNT_FIELD.get(c["dept"])
         dobj = c["rt"].date() - timedelta(days=rng.randint(1, 12))
         if c["datef"] in c["truth"] and c["datef"] not in omit:
@@ -564,12 +611,6 @@ def generate(conn: sqlite3.Connection, *, n: int = 1600, seed: int = 7, cfg: dic
         if c["amountf"] in omit and atext == c["truth"][c["amountf"]]:
             atext = money(901.5)
         c["facts"] = {"date": dtext, "date_obj": dobj, "amount": atext}
-        # urgency wording
-        c["vuln"] = None
-        if rng.random() < 0.12:
-            kinds = dept_terms.get(c["dept"]) if rng.random() < .7 else None
-            pool = [t for k, t in all_terms if kinds is None or k in kinds]
-            c["vuln"] = rng.choice(pool)
         # notes
         k = rng.randint(2, 5)
         body1 = _complaint(rng, c, c["mode"])
@@ -579,7 +620,7 @@ def generate(conn: sqlite3.Connection, *, n: int = 1600, seed: int = 7, cfg: dic
             staff_notes[j % (k - 1)].append(ln)
         t = c["rt"]
         note_rows.append((c["id"], 1, "customer", c["received"], body1))
-        authors = ["T1"] if owner is None else [handler] if st in ("new", "in_review", "returned") else [handler, spec]
+        authors = [handler] if owner is None or st in ("new", "in_review", "returned") else [handler, spec]
         for j, body in enumerate(staff_notes):
             t = min(t + timedelta(hours=rng.uniform(1, 40)), now)
             note_rows.append((c["id"], j + 2, rng.choice(authors), t.isoformat(timespec="seconds"), " ".join(body)))
@@ -612,12 +653,12 @@ def main() -> None:
     ap.add_argument("--seed", type=int, default=7)
     ap.add_argument("--db", default="data/workbench.db")
     ap.add_argument("--config", default="config/pipeline.yaml")
-    ap.add_argument("--adv-ids", default="tests/adversarial_ids.json")
+    ap.add_argument("--adv-ids", default=None, help="default tests/adversarial_ids.json, only for --n 1600 --seed 7")
     a = ap.parse_args()
     conn = connect(a.db)
     if not conn.execute("SELECT 1 FROM sqlite_master WHERE name='cases'").fetchone():
         init_db(conn)
-    generate(conn, n=a.n, seed=a.seed, cfg=load_config(a.config), adv_path=a.adv_ids)
+    generate(conn, n=a.n, seed=a.seed, cfg=load_config(a.config), adv_path=a.adv_ids or ("tests/adversarial_ids.json" if (a.n, a.seed) == (1600, 7) else None))
     conn.commit()
     conn.close()
 
