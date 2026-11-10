@@ -42,3 +42,15 @@ def test_work_view_in_browser(base, browser, width, path, name):
         page.goto(base + path)
         page.screenshot(path=str(SHOTS / f"{name}.png"))
     page.close()
+
+
+def test_specialist_accepts_a_waiting_case(base, browser):
+    page = browser.new_page(viewport={"width": 1440, "height": 900})
+    page.context.add_cookies([{"name": "role", "value": "specialist", "url": base}, {"name": "staff_id", "value": "S1", "url": base}])
+    page.goto(base + "/departments")
+    first = page.locator(".handovers li").first
+    cid = first.locator(".plain-id").inner_text()
+    first.get_by_role("button", name="Accept").click()
+    page.wait_for_url(f"**/cases/{cid}**")
+    assert "Accepted" in page.locator("main").inner_text()
+    page.close()

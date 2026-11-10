@@ -28,9 +28,10 @@
   {% else %}<p class="empty">Nothing needs you today.</p>{% endif %}
 </section>
 
-{% if rise %}
-<p class="rise"><b>Unusual rise:</b> <a href="/queue?{{ rise_query }}">{{ rise.department }}, {{ rise.type }}</a>.
-  {{ rise.this_week }} this week against about {{ "%.0f"|format(rise.usual) }} in a usual week.{% if more_rises %} <a href="/queue?owner=all">and {{ more_rises }} more</a>.{% endif %}</p>
+{% macro rise_item(r) %}<a href="/queue?{{ r.query }}">{{ r.department }}, {{ r.type }}</a>: {{ r.this_week }} this week against about {{ "%.0f"|format(r.usual) }} in a usual week.{% endmacro %}
+{% if rises %}
+<div class="rise"><b>Unusual rise:</b> {% for r in rises[:3] %}{{ rise_item(r) }} {% endfor %}
+  {% if rises|length > 3 %}<details class="inline"><summary>and {{ rises|length - 3 }} more</summary>{% for r in rises[3:] %}<p>{{ rise_item(r) }}</p>{% endfor %}</details>{% endif %}</div>
 {% endif %}
 
 <section class="card" aria-labelledby="chart-h">

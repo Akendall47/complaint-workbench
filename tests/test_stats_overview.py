@@ -49,10 +49,6 @@ def test_headline_empty(conn):
     assert stats.headline(conn, TODAY, set()) == {"open": 0, "due_soon": 0, "past_deadline": 0, "avg_days_open": None, "returned_share": None}
 
 
-def test_deadline_buckets(twelve):
-    assert stats.deadline_buckets(twelve, TODAY, set()) == [("Past deadline", 2), ("Due soon", 4), ("Later", 4)]
-
-
 def test_needs_attention_by_role(twelve):
     ids = lambda rows: [r["id"] for r in rows]  # noqa: E731
     assert ids(stats.needs_attention(twelve, Actor("H1", "handler"))) == ["l", "b", "c", "a", "e"]
@@ -75,18 +71,14 @@ def test_heatmap(twelve):
 def test_by_department_stage_and_map(twelve):
     assert {r["department"]: r["open"] for r in stats.by_department(twelve)} == {"Fraud claims": 3, "General service": 5, "Bereavement": 2}
     assert dict(stats.by_stage(twelve)) == {"new": 3, "in_review": 4, "handed_over": 2, "returned": 1, "accepted": 2}
-    assert sorted(stats.complaint_map(twelve)) == [("Bereavement", "Other", 2), ("Fraud claims", "Service", 3),
-                                                   ("General service", "Other", 3), ("General service", "Service", 2)]
 
 
-def test_pipeline_flow_and_team(twelve, cfg):
+def test_team(twelve, cfg):
     for i, (f, t) in enumerate([("new", "in_review"), ("in_review", "handed_over"), ("in_review", "handed_over"), ("handed_over", "returned")]):
         twelve.execute("INSERT INTO events(case_id, at, kind, from_state, to_state, actor_id) VALUES ('a', ?, 'x', ?, ?, 'H1')", (f"2026-11-0{i + 1}", f, t))
-    flow = {(r["from"], r["to"]): (r["kind"], r["count"]) for r in stats.pipeline_flow(twelve, cfg)}
-    assert flow[("in_review", "handed_over")] == ("forward", 2) and flow[("handed_over", "returned")] == ("return", 1)
     for sid in ("H1", "H2"):
         twelve.execute("INSERT INTO staff VALUES (?, ?, 'handler', NULL)", (sid, sid))
-    assert {r["id"]: (r["open"], r["past_deadline"]) for r in stats.team(twelve, TODAY, set())} == {"H1": (5, 2), "H2": (2, 0)}
+    assert {r["id"]: (r["open"], r["past_deadline"]) for r in stats.team(twelve, TODAY)} == {"H1": (5, 2), "H2": (2, 0)}
 
 
 def _add(conn, n, day, tag):

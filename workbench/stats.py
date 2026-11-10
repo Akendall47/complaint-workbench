@@ -39,11 +39,6 @@ def handover_returns(conn) -> tuple[int, int]:
     return back, ho
 
 
-def deadline_buckets(conn, today, holidays, limit=5) -> list[tuple[str, int]]:
-    h = headline(conn, today, holidays, limit)
-    return [("Past deadline", h["past_deadline"]), ("Due soon", h["due_soon"]), ("Later", h["open"] - h["past_deadline"] - h["due_soon"])]
-
-
 def needs_attention(conn, actor, limit=5) -> list[dict]:
     """The cases that need this person: a handler's own live cases, a specialist's handovers, everything open for a team lead.
     Soonest deadline first, urgent before not urgent."""
@@ -88,18 +83,7 @@ def by_stage(conn) -> list[tuple[str, int]]:
                                            " WHEN 'in_review' THEN 1 WHEN 'handed_over' THEN 2 WHEN 'returned' THEN 3 ELSE 4 END)")]
 
 
-def complaint_map(conn) -> list[tuple[str, str, int]]:
-    return [tuple(r) for r in conn.execute(f"SELECT department, type, COUNT(*) FROM cases WHERE {OPEN} AND department IS NOT NULL"
-                                           " AND type IS NOT NULL GROUP BY 1, 2 ORDER BY 3 DESC, 1, 2")]
-
-
-def pipeline_flow(conn, cfg) -> list[dict]:
-    q = ("SELECT from_state, to_state, COUNT(*) FROM events WHERE from_state IS NOT NULL AND to_state IS NOT NULL AND from_state != to_state"
-         " GROUP BY 1, 2 ORDER BY 1, 2")
-    return [{"from": f, "to": t, "kind": "return" if t == "returned" else "forward", "count": n} for f, t, n in conn.execute(q)]
-
-
-def team(conn, today, holidays):
+def team(conn, today):
     """One row per handler and specialist, most cases past deadline first. The team lead is not a row: they share the work out."""
     return conn.execute(f"SELECT s.id, s.name, s.role, COUNT(c.id) open, COALESCE(SUM(c.deadline < ?),0) past_deadline, COALESCE(SUM(c.urgent = 1),0) urgent"
                         f" FROM staff s LEFT JOIN cases c ON c.owner_id = s.id AND c.{OPEN} WHERE s.role IN ('handler','specialist')"
@@ -116,6 +100,9 @@ def _slice(source, type_):
     return sql, [v for v in (source, type_) if v]
 
 
+NO_DEPARTMENT = "No department yet"
+
+
 def department_rows(conn, cfg, today, source="", type_="") -> list[dict]:
     """Open, past deadline and urgent counts for every department, most past deadline first."""
     extra, args = _slice(source, type_)
@@ -123,7 +110,10 @@ def department_rows(conn, cfg, today, source="", type_="") -> list[dict]:
         "SELECT department, COUNT(*) open, COALESCE(SUM(deadline < ?),0) past, COALESCE(SUM(urgent = 1),0) urgent FROM cases"
         f" WHERE {OPEN} AND department IS NOT NULL{extra} GROUP BY department", (str(today), *args))}
     rows = [{"department": d, "open": 0, "past": 0, "urgent": 0, **got.get(d, {})} for d in cfg["departments"]]
-    return sorted(rows, key=lambda r: (-r["past"], -r["open"], r["department"]))
+    none = conn.execute("SELECT COUNT(*) open, COALESCE(SUM(deadline < ?),0) past, COALESCE(SUM(urgent = 1),0) urgent FROM cases"
+                        f" WHERE {OPEN} AND department IS NULL{extra}", (str(today), *args)).fetchone()
+    # last, so the totals add up to the open cases; the Queue has no filter for it, so the page shows plain text
+    return sorted(rows, key=lambda r: (-r["past"], -r["open"], r["department"])) + [{"department": NO_DEPARTMENT, **dict(none)}]
 
 
 def handovers(conn, department, source="", type_="", limit=10) -> tuple[list[dict], int]:

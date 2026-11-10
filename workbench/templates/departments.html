@@ -28,7 +28,7 @@
       <thead><tr><th scope="col">Department</th><th scope="col">Past deadline</th><th scope="col">Open</th><th scope="col">Urgent</th></tr></thead>
       <tbody>
       {% for r in rows %}
-      <tr><th scope="row"><a href="{{ link(r.department) }}"{% if r.department == chosen %} aria-current="true"{% endif %}>{{ r.department }}</a></th>
+      <tr><th scope="row">{% if r.department in cfg.departments %}<a href="{{ link(r.department) }}"{% if r.department == chosen %} aria-current="true"{% endif %}>{{ r.department }}</a>{% else %}{{ r.department }}{% endif %}</th>
         <td class="num-col{{ ' deadline-past' if r.past }}">{{ r.past }}</td><td class="num-col">{{ r.open }}</td><td class="num-col">{{ r.urgent }}</td></tr>
       {% endfor %}
       </tbody>
@@ -44,7 +44,7 @@
     <li><a href="/cases/{{ c.id }}" class="plain-id">{{ c.id }}</a>
       <span>{{ c.type or "Type not set" }}, {{ c.source }}</span>
       {{ deadline_chip(days(c.deadline)) }}
-      {% if can_act %}
+      {% if c.can %}
       <form method="post" action="/cases/{{ c.id }}/accept"><input type="hidden" name="version" value="{{ c.version }}"><button type="submit" class="primary">Accept<span class="sr-only"> {{ c.id }}</span></button></form>
       <details class="inline"><summary>Return<span class="sr-only"> {{ c.id }}</span></summary>
         <form method="post" action="/cases/{{ c.id }}/return"><input type="hidden" name="version" value="{{ c.version }}">

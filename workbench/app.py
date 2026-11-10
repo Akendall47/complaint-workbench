@@ -203,18 +203,15 @@ def create_app(db_path="data/workbench.db", config_path="config/pipeline.yaml", 
             h = stats.headline(conn, today, hol, cfg["urgent"]["deadline_within_business_days"])
             attention = [{**r, "days": business_days_left(date.fromisoformat(r["deadline"]), today, hol)}
                          for r in stats.needs_attention(conn, actor)]
-            rises = stats.rises(conn, today, cfg)
-            rise = rises[0] if rises else None
+            rises = [{**r, "query": urlencode({"owner": "all", "department": r["department"], "type": r["type"]})} for r in stats.rises(conn, today, cfg)]
             weeks = stats.trend(conn, today)
             items = [(f"{date.fromisoformat(w['week']).day} {date.fromisoformat(w['week']):%b}", w["new"]) for w in weeks]
             title = "Complaints per week, last 8 weeks"
             figures = [("Open complaints", f"{h['open']:,}", "/queue?owner=all"),
                        ("Typical days open", "–" if h["avg_days_open"] is None else str(int(h["avg_days_open"] + .5)), None),
                        ("Handovers returned", "–" if h["returned_share"] is None else f"{h['returned_share']:.0%}", None)]
-            return page(request, conn, "overview.html", figures=figures, attention=attention, rise=rise,
-                        rise_query=urlencode({"owner": "all", "department": rise["department"], "type": rise["type"]}) if rise else "",
+            return page(request, conn, "overview.html", figures=figures, attention=attention, rises=rises,
                         chart=charts.columns(items, summary=stats.sentence("columns", {"title": title, "items": items}) if items else "", axis="Week starting"),
-                        more_rises=len(rises) - 1,
                         chart_title=title, state_name=STATE_NAME)
 
     # ---- Departments, Team, Pipeline ----
@@ -225,16 +222,18 @@ def create_app(db_path="data/workbench.db", config_path="config/pipeline.yaml", 
         type_ = q.get("type") if q.get("type") in cfg["types"] else ""
         with db() as conn:
             row = conn.execute("SELECT department FROM staff WHERE id = ? AND role = 'specialist'", (actor.id,)).fetchone() if actor.role == "specialist" else None
-            mine = row[0] if row else None
+            mine = row[0] if row else None  # a specialist's ?department= is ignored: they see their own department only
             rows = stats.department_rows(conn, cfg, today, source, type_)
             if mine:  # a specialist sees their own department only
                 rows = [r for r in rows if r["department"] == mine]
             chosen = mine or (q.get("department") if q.get("department") in cfg["departments"] else rows[0]["department"])
             waiting, n_waiting = stats.handovers(conn, chosen, source, type_, limit=8)
+            for c in waiting:
+                c["can"] = cases.can_decide(conn, c["id"], actor)[0]  # the rules layer decides who gets the buttons
             missing = stats.missing_by_field(conn, cfg, chosen, source, type_)[:6]
             title = f"Fields most often missing, {chosen}"
             keep = {k: v for k, v in (("source", source), ("type", type_)) if v}
-            return page(request, conn, "departments.html", rows=rows, chosen=chosen, waiting=waiting, n_waiting=n_waiting, can_act=bool(mine),
+            return page(request, conn, "departments.html", rows=rows, chosen=chosen, waiting=waiting, n_waiting=n_waiting, can_act=any(c["can"] for c in waiting),
                         days=lambda d: business_days_left(date.fromisoformat(d), today, hol), source=source, type_=type_,
                         link=lambda d: "/departments?" + urlencode({"department": d, **keep}),
                         clear=lambda k: "/departments?" + urlencode({"department": chosen, **{a: b for a, b in keep.items() if a != k}}),
@@ -245,7 +244,7 @@ def create_app(db_path="data/workbench.db", config_path="config/pipeline.yaml", 
     def team(request: Request):
         actor = current_actor(request)
         with db() as conn:
-            everyone = stats.team(conn, today, hol)
+            everyone = stats.team(conn, today)
             avg = round(sum(r["open"] for r in everyone) / len(everyone), 1) if everyone else 0
             lead = actor.role == "team_lead"
             rows = everyone if lead else [r for r in everyone if r["id"] == actor.id]
@@ -256,7 +255,7 @@ def create_app(db_path="data/workbench.db", config_path="config/pipeline.yaml", 
 
     @app.get("/pipeline", response_class=HTMLResponse)
     def pipeline(request: Request):
-        kind = {"normal": "Normal", "urgent": "Urgent", "returned": "Returned", "second_return": "Second return"}
+        kind = {"normal": "Normal path", "urgent": "Urgent fast path", "returned": "Returned for more work", "second_return": "Returned a second time"}
         nm = lambda n: STATE_NAME.get(n, n.capitalize())  # noqa: E731
         with db() as conn:
             states = dict(stats.by_stage(conn))

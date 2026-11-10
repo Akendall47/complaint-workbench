@@ -15,7 +15,7 @@
       <thead><tr><th scope="col">Person</th><th scope="col">Past deadline</th><th scope="col">Open</th><th scope="col">Urgent</th></tr></thead>
       <tbody>
       {% for r in rows %}
-      <tr data-person="{{ r.id }}"><th scope="row">{{ r.name }} <small class="muted">{{ r.id }}</small></th>
+      <tr data-person="{{ r.id }}"><th scope="row">{{ r.name }}</th>
         <td class="num-col{{ ' deadline-past' if r.past_deadline }}">{{ r.past_deadline }}</td><td class="num-col">{{ r.open }}</td><td class="num-col">{{ r.urgent }}</td></tr>
       {% endfor %}
       </tbody>

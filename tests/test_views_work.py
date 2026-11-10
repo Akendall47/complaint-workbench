@@ -106,3 +106,28 @@ def test_new_views_write_nothing(client, app_db):
         for u in ("/departments", "/team", "/pipeline"):
             assert client.get(u).status_code == 200
     assert snap() == before
+
+
+def test_accept_is_refused_for_everyone_but_the_departments_specialist(client, app_db):
+    c = sqlite3.connect(app_db)
+    c.execute("UPDATE cases SET department = 'Fraud claims' WHERE state = 'handed_over'")
+    c.commit()
+    cid, ver = c.execute("SELECT id, version FROM cases WHERE state = 'handed_over' ORDER BY id").fetchone()
+    for role, sid in (("handler", "H1"), ("specialist", "S2"), ("team_lead", "T1")):  # S2 is Financial difficulty
+        as_role(client, role, sid)
+        r = client.post(f"/cases/{cid}/accept", data={"version": str(ver)})
+        assert r.status_code == 403, role
+        assert c.execute("SELECT state, version FROM cases WHERE id = ?", (cid,)).fetchone() == ("handed_over", ver)
+
+
+def test_department_rows_add_up_to_the_open_cases(client, app_db):
+    from workbench import stats
+    from workbench.config import load_config
+    from datetime import date
+    c = sqlite3.connect(app_db)
+    c.row_factory = sqlite3.Row
+    cfg = load_config()
+    rows = stats.department_rows(c, cfg, date(2026, 11, 10))
+    open_ = c.execute("SELECT COUNT(*) FROM cases WHERE state != 'accepted'").fetchone()[0]
+    assert rows[-1]["department"] == "No department yet" and sum(r["open"] for r in rows) == open_
+    assert "No department yet" in main_of(client.get("/departments").text)

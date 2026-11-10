@@ -143,15 +143,12 @@ button.primary:disabled{background:#c9c9d3;color:#4a4a55;cursor:not-allowed}
 .chart-svg .lbl.hi{font-weight:700}
 .chart-svg .halo{paint-order:stroke;stroke:white;stroke-width:4px;font-weight:600}
 .chart-svg .axis{stroke:var(--strong);stroke-width:1}
-.chart-svg .step{fill:none;stroke:var(--indigo-dark);stroke-width:2.5}
-.chart-svg .dot{fill:var(--indigo-dark)}
 .chart-svg .bar{fill:var(--indigo)}
 .chart-svg .bar.hi{fill:var(--accent-dark)}
 .chart-svg .cell{fill:var(--indigo)}
 .chart-svg .l0{fill-opacity:.04}.chart-svg .l1{fill-opacity:.15}.chart-svg .l2{fill-opacity:.3}.chart-svg .l3{fill-opacity:.5}.chart-svg .l4{fill-opacity:.7}
 .chart-data{margin-top:8px;font-size:14px}
 .chart-data summary{color:var(--indigo-dark);width:fit-content;padding:4px 0}
-.spark{width:120px;height:24px;vertical-align:middle}
 
 /* Departments, Team and Pipeline */
 .num-col{text-align:right;font-variant-numeric:tabular-nums}

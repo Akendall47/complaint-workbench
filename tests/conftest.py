@@ -85,5 +85,5 @@ def client(app_db):
 def session_db_stays_clean(request):
     """Tests never write to the shared session db (they copy it first): an open write transaction would block db.backup for ever."""
     yield
-    if "db" in request.fixturenames:
-        assert not request.getfixturevalue("db").in_transaction, "this test left a write transaction open on the session db"
+    if "db" in request.fixturenames or "db_timed" in request.fixturenames:
+        assert not request.getfixturevalue("db_timed")[0].in_transaction, "this test left a write transaction open on the session db"
