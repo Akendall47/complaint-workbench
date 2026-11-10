@@ -278,7 +278,7 @@ def create_app(db_path="data/workbench.db", config_path="config/pipeline.yaml", 
             found = search_policies(conn, q, k=100 if not q else 20)
             groups: dict = {}
             for r in found:
-                groups.setdefault(r["section"], []).append({"id": r["id"], "title": r["title"], "snippet": highlight(r["snippet"], q)})
+                groups.setdefault(r["section"], []).append({"id": r["id"], "title": r["title"], "snippet": highlight(r["snippet"] + ("" if q else "…"), q)})  # the empty-query snippet is cut at 160 characters
             return page(request, conn, "policies.html", q=q, groups=groups, n=len(found))
 
     def audit_ctx(conn, q) -> dict:

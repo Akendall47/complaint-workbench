@@ -12,6 +12,9 @@ def test_reference_view_in_browser(base, browser, width, path, name):
     page = browser.new_page(viewport={"width": width, "height": 900})
     if name == "audit":  # the log is for the Team lead
         page.context.add_cookies([{"name": "role", "value": "team_lead", "url": base}, {"name": "staff_id", "value": "T1", "url": base}])
+    if name == "audit" and width == 1440:  # something to show: three test complaints, filed by the Team lead
+        for text, src in (("My card payment was taken twice.", "phone"), ("The branch queue was far too long.", "letter"), ("I cannot afford my rent and need help.", "email")):
+            page.context.request.post(base + "/intake", form={"text": text, "source": src}, headers={"Origin": base})
     errors, hosts = [], set()
     page.on("console", lambda m: errors.append(m.text) if m.type == "error" else None)
     page.on("pageerror", lambda e: errors.append(str(e)))
