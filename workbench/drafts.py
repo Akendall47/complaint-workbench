@@ -12,17 +12,32 @@ LINK = re.compile(r"\[([^\]]*)\]\([^)]*\)")
 TAG = re.compile(r"<[^>]*>")
 
 
+ROOT = Path(__file__).resolve().parent.parent
+CASE_ID = re.compile(r"AB-\d{4}-\d{5}")
+MAX_RAW = 200_000
+
+
 def clean(s: str) -> str:
-    return " ".join(TAG.sub("", LINK.sub(r"\1", IMAGE.sub("", s))).split())
+    """Remove links, images and tags until nothing changes, then any leftover markup characters."""
+    while True:
+        t = TAG.sub("", LINK.sub(r"\1", IMAGE.sub("", s)))
+        if t == s:
+            break
+        s = t
+    for bad in ("<", ">", "](", "!["):
+        s = s.replace(bad, "")
+    return " ".join(s.split())
 
 
 def rec_path(cfg: dict, case_id: str, dev: bool = False) -> Path:
     base = cfg.get("recordings_dir") or ("data/recordings-dev" if dev else "data/recordings")
-    return Path(base) / f"{case_id}.json"
+    return ROOT / base / f"{case_id}.json"
 
 
 def parse(raw_output: str) -> dict | None:
     """The draft only if it has the Draft shape with 1 to 8 claims. Strings lose links, images and tags."""
+    if len(raw_output) > MAX_RAW:
+        return None
     try:
         d = json.loads(raw_output)
         claims, handover = d["claims"], d["handover"]
@@ -38,7 +53,7 @@ def parse(raw_output: str) -> dict | None:
         if not all(isinstance(k, str) and isinstance(v, str) for k, v in handover.items()):
             return None
         return {"claims": out, "handover": {clean(k): clean(v) for k, v in handover.items()}}
-    except (ValueError, KeyError, TypeError):
+    except (ValueError, KeyError, TypeError, RecursionError):
         return None
 
 
@@ -54,21 +69,42 @@ def masked_notes(conn, case_id: str, cfg: dict) -> list[tuple[int, int, str]]:
     return [(r["seq"], r["id"], mask(r["body"], known, cfg["masking"])) for r in rows]
 
 
-def store_claims(conn, case_id: str, cfg: dict) -> str:
-    """Parse the recording, check every quote against the masked note, store draft claims. Never touches state, owner or urgency."""
+def _raw_output(case_id: str, cfg: dict) -> str | None:
+    """The recording's raw_output, or None if there is no valid case id or no file. Unreadable gives an empty string."""
+    if not CASE_ID.fullmatch(case_id):
+        return None
     path = rec_path(cfg, case_id)
     if not path.exists():
-        return "none"
-    cur = conn.execute("SELECT draft_state FROM cases WHERE id = ?", (case_id,)).fetchone()[0]
-    if cur == "rejected" or conn.execute(
-            "SELECT 1 FROM claims WHERE case_id = ? AND status != 'draft'", (case_id,)).fetchone():
-        return cur  # a person has already acted on this draft
+        return None
     try:
         raw = json.loads(path.read_text(encoding="utf-8")).get("raw_output")
-        draft = parse(raw) if isinstance(raw, str) else None
-    except (ValueError, AttributeError):
-        draft = None
-    conn.execute("DELETE FROM claims WHERE case_id = ?", (case_id,))
+    except (ValueError, AttributeError, RecursionError):
+        return ""
+    return raw if isinstance(raw, str) else ""
+
+
+def load_handover(conn, case_id: str, cfg: dict) -> dict:
+    """Suggested handover values from the recording, for the department's fields only. Never written to the case."""
+    raw = _raw_output(case_id, cfg)
+    row = conn.execute("SELECT department FROM cases WHERE id = ?", (case_id,)).fetchone()
+    draft = parse(raw) if raw else None
+    if draft is None or row is None or row[0] not in cfg["departments"]:
+        return {}
+    fields = cfg["departments"][row[0]]["required_fields"]
+    return {k: v for k, v in draft["handover"].items() if k in fields}
+
+
+def store_claims(conn, case_id: str, cfg: dict) -> str:
+    """Parse the recording, check every quote against the masked note, store draft claims.
+
+    Never touches state, owner or urgency. If the case already has claim rows it changes nothing."""
+    raw = _raw_output(case_id, cfg)
+    row = conn.execute("SELECT draft_state FROM cases WHERE id = ?", (case_id,)).fetchone()
+    if raw is None or row is None:
+        return "none"
+    if row[0] == "rejected" or conn.execute("SELECT 1 FROM claims WHERE case_id = ?", (case_id,)).fetchone():
+        return row[0]
+    draft = parse(raw)
     if draft is None:
         state = "invalid"
     else:

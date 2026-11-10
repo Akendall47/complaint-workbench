@@ -5,6 +5,7 @@ uv run python -m workbench.record --db data/workbench.db --limit 150 [--dev 10]
 import argparse
 import hashlib
 import json
+import re
 import shutil
 import statistics
 import time
@@ -18,6 +19,7 @@ from .db import connect
 OLLAMA = "http://localhost:11434/api/generate"
 SEED = 7
 TIMEOUT = 120
+NOTES_TAG = re.compile(r"<\s*/?\s*notes\s*>", re.I)  # note text must not close the data block
 OPEN = "('new','in_review','returned')"
 
 PROMPTS = {
@@ -80,7 +82,7 @@ def fields_for(conn, case_id: str, cfg: dict) -> list[str]:
 
 
 def build_prompt(conn, case_id: str, cfg: dict) -> str:
-    notes = "\n".join(f"[Note {seq}] {text}" for seq, _, text in drafts.masked_notes(conn, case_id, cfg))
+    notes = "\n".join(f"[Note {seq}] {NOTES_TAG.sub('[notes]', text)}" for seq, _, text in drafts.masked_notes(conn, case_id, cfg))
     return PROMPTS[cfg["prompt_version"]].format(notes=notes, fields=", ".join(fields_for(conn, case_id, cfg)))
 
 
@@ -121,10 +123,11 @@ def record_one(conn, case_id: str, cfg: dict, dev: bool) -> tuple[str, int]:
     p = drafts.rec_path(cfg, case_id, dev)
     p.parent.mkdir(parents=True, exist_ok=True)
     p.write_text(text, encoding="utf-8")
-    return ("error" if "error" in rec else "ok"), len(drafts.parse(rec["raw_output"])["claims"]) if drafts.parse(rec["raw_output"]) else 0
+    d = drafts.parse(rec["raw_output"])
+    return ("error" if "error" in rec else "ok"), len(d["claims"]) if d else 0
 
 
-def summary(conn, ids: list[str], cfg: dict) -> dict:
+def summary(conn, ids: list[str], cfg: dict, withheld: int = 0) -> dict:
     """Stores claims for every id, then counts. Reads durations from the recording files."""
     states = [drafts.store_claims(conn, i, cfg) for i in ids]
     q = ",".join("?" * len(ids))
@@ -138,7 +141,7 @@ def summary(conn, ids: list[str], cfg: dict) -> dict:
     secs.sort()
     return {"recorded": len(secs), "invalid": states.count("invalid"), "claims": claims, "unsupported": bad,
             "median": statistics.median(secs) if secs else 0,
-            "p95": secs[min(len(secs) - 1, int(0.95 * len(secs)))] if secs else 0, "total": sum(secs)}
+            "p95": secs[min(len(secs) - 1, int(0.95 * len(secs)))] if secs else 0, "total": sum(secs), "withheld": withheld}
 
 
 def write_results(s: dict, cfg: dict, path: str = "docs/test-results.md") -> None:
@@ -148,7 +151,10 @@ def write_results(s: dict, cfg: dict, path: str = "docs/test-results.md") -> Non
            f"- Cases recorded: {s['recorded']}\n- Invalid outputs (not JSON, wrong shape or an error): {s['invalid']}\n"
            f"- Claims: {s['claims']}\n- Claims failing the citation check: {s['unsupported']} ({share:.1f}%)\n"
            f"- Seconds per draft: median {s['median']:.1f}, 95th percentile {s['p95']:.1f}\n"
-           f"- Total model time: {s['total'] / 60:.1f} minutes\n\n")
+           f"- Total model time: {s['total'] / 60:.1f} minutes\n")
+    if s.get("withheld"):
+        sec += f"- Cases withheld because masking missed a customer value: {s['withheld']}\n"
+    sec += "\n"
     p = Path(path)
     old = p.read_text(encoding="utf-8")
     i = old.find("## Drafts\n")
@@ -172,6 +178,7 @@ def main() -> None:
     if dev:
         cfg["recordings_dir"] = "data/recordings-dev"
     t0 = time.time()
+    withheld = 0
     for n, cid in enumerate(ids, 1):
         if a.max_minutes and time.time() - t0 > a.max_minutes * 60:
             print(f"time cap reached after {n - 1} cases", flush=True)
@@ -180,13 +187,15 @@ def main() -> None:
             continue  # resume after a crash; not a re-run
         t1 = time.time()
         out, k = record_one(conn, cid, cfg, dev)
+        withheld += out.startswith("withheld")
         print(f"{n}/{len(ids)} {cid} {out} claims={k} {time.time() - t1:.1f}s", flush=True)
     done = [i for i in ids if drafts.rec_path(cfg, i, dev).exists()]
     if dev:  # tuning must not touch the real database
         mem = connect(":memory:")
         conn.backup(mem)
         conn = mem
-    s = summary(conn, done, cfg)
+    s = summary(conn, done, cfg, withheld)
+    print(f"withheld: {withheld}", flush=True)
     print(json.dumps(s), flush=True)
     if not dev:
         write_results(s, cfg)

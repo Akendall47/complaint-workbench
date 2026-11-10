@@ -88,3 +88,5 @@ Model `qwen3:4b-instruct`, prompt version 2, seed 7, run locally through Ollama.
 - Claims failing the citation check: 42 (4.9%)
 - Seconds per draft: median 12.0, 95th percentile 13.2
 - Total model time: 29.9 minutes
+
+A passing citation check proves only that the quoted words are in the cited note. It does not prove the claim is a fair summary, which is why a person confirms each claim. The 42 failing claims were counted and kept, and are shown to the handler as unsupported. Cases with no department (below the routing threshold) get no draft and show "No draft recorded".
