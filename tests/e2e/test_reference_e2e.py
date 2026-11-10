@@ -28,7 +28,8 @@ def test_reference_view_in_browser(base, browser, width, path, name):
 
     page.keyboard.press("Tab")
     assert page.evaluate("document.activeElement.className") == "skip"
-    want = page.locator("main a[href]:visible, main button:visible, main summary:visible, main input:visible, main select:visible, main textarea:visible").count()
+    want = len(set(page.locator("main a[href]:visible, main button:visible, main summary:visible, main input:visible, main select:visible, main textarea:visible")
+                   .evaluate_all("els => els.map(e => e.outerHTML.slice(0, 160))")))  # identical links (a case listed twice) are one stop to check
     reached = set()
     for _ in range(300):
         page.keyboard.press("Tab")

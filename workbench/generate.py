@@ -11,6 +11,7 @@ from pathlib import Path
 
 import yaml
 
+from workbench import audit
 from workbench.config import load_config
 from workbench.db import connect, init_db
 from workbench.deadlines import deadline_for
@@ -642,6 +643,15 @@ def generate(conn: sqlite3.Connection, *, n: int = 1600, seed: int = 7, cfg: dic
                      [(i + 1,) + r for i, r in enumerate(note_rows)])
     conn.executemany("INSERT INTO events(id,case_id,at,kind,from_state,to_state,actor_id) VALUES (?,?,?,?,?,?,?)",
                      [(i + 1,) + r for i, r in enumerate(ev_rows)])
+    # One audit entry per generated move, oldest first, so the chain verifies over the whole history.
+    # The append-only trigger blocks DELETE, so a re-run drops it, clears the log and puts it back.
+    conn.execute("DROP TRIGGER IF EXISTS audit_no_delete")
+    conn.execute("DELETE FROM audit")
+    conn.execute("DELETE FROM sqlite_sequence WHERE name='audit'")
+    conn.execute("CREATE TRIGGER audit_no_delete BEFORE DELETE ON audit BEGIN SELECT RAISE(ABORT, 'audit log is append-only'); END")
+    role_of = {s[0]: s[2] for s in STAFF} | {"system": "system"}
+    for cid, at, kind, frm, to, actor in sorted(ev_rows, key=lambda r: r[1]):
+        audit.append(conn, actor_id=actor, role=role_of[actor], action=kind, case_id=cid, detail={"from": frm, "to": to}, at=at)
     if adv_path and adv:
         ids = [cases[i]["id"] for i in adv]
         Path(adv_path).write_text(json.dumps({"hidden_instruction": ids[0:2], "unusual_format": ids[2:4],

@@ -274,7 +274,7 @@ def create_app(db_path="data/workbench.db", config_path="config/pipeline.yaml", 
             found = search_policies(conn, q, k=100 if not q else 20)
             groups: dict = {}
             for r in found:
-                groups.setdefault(r["section"], []).append({"id": r["id"], "title": r["title"], "snippet": highlight(r["snippet"] + ("" if q else "…"), q)})  # the empty-query snippet is cut at 160 characters
+                groups.setdefault("Best matches" if q else r["section"], []).append({"id": r["id"], "section": r["section"], "title": r["title"], "snippet": highlight(r["snippet"] + ("" if q else "…"), q)})  # the empty-query snippet is cut at 160 characters
             return page(request, conn, "policies.html", q=q, groups=groups, n=len(found))
 
     def audit_ctx(conn, q) -> dict:
@@ -291,11 +291,12 @@ def create_app(db_path="data/workbench.db", config_path="config/pipeline.yaml", 
         pages = max(1, -(-total // PER_PAGE))
         pg = to_int(q.get("page"), 1)
         pg = min(max(1, pg), pages)
-        got = [] if bad else conn.execute(f"SELECT * FROM audit{w} ORDER BY id DESC LIMIT ? OFFSET ?", (*args, PER_PAGE, (pg - 1) * PER_PAGE)).fetchall()
+        got = [] if bad else conn.execute(f"SELECT audit.*, (SELECT name FROM staff WHERE staff.id = audit.actor_id) AS who FROM audit{w} ORDER BY id DESC LIMIT ? OFFSET ?", (*args, PER_PAGE, (pg - 1) * PER_PAGE)).fetchall()
         broken = audit.verify_chain(conn)
         everything = conn.execute("SELECT COUNT(*) FROM audit").fetchone()[0]
         keep = {k: v for k, v in (("case", case), ("actor", actor)) if v}
-        return {"rows": [{**dict(r), "what": audit.describe(r["detail_json"])} for r in got], "people": people, "case": case, "actor": actor,
+        return {"rows": [{**dict(r), "what": audit.describe(r["detail_json"]), "when": r["at"][:16].replace("T", " "),
+                          "by": "System" if r["actor_id"] == "system" else f'{r["who"] or r["actor_id"]}, {r["role"].replace("_", " ").capitalize()}'} for r in got], "people": people, "case": case, "actor": actor,
                 "page_no": pg, "pages": pages, "chain": "Chain verified: " + f"{everything:,} entries" if broken is None else f"Chain broken at entry {broken}",
                 "chain_ok": broken is None, "link": lambda p: "/audit?" + urlencode({**keep, "page": p})}
 

@@ -16,7 +16,7 @@
     <summary>{{ section }} <span class="muted">({{ items|length }} clause{{ "" if items|length == 1 else "s" }})</span></summary>
     <ul class="clauses">
       {% for c in items %}
-      <li id="{{ c.id }}"><b>{{ c.id }}</b> {{ c.title }}<br><span class="muted">{{ c.snippet }}</span></li>
+      <li id="{{ c.id }}"><b>{{ c.id }}</b> {{ c.title }}{% if q %} <span class="muted">({{ c.section }})</span>{% endif %}<br><span class="muted">{{ c.snippet }}</span></li>
       {% endfor %}
     </ul>
   </details>

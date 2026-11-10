@@ -11,7 +11,7 @@
 <section class="table-card">
   <div class="table-wrap">
     <table class="case-table">
-      <thead><tr><th scope="col">Person</th><th scope="col">Past deadline</th><th scope="col">Open</th><th scope="col">Urgent</th></tr></thead>
+      <thead><tr><th scope="col">Person</th><th scope="col" class="num-col">Past deadline</th><th scope="col" class="num-col">Open</th><th scope="col" class="num-col">Urgent</th></tr></thead>
       <tbody>
       {% for r in rows %}
       <tr data-person="{{ r.id }}"><th scope="row">{{ r.name }}</th>

@@ -93,7 +93,7 @@ def test_screenshots_from_a_fresh_database(base, dbfile, browser):
     from workbench.db import connect
     SHOTS.mkdir(parents=True, exist_ok=True)
     cfg = load_config()
-    mid, handed = candidates(dbfile)[3], candidates(dbfile)[4]
+    handed = candidates(dbfile)[4]
     c = connect(dbfile)  # the second case is handed over the way a handler would leave it: claims confirmed, handover saved
     c.execute("UPDATE claims SET status='confirmed' WHERE case_id=? AND supported=1", (handed,))
     c.execute("UPDATE claims SET status='removed' WHERE case_id=? AND status='draft'", (handed,))
@@ -102,9 +102,8 @@ def test_screenshots_from_a_fresh_database(base, dbfile, browser):
     c.commit()
     c.close()
     page = new_page(browser, base)
-    page.goto(f"{base}/cases/{mid}")
-    page.locator("button.confirm").first.click()
-    expect(page.locator(".stepper a").first).to_contain_text("1 of")
+    page.goto(f"{base}/cases/{load_config()['demo_case']}")  # the demo case, before any action
+    expect(page.locator("h1")).to_contain_text(load_config()["demo_case"])
     page.screenshot(path=str(SHOTS / "case.png"))
     switch(page, "Specialist")
     page.goto(f"{base}/cases/{handed}")

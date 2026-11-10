@@ -48,7 +48,8 @@
 // A link to a place inside a closed <details> (for example /settings#data-sources) opens it. Without script the summary is still there.
 (function () {
   function openTarget() {
-    var t = location.hash.length > 1 && document.getElementById(decodeURIComponent(location.hash.slice(1)));
+    var t = false;
+    try { t = location.hash.length > 1 && document.getElementById(decodeURIComponent(location.hash.slice(1))); } catch (e) { /* malformed hash: ignore */ }
     if (!t) return;
     for (var d = t; d; d = d.parentElement) if (d.tagName === 'DETAILS') d.open = true;
     t.scrollIntoView();

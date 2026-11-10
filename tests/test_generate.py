@@ -354,3 +354,10 @@ def test_cli_explicit_adv_ids_at_n300(tmp_path, monkeypatch):
     monkeypatch.setattr(sys, "argv", ["g", "--n", "300", "--db", str(tmp_path / "b.db"), "--config", str(cfg), "--adv-ids", str(out)])
     g.main()
     assert set(json.loads(out.read_text())) == {"hidden_instruction", "unusual_format", "long", "french"}
+
+
+def test_audit_entry_for_every_generated_move(db):
+    from workbench import audit
+    assert db.execute("SELECT COUNT(*) FROM audit").fetchone()[0] == db.execute("SELECT COUNT(*) FROM events").fetchone()[0] > 0
+    assert audit.verify_chain(db) is None
+    assert db.execute("SELECT actor_id, role FROM audit WHERE action='received' LIMIT 1").fetchone()[:] == ("system", "system")

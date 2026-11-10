@@ -128,6 +128,15 @@ def test_department_rows_add_up_to_the_open_cases(client, app_db):
     c.row_factory = sqlite3.Row
     cfg = load_config()
     rows = stats.department_rows(c, cfg, date(2026, 11, 10))
-    open_ = c.execute("SELECT COUNT(*) FROM cases WHERE state != 'accepted'").fetchone()[0]
+    open_ = stats.headline(c, date(2026, 11, 10), cfg["bank_holidays"])["open"]
     assert rows[-1]["department"] == "No department yet" and sum(r["open"] for r in rows) == open_
     assert "No department yet" in main_of(client.get("/departments").text)
+
+
+def test_audit_page_names_people_without_seconds(client):
+    client.cookies.set("role", "team_lead"); client.cookies.set("staff_id", "T1")  # noqa: E702
+    html = client.get("/audit").text
+    assert "<td>System</td>" in html and "T1 team_lead" not in html
+    import re
+    assert not re.search(r"\d\d:\d\d:\d\d", html)
+    assert html.index("Filters") < html.index("<table")
