@@ -1,0 +1,51 @@
+{% from "partials/macros.html" import hx, hidden with context %}
+<section class="card claims" aria-labelledby="claims-h">
+  <h2 id="claims-h">Summary <span class="tag">AI draft</span></h2>
+  {% if not v.has_dept %}<p class="muted">This case has no department yet, so there is no draft. Choose one above, then complete the summary by hand.</p>
+  {% elif v.draft_state == "rejected" %}<p class="muted">Draft rejected. Complete the summary by hand.</p>
+  {% elif v.draft_state == "invalid" %}<p class="muted">The draft could not be read. Complete the summary by hand.</p>
+  {% elif v.draft_state == "none" %}<p class="muted">No draft recorded for this case. Complete the summary by hand.</p>
+  {% else %}<p class="muted small">The check only shows that a quote appears in the note. You decide whether the claim is fair.</p>{% endif %}
+  <ol class="claim-list">
+  {% for x in v.claims %}
+    <li class="claim" id="claim-{{ x.id }}">
+      <p><b class="num">{{ x.no }}</b> {{ x.text }}</p>
+      <p class="chips small">
+        <span class="chip">{{ {"draft": "Not checked yet", "confirmed": "Confirmed", "edited": "Edited"}[x.status] }}</span>
+        {% if x.by_hand %}<span class="chip">Added by you</span>{% endif %}
+        {% if x.inferred %}<span class="chip warn">Check this</span>{% endif %}
+        {% if not x.by_hand and not x.supported %}<span class="chip warn">Not found in the notes</span> Quote not found in the note
+        {% elif x.located %}<a href="#src-{{ x.no }}">Show in the notes</a>{% endif %}
+      </p>
+      {% if v.editable %}
+      <div class="claim-actions">
+        {% if x.status == "draft" and x.supported %}
+        <form {{ hx("/cases/" ~ v.id ~ "/claims/" ~ x.id ~ "/confirm") }}>{{ hidden() }}<button type="submit" class="confirm"{% if x.id == v.first_pending %} data-focus{% endif %}>Confirm<span class="sr-only"> claim {{ x.no }}</span></button></form>
+        {% endif %}
+        <details class="inline"><summary>Edit<span class="sr-only"> claim {{ x.no }}</span></summary>
+          <form {{ hx("/cases/" ~ v.id ~ "/claims/" ~ x.id ~ "/edit") }}>{{ hidden() }}
+            <label>Claim <textarea name="text" required maxlength="600" rows="3">{{ x.text }}</textarea></label>
+            <button type="submit">Save</button>
+          </form></details>
+        <form {{ hx("/cases/" ~ v.id ~ "/claims/" ~ x.id ~ "/remove") }}>{{ hidden() }}<button type="submit">Remove<span class="sr-only"> claim {{ x.no }}</span></button></form>
+      </div>
+      {% endif %}
+    </li>
+  {% endfor %}
+  </ol>
+  {% if v.editable %}
+  <details class="inline"{% if not v.claims %} open{% endif %}><summary>Add a claim</summary>
+    <form {{ hx("/cases/" ~ v.id ~ "/claims") }}>{{ hidden() }}
+      <label>Claim <textarea name="text" required maxlength="600" rows="2"></textarea></label>
+      <button type="submit">Add</button>
+    </form></details>
+  {% if v.draft_state in ("available", "invalid") %}
+  <details class="inline"><summary>Reject the draft</summary>
+    <form {{ hx("/cases/" ~ v.id ~ "/reject") }}>{{ hidden() }}
+      <label>Reason <input name="reason" maxlength="500"></label>
+      <button type="submit">Reject draft</button>
+      <p class="small muted">Removes only the claims you have not yet confirmed or edited.</p>
+    </form></details>
+  {% endif %}
+  {% endif %}
+</section>

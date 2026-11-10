@@ -1,0 +1,16 @@
+{% from "partials/macros.html" import hx, hidden with context %}
+<section class="card handover" aria-labelledby="handover-h">
+  <h2 id="handover-h">Handover</h2>
+  {% if not v.has_dept %}<p class="muted">Set the department first.</p>
+  {% elif v.editable %}
+  <form {{ hx("/cases/" ~ v.id ~ "/handover") }}>{{ hidden() }}
+    {% if v.fields|selectattr("suggested")|list %}<p class="muted small">Some values come from the AI draft. Check them, then save.</p>{% endif %}
+    <div class="fields">
+    {% for f in v.fields %}<label>{{ f.label }}{% if f.missing %} <span class="chip warn">Missing</span>{% endif %}<input name="f_{{ f.name }}" value="{{ f.value }}" maxlength="300"></label>{% endfor %}
+    </div>
+    <button type="submit">Save handover</button>
+  </form>
+  {% else %}
+  <dl class="pairs">{% for f in v.fields %}<dt>{{ f.label }}</dt><dd>{{ f.value or "Missing" }}</dd>{% endfor %}</dl>
+  {% endif %}
+</section>

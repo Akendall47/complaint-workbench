@@ -1,0 +1,15 @@
+{% from "partials/macros.html" import hx, hidden with context %}
+<section class="card notes" aria-labelledby="notes-h">
+  <h2 id="notes-h">Customer's notes</h2>
+  <p class="muted small">{{ "Unmasked for this view only." if v.unmasked else "Personal details are masked." }}</p>
+  {% for n in v.notes %}
+  <article class="note"><p class="small muted">Note {{ n.seq }} · {{ n.at }} · {{ n.author }}</p>
+    <p class="note-body">{% for text, no in n.parts %}{% if no %}<mark id="src-{{ no }}"><sup>{{ no }}</sup> {{ text }}</mark>{% else %}{{ text }}{% endif %}{% endfor %}</p></article>
+  {% else %}<p class="muted">No notes.</p>{% endfor %}
+  <details class="inline"><summary>Show unmasked notes</summary>
+    <form {{ hx("/cases/" ~ v.id ~ "/unmask") }}>{{ hidden() }}
+      <label>Reason (logged) <input name="reason" maxlength="500"></label>
+      <button type="submit">Show unmasked</button>
+    </form>
+  </details>
+</section>

@@ -17,7 +17,7 @@ from fastapi.responses import HTMLResponse, PlainTextResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from . import audit, cases
+from . import audit, case_view, cases
 from .cases import Actor, NotAllowed, StaleCase
 from .classify import MODELS_DIR, ensure_models
 from .config import load_config
@@ -210,6 +210,111 @@ def create_app(db_path="data/workbench.db", config_path="config/pipeline.yaml", 
                 q = parse_qs(urlparse(nxt).query)
                 return page(request, conn, "queue.html", status=409 if isinstance(e, StaleCase) else 403,
                             message=str(e), **queue_ctx(conn, actor, q, edge_of(request)))
+
+
+    # ---- Case view ----
+    def to_int(v, default=0):
+        try:
+            return int(v)
+        except (TypeError, ValueError):
+            return default
+
+    def case_response(request, case_id, step=1, all_=False, message=None, status=200, unmasked=False):
+        actor = current_actor(request)
+        with db() as conn:
+            v = case_view.build(conn, cfg, case_id, actor, step, all_, unmasked)
+            if v is None:
+                return page(request, conn, "not_found.html", status=404)
+            ctx = {"v": v, "state_name": STATE_NAME, "message": message, "stale": status == 409}
+            if request.headers.get("HX-Request"):
+                resp = templates.TemplateResponse(request, "partials/case_main.html", {"actor": actor, "cfg": cfg, **ctx}, status_code=status)
+            else:
+                resp = page(request, conn, "case.html", status=status, **ctx)
+        if unmasked:
+            resp.headers["Cache-Control"] = "no-store"  # unmasked text is never kept in a cache
+        resp.set_cookie("last_case", case_id, samesite="lax")
+        return resp
+
+    @app.get("/cases/{case_id}", response_class=HTMLResponse)
+    def case_page(request: Request, case_id: str, step: str = "1", all: str = "0"):
+        if not CASE_ID.match(case_id):
+            with db() as conn:
+                return page(request, conn, "not_found.html", status=404)
+        return case_response(request, case_id, to_int(step, 1), all == "1")
+
+    def act(request, case_id, version, step, all_, do, unmask=False):
+        """Run one cases.py action. Success: htmx gets the fresh fragment, others a redirect. Failure: the plain message."""
+        actor, st, al = current_actor(request), to_int(step, 1), all_ == "1"
+        if not CASE_ID.match(case_id):
+            return case_response(request, case_id)
+        try:
+            ver = to_int(version, -1)
+            if ver < 0:
+                raise NotAllowed("That form was not valid. Reload the page.")
+            with db() as conn:
+                do(conn, actor, ver)
+        except (NotAllowed, StaleCase) as e:
+            return case_response(request, case_id, st, al, str(e), 409 if isinstance(e, StaleCase) else 403)
+        if unmask:
+            return case_response(request, case_id, st, al, unmasked=True)
+        if request.headers.get("HX-Request"):
+            return case_response(request, case_id, st, al)
+        return RedirectResponse(f"/cases/{case_id}?step={st}&all={1 if al else 0}", status_code=303)
+
+    def need_reason(reason):
+        if not (reason or "").strip():
+            raise NotAllowed("Enter a reason")
+        return reason
+
+    def simple(name, fn_name):
+        @app.post("/cases/{case_id}/" + name)
+        def _(request: Request, case_id: str, version: str = Form(""), step: str = Form("1"), all: str = Form("0")):
+            return act(request, case_id, version, step, all, lambda c, a, v: getattr(cases, fn_name)(c, case_id, a, v))
+    for n, f in (("open", "open_case"), ("approve", "approve"), ("accept", "accept")):
+        simple(n, f)
+
+    def with_reason(name, fn_name):
+        @app.post("/cases/{case_id}/" + name)
+        def _(request: Request, case_id: str, version: str = Form(""), step: str = Form("1"), all: str = Form("0"), reason: str = Form("")):
+            def do(c, a, v):
+                getattr(cases, fn_name)(c, case_id, a, v, need_reason(reason))
+            return act(request, case_id, version, step, all, do, unmask=name == "unmask")
+    for n, f in (("reject", "reject_draft"), ("return", "return_case"), ("unmask", "unmask")):
+        with_reason(n, f)
+
+    @app.post("/cases/{case_id}/urgent")
+    def set_urgent(request: Request, case_id: str, version: str = Form(""), step: str = Form("1"), all: str = Form("0"),
+                   urgent: str = Form(""), reason: str = Form("")):
+        return act(request, case_id, version, step, all, lambda c, a, v: cases.set_urgent(c, case_id, a, v, urgent == "1", need_reason(reason)))
+
+    @app.post("/cases/{case_id}/department")
+    def set_department(request: Request, case_id: str, version: str = Form(""), step: str = Form("1"), all: str = Form("0"),
+                       department: str = Form("")):
+        return act(request, case_id, version, step, all, lambda c, a, v: cases.set_department(c, case_id, a, v, department))
+
+    @app.post("/cases/{case_id}/claims")
+    def add_claim(request: Request, case_id: str, version: str = Form(""), step: str = Form("1"), all: str = Form("0"), text: str = Form("")):
+        return act(request, case_id, version, step, all, lambda c, a, v: cases.add_claim(c, case_id, a, v, text))
+
+    @app.post("/cases/{case_id}/claims/{claim_id}/{what}")
+    def claim_action(request: Request, case_id: str, claim_id: int, what: str, version: str = Form(""), step: str = Form("1"),
+                     all: str = Form("0"), text: str = Form("")):
+        if what not in ("confirm", "edit", "remove"):
+            return PlainTextResponse("Not found", status_code=404)
+        fn = {"confirm": lambda c, a, v: cases.confirm_claim(c, case_id, a, v, claim_id),
+              "edit": lambda c, a, v: cases.edit_claim(c, case_id, a, v, claim_id, text),
+              "remove": lambda c, a, v: cases.remove_claim(c, case_id, a, v, claim_id)}[what]
+        return act(request, case_id, version, step, all, fn)
+
+    @app.post("/cases/{case_id}/handover")
+    async def handover(request: Request, case_id: str):
+        form = await request.form()
+        with db() as conn:
+            row = conn.execute("SELECT department FROM cases WHERE id = ?", (case_id,)).fetchone()
+        names = cfg["departments"].get(row[0] if row else None, {}).get("required_fields", [])
+        fields = {n: str(form[f"f_{n}"]) for n in names if f"f_{n}" in form}
+        return act(request, case_id, str(form.get("version", "")), str(form.get("step", "2")), str(form.get("all", "0")),
+                   lambda c, a, v: cases.set_handover(c, case_id, a, v, fields))
 
     @app.post("/role")
     def role(request: Request, role: str = Form("")):

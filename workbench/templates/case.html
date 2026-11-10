@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+{% from "partials/help.html" import help_panel %}
+{% block title %}Case {{ v.id }}{% endblock %}
+{% block purpose %}{{ content.views.case.purpose }}{% endblock %}
+{% block help %}{{ help_panel("case") }}{% endblock %}
+{% block content %}{% include "partials/case_main.html" %}{% endblock %}

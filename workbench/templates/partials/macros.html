@@ -1,0 +1,2 @@
+{% macro hx(path) %}method="post" action="{{ path }}" hx-post="{{ path }}" hx-target="#case" hx-swap="outerHTML"{% endmacro %}
+{% macro hidden() %}<input type="hidden" name="version" value="{{ v.c.version }}"><input type="hidden" name="step" value="{{ v.step }}"><input type="hidden" name="all" value="{{ 1 if v.all else 0 }}">{% endmacro %}

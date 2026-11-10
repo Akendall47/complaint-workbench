@@ -1,0 +1,18 @@
+{% from "partials/macros.html" import hx, hidden with context %}
+{% set c = v.c %}
+<section class="card decide" aria-labelledby="decide-h">
+  <h2 id="decide-h">Decide</h2>
+  {% if v.claims %}<ul class="recap">{% for x in v.claims if x.status != "draft" %}<li>{{ x.text }}</li>{% endfor %}</ul>{% endif %}
+  {% if v.worker and c.state in ("new", "returned") %}
+  <form {{ hx("/cases/" ~ v.id ~ "/open") }}>{{ hidden() }}<button type="submit" class="primary">Start review</button></form>
+  {% elif v.worker and c.state == "in_review" %}
+  <form {{ hx("/cases/" ~ v.id ~ "/approve") }}>{{ hidden() }}<button type="submit" class="primary" aria-describedby="bar-text"{% if not v.can_approve %} disabled{% endif %}>Approve and send</button></form>
+  {% elif actor.role == "specialist" and c.state == "handed_over" %}
+  <form {{ hx("/cases/" ~ v.id ~ "/accept") }}>{{ hidden() }}<button type="submit" class="primary">Accept</button></form>
+  <details class="inline"><summary>Return to the handler</summary>
+    <form {{ hx("/cases/" ~ v.id ~ "/return") }}>{{ hidden() }}
+      <label>Reason <input name="reason" maxlength="500"></label>
+      <button type="submit">Return</button>
+    </form></details>
+  {% else %}<p class="muted">Nothing to decide here.</p>{% endif %}
+</section>
