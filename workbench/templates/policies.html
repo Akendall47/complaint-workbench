@@ -1,26 +1,28 @@
 {% extends "base.html" %}
 {% from "partials/help.html" import help_panel %}
 {% block title %}Policy library{% endblock %}
-{% block strip %}{% include "partials/deadline_strip.html" %}{% endblock %}
 {% block purpose %}{{ content.views.policies.purpose }}{% endblock %}
 {% block hint %}{% endblock %}
 {% block help %}{{ help_panel("policies") }}{% endblock %}
-{% block content %}
-<form method="get" action="/policies" role="search" class="search-bar">
+{% block content %}<form method="get" action="/policies" role="search" class="search-bar">
   <label for="q">Search the policy clauses</label>
   <div class="search-row"><input id="q" name="q" type="search" value="{{ q }}" maxlength="200" autocomplete="off"> <button type="submit" class="primary">Search</button></div>
 </form>
 {% if q %}<p class="muted" role="status">{{ n }} clause{{ "" if n == 1 else "s" }} found for “{{ q }}”.{% if n %} <a href="/policies">Show all clauses</a>{% endif %}</p>{% endif %}
-{% for section, items in groups.items() %}
-<section class="card" aria-labelledby="sec-{{ loop.index }}">
-  <h2 id="sec-{{ loop.index }}">{{ section }}</h2>
-  <ul class="clauses">
-    {% for c in items %}
-    <li id="{{ c.id }}"><b>{{ c.id }}</b> {{ c.title }}<br><span class="muted">{{ c.snippet }}</span></li>
-    {% endfor %}
-  </ul>
+{% if groups %}
+<section class="card" aria-label="Policy clauses">
+  {% for section, items in groups.items() %}
+  <details{% if q %} open{% endif %}>
+    <summary>{{ section }} <span class="muted">({{ items|length }} clause{{ "" if items|length == 1 else "s" }})</span></summary>
+    <ul class="clauses">
+      {% for c in items %}
+      <li id="{{ c.id }}"><b>{{ c.id }}</b> {{ c.title }}<br><span class="muted">{{ c.snippet }}</span></li>
+      {% endfor %}
+    </ul>
+  </details>
+  {% endfor %}
 </section>
 {% else %}
 <p class="empty">No clause matches. Try fewer or different words.</p>
-{% endfor %}
+{% endif %}
 {% endblock %}

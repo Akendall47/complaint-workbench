@@ -1,7 +1,6 @@
 {% extends "base.html" %}
 {% from "partials/help.html" import help_panel %}
 {% block title %}Pipeline{% endblock %}
-{% block strip %}{% include "partials/deadline_strip.html" %}{% endblock %}
 {% block purpose %}{{ content.views.pipeline.purpose }}{% endblock %}
 {% block hint %}{% endblock %}
 {% block help %}{{ help_panel("pipeline") }}{% endblock %}

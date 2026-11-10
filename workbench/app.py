@@ -183,7 +183,7 @@ def create_app(db_path="data/workbench.db", config_path="config/pipeline.yaml", 
             pg = min(max(1, int(one("page"))), pages)
         except ValueError:
             pg = 1
-        got = conn.execute(f"SELECT c.* FROM cases c WHERE {w} ORDER BY c.deadline, c.urgent DESC, c.id LIMIT ? OFFSET ?",
+        got = conn.execute(f"SELECT c.*, s.name AS owner_name FROM cases c LEFT JOIN staff s ON s.id = c.owner_id WHERE {w} ORDER BY c.deadline, c.urgent DESC, c.id LIMIT ? OFFSET ?",
                            (*args, PER_PAGE, (pg - 1) * PER_PAGE)).fetchall()
         rows = [{"c": r, "days": business_days_left(date.fromisoformat(r["deadline"]), today, hol)} for r in got]
         keep = {k: v for k, v in f.items() if v}
@@ -247,13 +247,9 @@ def create_app(db_path="data/workbench.db", config_path="config/pipeline.yaml", 
         actor = current_actor(request)
         with db() as conn:
             everyone = stats.team(conn, today)
-            avg = round(sum(r["open"] for r in everyone) / len(everyone), 1) if everyone else 0
             lead = actor.role == "team_lead"
             rows = everyone if lead else [r for r in everyone if r["id"] == actor.id]
-            items = [(r["name"], r["open"]) for r in everyone] + [("Team average", avg)]
-            title = "Open cases per person"
-            return page(request, conn, "team.html", rows=rows, lead=lead, avg=avg, unassigned=stats.unassigned(conn),
-                        chart=charts.bars(items, highlight="Team average", title=title, summary=stats.sentence("bars", {"title": title, "items": items})) if lead else "")
+            return page(request, conn, "team.html", rows=rows, lead=lead, unassigned=stats.unassigned(conn))
 
     @app.get("/pipeline", response_class=HTMLResponse)
     def pipeline(request: Request):

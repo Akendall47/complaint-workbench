@@ -1,7 +1,6 @@
 {% extends "base.html" %}
 {% from "partials/help.html" import help_panel %}
 {% block title %}Team{% endblock %}
-{% block strip %}{% include "partials/deadline_strip.html" %}{% endblock %}
 {% block purpose %}{{ content.views.team.purpose }}{% endblock %}
 {% block hint %}{% endblock %}
 {% block help %}{{ help_panel("team") }}{% endblock %}
@@ -24,11 +23,5 @@
   {% if not lead %}<p class="muted">Switch to Team lead (bottom left) to see the whole team.</p>{% endif %}
   <p class="muted">This page is for sharing out work. It does not show speed per case, because a speed target pushes people to approve AI drafts without checking.</p>
 </section>
-{% if lead %}
-<section class="card" aria-labelledby="load-h">
-  <h2 id="load-h">Open cases against the team average</h2>
-  {{ chart }}
-</section>
-{% endif %}
 <p class="source"><a href="/settings#data-sources">Where these numbers come from</a></p>
 {% endblock %}

@@ -194,7 +194,7 @@ def test_full_flow(base, dbfile, browser):
     expect(page.locator("#bar-text")).to_contain_text("Nothing for you")
     assert db_value(dbfile, "SELECT owner_id FROM cases WHERE id=?", cid) == "T1"
     switch(page, "Team lead")
-    assert "Owner: T1" in page.locator(".case-head").inner_text()
+    assert "Owner: " + db_value(dbfile, "SELECT name FROM staff WHERE id='T1'") in page.locator(".case-head").inner_text()
     assert not page.errors, page.errors
     page.close()
 

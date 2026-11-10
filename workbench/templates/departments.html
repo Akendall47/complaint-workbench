@@ -2,7 +2,6 @@
 {% from "partials/help.html" import help_panel %}
 {% from "partials/macros.html" import deadline_chip %}
 {% block title %}Departments{% endblock %}
-{% block strip %}{% include "partials/deadline_strip.html" %}{% endblock %}
 {% block purpose %}{{ content.views.departments.purpose }}{% endblock %}
 {% block hint %}{% endblock %}
 {% block help %}{{ help_panel("departments") }}{% endblock %}
@@ -13,15 +12,6 @@
       {% if source %}<li class="chip">Source: {{ source }} <a href="{{ clear('source') }}">Clear<span class="sr-only"> source</span></a></li>{% endif %}
       {% if type_ %}<li class="chip">Type: {{ type_ }} <a href="{{ clear('type') }}">Clear<span class="sr-only"> type</span></a></li>{% endif %}
     </ul>
-    <details class="filters">
-      <summary>Filter by source or type</summary>
-      <form method="get" action="/departments" class="filter-form">
-        <input type="hidden" name="department" value="{{ chosen }}">
-        <label>Source <select name="source"><option value="">Any</option>{% for s in cfg.sources %}<option{% if source == s %} selected{% endif %}>{{ s }}</option>{% endfor %}</select></label>
-        <label>Type <select name="type"><option value="">Any</option>{% for t in cfg.types %}<option{% if type_ == t %} selected{% endif %}>{{ t }}</option>{% endfor %}</select></label>
-        <button type="submit">Apply</button>
-      </form>
-    </details>
   </div>
   <div class="table-wrap">
     <table class="case-table">
@@ -34,6 +24,15 @@
       </tbody>
     </table>
   </div>
+    <details class="filters">
+      <summary>Filter by source or type</summary>
+      <form method="get" action="/departments" class="filter-form">
+        <input type="hidden" name="department" value="{{ chosen }}">
+        <label>Source <select name="source"><option value="">Any</option>{% for s in cfg.sources %}<option{% if source == s %} selected{% endif %}>{{ s }}</option>{% endfor %}</select></label>
+        <label>Type <select name="type"><option value="">Any</option>{% for t in cfg.types %}<option{% if type_ == t %} selected{% endif %}>{{ t }}</option>{% endfor %}</select></label>
+        <button type="submit">Apply</button>
+      </form>
+    </details>
 </section>
 
 <section class="card" aria-labelledby="wait-h">

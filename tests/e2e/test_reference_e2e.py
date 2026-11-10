@@ -48,7 +48,7 @@ def test_reference_view_in_browser(base, browser, width, path, name):
 def test_settings_data_sources_link_lands_on_the_table(base, browser):
     page = browser.new_page(viewport={"width": 1024, "height": 700})
     page.goto(base + "/settings#data-sources")
-    assert page.locator("#data-sources").is_visible() and page.locator("#data-sources ~ .table-wrap table").is_visible()
+    assert page.locator("#data-sources").is_visible() and page.locator("#data-sources table").is_visible()
     page.close()
 
 

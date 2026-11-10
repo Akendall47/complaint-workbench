@@ -106,7 +106,8 @@ def build(conn, cfg, case_id, actor, step=1, all_=False, unmasked=False) -> dict
     can_decide, decide_msg = cases.can_decide(conn, case_id, actor)
     all_ = all_ or not editable
     step = step if step in (1, 2, 3) else 1
-    return {"c": c, "id": case_id, "step": step, "all": all_, "unmasked": unmasked, "worker": worker, "editable": editable,
+    owner = conn.execute("SELECT name FROM staff WHERE id = ?", (c["owner_id"],)).fetchone()
+    return {"c": c, "id": case_id, "owner_name": owner[0] if owner else None, "step": step, "all": all_, "unmasked": unmasked, "worker": worker, "editable": editable,
             "days": business_days_left(date.fromisoformat(c["deadline"]), today, hol), "reasons": reasons, "returned_reason": ret,
             "notes": notes, "claims": claims, "reviewed": reviewed, "fields": fields, "missing": len(missing), "has_dept": bool(dept),
             "can_approve": ok, "why": why, "next_action": cases.next_action(conn, case_id, actor.role), "trail": trail,

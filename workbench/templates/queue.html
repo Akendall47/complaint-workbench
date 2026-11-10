@@ -32,7 +32,7 @@
   {% if rows %}
   <div class="table-wrap">
     <table class="case-table">
-      <thead><tr><th scope="col">Case</th><th scope="col">Deadline</th><th scope="col">Type</th><th scope="col">Department</th><th scope="col">State</th><th scope="col">Owner</th></tr></thead>
+      <thead><tr><th scope="col">Case</th><th scope="col">Deadline</th><th scope="col">Type</th><th scope="col">Department</th><th scope="col">State</th>{% if f.owner != "me" %}<th scope="col">Owner</th>{% endif %}</tr></thead>
       <tbody>
       {% for r in rows %}{% set c = r.c %}
       <tr class="case-row" data-case="{{ c.id }}" data-days="{{ r.days }}">
@@ -41,8 +41,8 @@
         <td>{{ c.type or "–" }}</td>
         <td>{{ c.department or "Needs routing" }}</td>
         <td><span class="status-label">{{ state_name[c.state] }}</span></td>
-        <td>{% if c.owner_id %}{{ c.owner_id }}{% else %}
-          <form method="post" action="/cases/{{ c.id }}/assign"><input type="hidden" name="version" value="{{ c.version }}"><input type="hidden" name="next" value="{{ here }}"><button type="submit">Assign to me</button></form>{% endif %}</td>
+        {% if f.owner != "me" %}<td>{% if c.owner_name %}{{ c.owner_name }}{% else %}
+          <form method="post" action="/cases/{{ c.id }}/assign"><input type="hidden" name="version" value="{{ c.version }}"><input type="hidden" name="next" value="{{ here }}"><button type="submit">Assign to me</button></form>{% endif %}</td>{% endif %}
       </tr>
       {% endfor %}
       </tbody>

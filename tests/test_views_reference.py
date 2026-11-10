@@ -30,7 +30,7 @@ def test_search_for_a_clause_id_returns_it_first_and_every_clause_has_an_anchor(
     html = main_of(client.get("/policies?q=POL-4.2").text)
     assert re.findall(r'<li id="(POL-[\d.]+)"', html)[0] == "POL-4.2"
     everything = main_of(client.get("/policies").text)
-    assert len(re.findall(r'<li id="POL-[\d.]+"', everything)) == 40 and "<h2" in everything  # grouped by section
+    assert len(re.findall(r'<li id="POL-[\d.]+"', everything)) == 40 and everything.count("<summary>") >= 8  # one closed group per section
 
 
 def test_highlight_escapes_before_it_marks():

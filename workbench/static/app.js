@@ -44,3 +44,15 @@
   if (dismiss) dismiss.addEventListener('click', hideHint);
   document.addEventListener('keydown', function (e) { if (e.key !== 'Tab' && e.key !== 'Shift') hideHint(); });
 })();
+
+// A link to a place inside a closed <details> (for example /settings#data-sources) opens it. Without script the summary is still there.
+(function () {
+  function openTarget() {
+    var t = location.hash.length > 1 && document.getElementById(decodeURIComponent(location.hash.slice(1)));
+    if (!t) return;
+    for (var d = t; d; d = d.parentElement) if (d.tagName === 'DETAILS') d.open = true;
+    t.scrollIntoView();
+  }
+  window.addEventListener('hashchange', openTarget);
+  openTarget();
+})();

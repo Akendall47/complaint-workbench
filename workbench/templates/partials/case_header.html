@@ -5,28 +5,30 @@
     <span class="status-label">{{ state_name[c.state] }}</span>
     <span>{{ c.type or "No type" }}</span>
     <span class="{{ 'deadline-past' if v.days < 0 else '' }}">{% if v.days < 0 %}{{ -v.days }} business days past deadline{% else %}{{ v.days }} business days left{% endif %}</span>
-    <span>Owner: {{ c.owner_id or "none" }}</span>
+    <span>Owner: {{ v.owner_name or c.owner_id or "none" }}</span>
     <span>Department: <b>{{ c.department or "not set" }}</b></span>
     {% if v.editable and v.all %}<a class="small" href="/cases/{{ v.id }}?step=1&amp;all=0">One step at a time</a>{% elif not v.all %}<a class="small" href="/cases/{{ v.id }}?all=1">Show everything</a>{% endif %}
   </p>
   {% if c.urgent %}<p class="urgent-line"><span class="urgent-tag">Urgent</span>{% if v.reasons %} {{ v.reasons|join(". ") }}{% endif %}</p>{% endif %}
   {% if v.worker and c.state in ("new", "in_review", "returned", "handed_over") %}
-  <div class="head-change">
-    <details><summary>Change urgent flag</summary>
+  <details class="inline"><summary>Change urgency or department</summary>
+    <div class="head-change">
+    <div><b>Urgency</b>
       <form {{ hx("/cases/" ~ v.id ~ "/urgent") }}>{{ hidden() }}
         <label>Mark as <select name="urgent"><option value="1"{% if c.urgent %} selected{% endif %}>Urgent</option><option value="0"{% if not c.urgent %} selected{% endif %}>Not urgent</option></select></label>
         <label>Reason <input name="reason" maxlength="500"></label>
         <button type="submit">Save</button>
       </form>
-    </details>
+    </div>
     {% if c.state in ("new", "in_review", "returned") %}
-    <details><summary>Change department</summary>
+    <div><b>Department</b>
       <form {{ hx("/cases/" ~ v.id ~ "/department") }}>{{ hidden() }}
         <label>Department <select name="department">{% for d in v.departments %}<option{% if d == c.department %} selected{% endif %}>{{ d }}</option>{% endfor %}</select></label>
         <button type="submit">Save</button>
       </form>
-    </details>
+    </div>
     {% endif %}
-  </div>
+    </div>
+  </details>
   {% endif %}
 </section>

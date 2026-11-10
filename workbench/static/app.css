@@ -175,3 +175,7 @@ mark{background:#fff0b3;color:var(--ink);border-radius:3px}
 .chain{padding:10px 16px;border-radius:12px;background:white;margin:0 0 16px}
 .chain.bad{background:var(--tint);color:var(--accent-dark)}
 .intake-form{display:grid;gap:8px;max-width:640px}
+.card>details{padding:6px 0;border-bottom:1px solid #ededf2}
+.card>details:last-child{border-bottom:0}
+.card>details>summary{cursor:pointer;font-weight:600;padding:6px 0}
+.head-change>div{display:grid;gap:4px}
