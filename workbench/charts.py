@@ -81,11 +81,12 @@ def sparkline(values, title="") -> Markup:
 
 
 def band_flow(left, right, bands, marks=(), title="", summary="") -> Markup:
-    """Bands from left labels to right labels. bands: (left, right, count, href). Each band is a link with a title and a drawn count.
+    """Bands from left labels to right labels. bands: (left, right, count, href[, kind]); the kind is a class, so two paths between the same labels both show. Each band is a link with a title and a drawn count.
     Marked bands (left, right) get a heavier colour and the word rising. Minimum band width 3."""
     if not bands:
         return EMPTY
-    top = max(c for *_, c, _h in bands) or 1
+    bands = [(*b, "") if len(b) == 4 else tuple(b) for b in bands]
+    top = max(b[2] for b in bands) or 1
     thick = lambda c: max(3.0, 30 * c / top)  # noqa: E731
     slot = lambda c: max(thick(c), 18.0) + 4  # noqa: E731  room for the drawn count
     ypos, ends = {}, {}
@@ -93,9 +94,9 @@ def band_flow(left, right, bands, marks=(), title="", summary="") -> Markup:
         y = 6.0
         for name in names:
             start = y
-            for b in bands:
+            for i, b in enumerate(bands):
                 if b[idx] == name:
-                    ypos[(side, b[0], b[1])] = y + slot(b[2]) / 2
+                    ypos[(side, i)] = y + slot(b[2]) / 2
                     y += slot(b[2])
             ends[(side, name)] = (start + y) / 2 if y > start else None
             y += 12 if y > start else 0
@@ -107,11 +108,11 @@ def band_flow(left, right, bands, marks=(), title="", summary="") -> Markup:
             if ends[(side, name)] is not None:
                 body.append(f'<text class="lbl" x="{x}" y="{ends[(side, name)] + 5:.1f}" text-anchor="{anchor}">{_e(name)}</text>')
     marks = set(map(tuple, marks))
-    for l, r, c, href in bands:
-        y1, y2, mk = ypos[("l", l, r)], ypos[("r", l, r)], (l, r) in marks
-        label = f"{l} to {r}: {c}" + (", rising" if mk else "")
+    for i, (l, r, c, href, kind) in enumerate(bands):
+        y1, y2, mk = ypos[("l", i)], ypos[("r", i)], (l, r) in marks
+        label = f"{l} to {r}: {c}" + (", rising" if mk else "") + (f", {kind}" if kind else "")
         body.append(f'<a href="{_e(href)}"><title>{_e(label)}</title>'
-                    f'<path class="band{" mark" if mk else ""}" d="M180,{y1:.1f} C320,{y1:.1f} 320,{y2:.1f} 460,{y2:.1f}" fill="none" stroke-width="{thick(c):.1f}"/>'
+                    f'<path class="band{" mark" if mk else ""}{" " + _e(kind) if kind else ""}" d="M180,{y1:.1f} C320,{y1:.1f} 320,{y2:.1f} 460,{y2:.1f}" fill="none" stroke-width="{thick(c):.1f}"/>'
                     f'<text class="lbl halo" x="320" y="{(y1 + y2) / 2 + 5:.1f}" text-anchor="middle">{"▲ " if mk else ""}{_e(c)}</text></a>')
     return _fig("".join(body), H, title, summary, ["From", "To", "Count", "Marked"],
-                [(l, r, c, "rising" if (l, r) in marks else "") for l, r, c, _ in bands])
+                [(l, r, c, "rising" if (l, r) in marks else kind) for l, r, c, _, kind in bands])

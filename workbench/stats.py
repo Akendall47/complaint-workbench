@@ -1,7 +1,9 @@
 """Aggregate queries for the dashboards. Each is one or two grouped queries, never one per row."""
+import json
 from datetime import date, timedelta
 
 from .deadlines import due_soon_edge
+from .handover import missing_fields
 
 OPEN = "state != 'accepted'"
 HOURS = range(8, 19)
@@ -92,9 +94,65 @@ def pipeline_flow(conn, cfg) -> list[dict]:
 
 
 def team(conn, today, holidays):
-    return conn.execute(f"SELECT s.id, s.name, COUNT(c.id) open, COALESCE(SUM(c.deadline < ?),0) past_deadline, COALESCE(SUM(c.urgent = 1),0) urgent"
-                        f" FROM staff s LEFT JOIN cases c ON c.owner_id = s.id AND c.{OPEN} WHERE s.role = 'handler' GROUP BY s.id ORDER BY s.id",
-                        (str(today),)).fetchall()
+    """One row per handler and specialist, most cases past deadline first. The team lead is not a row: they share the work out."""
+    return conn.execute(f"SELECT s.id, s.name, s.role, COUNT(c.id) open, COALESCE(SUM(c.deadline < ?),0) past_deadline, COALESCE(SUM(c.urgent = 1),0) urgent"
+                        f" FROM staff s LEFT JOIN cases c ON c.owner_id = s.id AND c.{OPEN} WHERE s.role IN ('handler','specialist')"
+                        " GROUP BY s.id ORDER BY past_deadline DESC, open DESC, s.id", (str(today),)).fetchall()
+
+
+def unassigned(conn) -> int:
+    return conn.execute(f"SELECT COUNT(*) FROM cases WHERE {OPEN} AND owner_id IS NULL").fetchone()[0]
+
+
+def _slice(source, type_):
+    """SQL and arguments that narrow cases by source and type. Empty values do not narrow."""
+    sql = "".join(f" AND {col} = ?" for col, v in (("source", source), ("type", type_)) if v)
+    return sql, [v for v in (source, type_) if v]
+
+
+def department_rows(conn, cfg, today, source="", type_="") -> list[dict]:
+    """Open, past deadline and urgent counts for every department, most past deadline first."""
+    extra, args = _slice(source, type_)
+    got = {r["department"]: dict(r) for r in conn.execute(
+        "SELECT department, COUNT(*) open, COALESCE(SUM(deadline < ?),0) past, COALESCE(SUM(urgent = 1),0) urgent FROM cases"
+        f" WHERE {OPEN} AND department IS NOT NULL{extra} GROUP BY department", (str(today), *args))}
+    rows = [{"department": d, "open": 0, "past": 0, "urgent": 0, **got.get(d, {})} for d in cfg["departments"]]
+    return sorted(rows, key=lambda r: (-r["past"], -r["open"], r["department"]))
+
+
+def handovers(conn, department, source="", type_="", limit=10) -> tuple[list[dict], int]:
+    """Cases waiting for a department (soonest deadline first, at most limit) and how many wait in all."""
+    extra, args = _slice(source, type_)
+    where = f"state = 'handed_over' AND department = ?{extra}"
+    n = conn.execute(f"SELECT COUNT(*) FROM cases WHERE {where}", (department, *args)).fetchone()[0]
+    rows = conn.execute(f"SELECT id, type, source, deadline, version FROM cases WHERE {where} ORDER BY deadline, id LIMIT ?", (department, *args, limit))
+    return [dict(r) for r in rows], n
+
+
+def missing_by_field(conn, cfg, department, source="", type_="") -> list[tuple[str, int]]:
+    """How many open cases of a department lack each required field, most often missing first. Fields never missing are left out."""
+    extra, args = _slice(source, type_)
+    n = {}
+    for (raw,) in conn.execute(f"SELECT handover_json FROM cases WHERE {OPEN} AND department = ?{extra}", (department, *args)):
+        for f in missing_fields(department, json.loads(raw or "{}"), cfg):
+            n[f] = n.get(f, 0) + 1
+    return sorted(((f.replace("_", " ").capitalize(), k) for f, k in n.items()), key=lambda x: (-x[1], x[0]))
+
+
+def pipeline_paths(conn, cfg) -> list[dict]:
+    """The paths in cfg["paths"] with how many cases took each. An urgent path counts urgent cases, a normal path the rest, any other
+    kind all. Paths nobody took are left out. Urgency is the case's today, not what it was at the move."""
+    n = {}
+    for f, t, u, k in conn.execute("SELECT e.from_state, e.to_state, COALESCE(c.urgent, 0), COUNT(*) FROM events e LEFT JOIN cases c ON c.id = e.case_id"
+                                   " WHERE e.from_state IS NOT NULL AND e.to_state IS NOT NULL AND e.from_state != e.to_state GROUP BY 1, 2, 3"):
+        n[(f, t, u)] = k
+    pick = {"urgent": lambda f, t: n.get((f, t, 1), 0), "normal": lambda f, t: n.get((f, t, 0), 0)}
+    out = []
+    for p in cfg["paths"]:
+        count = pick.get(p["kind"], lambda f, t: n.get((f, t, 0), 0) + n.get((f, t, 1), 0))(p["from"], p["to"])
+        if count:
+            out.append({**p, "count": count})
+    return out
 
 
 def rises(conn, today, cfg) -> list[dict]:

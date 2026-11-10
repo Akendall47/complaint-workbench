@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% from "partials/help.html" import help_panel %}
+{% block title %}Team{% endblock %}
+{% block strip %}{% include "partials/deadline_strip.html" %}{% endblock %}
+{% block purpose %}{{ content.views.team.purpose }}{% endblock %}
+{% block hint %}{% endblock %}
+{% block help %}{{ help_panel("team") }}{% endblock %}
+{% block content %}
+{% if lead %}
+<p class="rise"><b>Unassigned:</b> <a href="/queue?owner=unassigned">{{ unassigned }} open cases have no owner</a>.</p>
+{% endif %}
+<section class="table-card">
+  <div class="table-wrap">
+    <table class="case-table">
+      <thead><tr><th scope="col">Person</th><th scope="col">Past deadline</th><th scope="col">Open</th><th scope="col">Urgent</th></tr></thead>
+      <tbody>
+      {% for r in rows %}
+      <tr data-person="{{ r.id }}"><th scope="row">{{ r.name }} <small class="muted">{{ r.id }}</small></th>
+        <td class="num-col{{ ' deadline-past' if r.past_deadline }}">{{ r.past_deadline }}</td><td class="num-col">{{ r.open }}</td><td class="num-col">{{ r.urgent }}</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if not lead %}<p class="muted">Team lead sees the whole team.</p>{% endif %}
+</section>
+{% if lead %}
+<section class="card" aria-labelledby="load-h">
+  <h2 id="load-h">Open cases against the team average</h2>
+  {{ chart }}
+</section>
+{% endif %}
+<p class="muted">This page is for sharing out work. It does not show speed per case, because a speed target pushes people to approve AI drafts without checking.</p>
+<p class="source"><a href="/settings#data-sources">Where these numbers come from</a></p>
+{% endblock %}

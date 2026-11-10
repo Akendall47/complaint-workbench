@@ -154,3 +154,21 @@ button.primary:disabled{background:#c9c9d3;color:#4a4a55;cursor:not-allowed}
 .chart-data{margin-top:8px;font-size:14px}
 .chart-data summary{color:var(--indigo-dark);width:fit-content;padding:4px 0}
 .spark{width:120px;height:24px;vertical-align:middle}
+
+/* Departments, Team and Pipeline */
+.num-col{text-align:right;font-variant-numeric:tabular-nums}
+.case-table th[scope=row]{text-align:left;font-weight:500}
+.case-table th[scope=row] a[aria-current]{font-weight:700;text-decoration-thickness:2px}
+.handovers{list-style:none;padding:0;margin:10px 0 0;display:grid;gap:2px}
+.handovers li{display:flex;gap:6px 14px;flex-wrap:wrap;align-items:center;padding:9px 0;border-bottom:1px solid #ededf2;font-size:15px}
+.handovers li:last-child{border-bottom:0}
+.handovers form{margin:0}
+.more>summary{cursor:pointer;font-weight:600;padding:4px 0}
+.more h3{font-size:16px;margin:16px 0 0}
+.chips{list-style:none;padding:0;margin:0}
+.legend{list-style:none;display:flex;flex-wrap:wrap;gap:6px 20px;padding:0;margin:8px 0}
+.key{display:inline-block;width:34px;margin-right:8px;vertical-align:middle;border-top:4px solid var(--indigo-dark)}
+.key.urgent{border-top-style:dashed}
+.key.returned{border-top-style:dotted}
+.chart-svg .band.urgent{stroke-dasharray:10 5}
+.chart-svg .band.returned,.chart-svg .band.second_return{stroke-dasharray:2 4}

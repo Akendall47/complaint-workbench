@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% from "partials/help.html" import help_panel %}
+{% block title %}Departments{% endblock %}
+{% block strip %}{% include "partials/deadline_strip.html" %}{% endblock %}
+{% block purpose %}{{ content.views.departments.purpose }}{% endblock %}
+{% block hint %}{% endblock %}
+{% block help %}{{ help_panel("departments") }}{% endblock %}
+{% block content %}
+<section class="table-card">
+  <div class="toolbar">
+    <ul class="chips" aria-label="Filters in use">
+      {% if source %}<li class="chip">Source: {{ source }} <a href="{{ clear('source') }}">Clear<span class="sr-only"> source</span></a></li>{% endif %}
+      {% if type_ %}<li class="chip">Type: {{ type_ }} <a href="{{ clear('type') }}">Clear<span class="sr-only"> type</span></a></li>{% endif %}
+    </ul>
+    <details class="filters">
+      <summary>Filter by source or type</summary>
+      <form method="get" action="/departments" class="filter-form">
+        <input type="hidden" name="department" value="{{ chosen }}">
+        <label>Source <select name="source"><option value="">Any</option>{% for s in cfg.sources %}<option{% if source == s %} selected{% endif %}>{{ s }}</option>{% endfor %}</select></label>
+        <label>Type <select name="type"><option value="">Any</option>{% for t in cfg.types %}<option{% if type_ == t %} selected{% endif %}>{{ t }}</option>{% endfor %}</select></label>
+        <button type="submit">Apply</button>
+      </form>
+    </details>
+  </div>
+  <div class="table-wrap">
+    <table class="case-table">
+      <thead><tr><th scope="col">Department</th><th scope="col">Past deadline</th><th scope="col">Open</th><th scope="col">Urgent</th></tr></thead>
+      <tbody>
+      {% for r in rows %}
+      <tr><th scope="row"><a href="{{ link(r.department) }}"{% if r.department == chosen %} aria-current="true"{% endif %}>{{ r.department }}</a></th>
+        <td class="num-col{{ ' deadline-past' if r.past }}">{{ r.past }}</td><td class="num-col">{{ r.open }}</td><td class="num-col">{{ r.urgent }}</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="card" aria-labelledby="wait-h">
+  <h2 id="wait-h">Waiting for {{ chosen }}</h2>
+  {% if waiting %}
+  <ul class="handovers">
+    {% for c in waiting %}
+    <li><a href="/cases/{{ c.id }}" class="plain-id">{{ c.id }}</a>
+      <span>{{ c.type or "Type not set" }}, {{ c.source }}</span>
+      {% set d = days(c.deadline) %}<span class="chip{{ ' warn' if d < 0 }}">{% if d < 0 %}{{ -d }} past deadline{% else %}{{ d }} left{% endif %}</span>
+      {% if can_act %}
+      <form method="post" action="/cases/{{ c.id }}/accept"><input type="hidden" name="version" value="{{ c.version }}"><button type="submit" class="primary">Accept<span class="sr-only"> {{ c.id }}</span></button></form>
+      <details class="inline"><summary>Return<span class="sr-only"> {{ c.id }}</span></summary>
+        <form method="post" action="/cases/{{ c.id }}/return"><input type="hidden" name="version" value="{{ c.version }}">
+          <label>Reason <input name="reason" maxlength="500" required></label> <button type="submit">Return to the handler</button></form></details>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  {% if n_waiting > waiting|length %}<p><a href="{{ queue_link }}">See all {{ n_waiting }} in the Queue</a></p>{% endif %}
+  {% if not can_act %}<p class="muted">Specialists accept or return handovers.</p>{% endif %}
+  {% else %}<p class="empty">No handovers waiting.</p>{% endif %}
+</section>
+
+<details class="card more">
+  <summary>Fields most often missing</summary>
+  {{ chart }}
+</details>
+
+<p class="source"><a href="/settings#data-sources">Where these numbers come from</a></p>
+{% endblock %}

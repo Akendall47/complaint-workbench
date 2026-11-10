@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% from "partials/help.html" import help_panel %}
+{% block title %}Pipeline{% endblock %}
+{% block strip %}{% include "partials/deadline_strip.html" %}{% endblock %}
+{% block purpose %}{{ content.views.pipeline.purpose }}{% endblock %}
+{% block hint %}{% endblock %}
+{% block help %}{{ help_panel("pipeline") }}{% endblock %}
+{% block content %}
+<section class="card" aria-labelledby="flow-h">
+  <h2 id="flow-h">{{ title }}</h2>
+  <ul class="legend" aria-label="Key">
+    {% for kind, label in legend %}<li><span class="key {{ kind }}" aria-hidden="true"></span>{{ label }}</li>{% endfor %}
+  </ul>
+  {{ flow }}
+</section>
+
+<section class="table-card" aria-labelledby="stages-h">
+  <h2 id="stages-h" class="sr-only">Open cases by stage</h2>
+  <div class="table-wrap">
+    <table class="case-table">
+      <thead><tr><th scope="col">Stage</th><th scope="col">Open cases</th></tr></thead>
+      <tbody>
+      {% for s, n in stages %}
+      <tr><th scope="row"><a href="/queue?owner=all&amp;stage={{ s }}">{{ stage_name[s] }}</a></th><td class="num-col">{{ n }}</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<details class="card more">
+  <summary>More charts</summary>
+  {% for t, c in more %}<h3>{{ t }}</h3>{{ c }}{% endfor %}
+</details>
+
+<p class="source"><a href="/settings#data-sources">Where these numbers come from</a></p>
+{% endblock %}

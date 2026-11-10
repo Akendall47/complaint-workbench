@@ -221,6 +221,63 @@ def create_app(db_path="data/workbench.db", config_path="config/pipeline.yaml", 
                         chart=charts.step_line(items, summary=stats.sentence("bars", {"title": title, "items": items}) if items else ""),
                         chart_title=title, state_name=STATE_NAME)
 
+    # ---- Departments, Team, Pipeline ----
+    @app.get("/departments", response_class=HTMLResponse)
+    def departments(request: Request):
+        actor, q = current_actor(request), request.query_params
+        source = q.get("source") if q.get("source") in cfg["sources"] else ""
+        type_ = q.get("type") if q.get("type") in cfg["types"] else ""
+        with db() as conn:
+            row = conn.execute("SELECT department FROM staff WHERE id = ? AND role = 'specialist'", (actor.id,)).fetchone() if actor.role == "specialist" else None
+            mine = row[0] if row else None
+            rows = stats.department_rows(conn, cfg, today, source, type_)
+            if mine:  # a specialist sees their own department only
+                rows = [r for r in rows if r["department"] == mine]
+            chosen = mine or (q.get("department") if q.get("department") in cfg["departments"] else rows[0]["department"])
+            waiting, n_waiting = stats.handovers(conn, chosen, source, type_)
+            missing = stats.missing_by_field(conn, cfg, chosen, source, type_)[:6]
+            title = f"Fields most often missing, {chosen}"
+            keep = {k: v for k, v in (("source", source), ("type", type_)) if v}
+            return page(request, conn, "departments.html", rows=rows, chosen=chosen, waiting=waiting, n_waiting=n_waiting, can_act=bool(mine),
+                        days=lambda d: business_days_left(date.fromisoformat(d), today, hol), source=source, type_=type_,
+                        link=lambda d: "/departments?" + urlencode({"department": d, **keep}),
+                        clear=lambda k: "/departments?" + urlencode({"department": chosen, **{a: b for a, b in keep.items() if a != k}}),
+                        queue_link="/queue?" + urlencode({"owner": "all", "state": "handed_over", "department": chosen}),
+                        chart=charts.bars(missing, title=title, summary=stats.sentence("bars", {"title": title, "items": missing}) if missing else ""))
+
+    @app.get("/team", response_class=HTMLResponse)
+    def team(request: Request):
+        actor = current_actor(request)
+        with db() as conn:
+            everyone = stats.team(conn, today, hol)
+            avg = round(sum(r["open"] for r in everyone) / len(everyone), 1) if everyone else 0
+            lead = actor.role == "team_lead"
+            rows = everyone if lead else [r for r in everyone if r["id"] == actor.id]
+            items = [(r["name"], r["open"]) for r in everyone] + [("Team average", avg)]
+            title = "Open cases per person"
+            return page(request, conn, "team.html", rows=rows, lead=lead, avg=avg, unassigned=stats.unassigned(conn),
+                        chart=charts.bars(items, highlight="Team average", title=title, summary=stats.sentence("bars", {"title": title, "items": items})) if lead else "")
+
+    @app.get("/pipeline", response_class=HTMLResponse)
+    def pipeline(request: Request):
+        order = {s: i for i, s in enumerate(cfg["stages"])}
+        by = lambda names: sorted(set(names), key=lambda n: (order.get(n, len(order)), n))  # noqa: E731
+        href = lambda p: "/queue?" + urlencode({"owner": "all", "stage": p["to"] if p["to"] in order else p["from"]})  # noqa: E731
+        with db() as conn:
+            paths = stats.pipeline_paths(conn, cfg)
+            states = dict(stats.by_stage(conn))
+            stages = [(s, states.get(s, 0)) for s in cfg["stages"] if s != "accepted"]  # accepted is closed, so not an open count
+            title = "How cases move between stages"
+            summary = "Cases that took each path: " + ", ".join(f"{p['from']} to {p['to']} {p['count']} ({p['kind']})" for p in paths) + "."
+            flow = charts.band_flow(by(p["from"] for p in paths), by(p["to"] for p in paths),
+                                    [(p["from"], p["to"], p["count"], href(p), p["kind"]) for p in paths], title=title, summary=summary)
+            dept_title = "Open complaints by department"
+            by_dept = [(r["department"], r["open"]) for r in stats.by_department(conn)]
+            more = [(dept_title, charts.bars(by_dept, title=dept_title, summary=stats.sentence("bars", {"title": dept_title, "items": by_dept}) if by_dept else "")),
+                    ("When complaints arrive", charts.heatmap(stats.heatmap(conn), title="Complaints received by weekday and hour", summary="Darker cells are busier hours."))]
+            return page(request, conn, "pipeline.html", flow=flow, stages=stages, stage_name=STATE_NAME, more=more, title=title,
+                        legend=[("normal", "Normal path"), ("urgent", "Urgent fast path"), ("returned", "Returned for more work")])
+
     def back_to(nxt: str) -> str:
         return safe_path(nxt) or "/queue"
 
@@ -252,7 +309,7 @@ def create_app(db_path="data/workbench.db", config_path="config/pipeline.yaml", 
     def gone(request):
         """The case does not exist. A swap target gets a small fragment, a page the not-found page."""
         if request.headers.get("HX-Request"):
-            return HTMLResponse('<div id="case" hx-history="false"><p class="notice" role="alert">Case not found</p></div>', status_code=404)
+            return HTMLResponse('<div id="case" tabindex="-1" hx-history="false"><p class="notice" role="alert">Case not found</p></div>', status_code=404)
         with db() as conn:
             return page(request, conn, "not_found.html", status=404)
 
@@ -326,7 +383,10 @@ def create_app(db_path="data/workbench.db", config_path="config/pipeline.yaml", 
     @app.post("/cases/{case_id}/department")
     def set_department(request: Request, case_id: str, version: str = Form(""), step: str = Form("1"), all: str = Form("0"),
                        department: str = Form("")):
-        return act(request, case_id, version, step, all, lambda c, a, v: cases.set_department(c, case_id, a, v, department))
+        def do(c, a, v):
+            cases.set_department(c, case_id, a, v, department)
+            drafts.store_claims(c, case_id, cfg)  # the recording loads now, not at the next start; a no-op without one
+        return act(request, case_id, version, step, all, do)
 
     @app.post("/cases/{case_id}/claims")
     def add_claim(request: Request, case_id: str, version: str = Form(""), step: str = Form("1"), all: str = Form("0"), text: str = Form("")):

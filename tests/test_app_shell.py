@@ -10,7 +10,7 @@ from workbench.config import load_config
 from workbench.deadlines import business_days_left
 
 NAV = ["/", "/queue", "/departments", "/team", "/pipeline", "/policies", "/audit", "/settings"]
-BUILT = {"/", "/queue"}
+BUILT = {"/", "/queue", "/departments", "/team", "/pipeline"}
 
 
 @pytest.mark.parametrize("path", [pytest.param(p, marks=[] if p in BUILT else pytest.mark.xfail(reason="view not built yet", strict=True))
