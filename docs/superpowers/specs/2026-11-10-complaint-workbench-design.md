@@ -329,3 +329,12 @@ The owner asked that testing show the design holds up to thousands of complaints
 **Classifiers.** Held-out accuracy and a confusion table for routing and type, and the share sent to "needs routing". Trained and tested on synthetic data, so the numbers show the method works, not how it would do on real complaints. The deck says this.
 
 **Not tested.** Real complaints, real handlers, many users at once beyond two, and a live model under load.
+
+## 27. Assignment and team view **(owner; limits are my calls)**
+
+The owner asked to see which staff member is assigned to which case and who closed what, as in a ticketing system.
+
+- **Assignment.** Every case has an owner. The Queue has an Owner column and filters for my cases, unassigned and all. A handler can take an unassigned case; a team lead can assign or reassign. Each change is logged.
+- **Team view** (ninth navigation section, after Departments). One row per person: open cases, past deadline, due within 5 days, closed this week, returned by specialists. A bar shows each person's open cases against the team average. The team lead sees everyone; handlers and specialists see their own row.
+- **Limits, and why.** The view is for sharing out work, not for scoring people. It has no ranking and no speed-per-case figure. A speed target would reward approving AI drafts without checking them, which is the failure the per-claim check exists to prevent ([[automation-bias]] in the vault). "Returned by specialists" is shown because it measures handover quality, the problem in the brief. In a real bank, monitoring staff through this data would need the bank's own review (data protection and HR); the deck notes this as a workforce risk.
+- **Data.** A `staff` table of fictional people. Added to the Data sources table: prototype `staff`; real bank, the staff directory.
