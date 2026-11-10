@@ -1,17 +1,33 @@
 import re
 
 KNOWN_TOKENS = {"name": "[NAME]", "address": "[ADDRESS]", "dob": "[DOB]"}
-# Card first: its 13 to 19 digits would otherwise be half-eaten by the account or phone
-# pattern. Sort code before account for the same reason. Unlisted patterns run last.
-ORDER = ["card", "sort_code", "account", "phone", "email", "postcode"]
+TOKENS = {"sort_code_account": "[SORT CODE] [ACCOUNT]"}
+# Email first (bounded), then card, sort code plus account, sort code, account, phone;
+# the 9+ digit catch-all runs last. Unlisted patterns go in between.
+FIRST = ["email", "card", "sort_code_account", "sort_code", "account", "phone"]
+LAST = ["number"]
+# Case references and clause numbers must reach the quote check unchanged.
+PROTECTED = re.compile(r"\bAB-\d{4}-\d{5}\b|\bPOL-\d+(?:\.\d+)*\b")
+HOLD = 0xE000  # private-use characters stand in for protected text; no pattern matches them
 
 
 def mask(text: str, known: dict[str, str], patterns: dict[str, str]) -> str:
-    values = sorted(((v, KNOWN_TOKENS[k]) for k, v in known.items() if v), key=lambda x: -len(x[0]))
+    held: list[str] = []
+
+    def hold(m):
+        held.append(m.group())
+        return chr(HOLD + len(held) - 1)
+
+    text = PROTECTED.sub(hold, text)
+    values = sorted(((v.strip(), KNOWN_TOKENS[k]) for k, v in known.items() if v and len(v.strip()) >= 3),
+                    key=lambda x: -len(x[0]))
     for value, token in values:
-        text = re.sub(re.escape(value), token, text, flags=re.I)
-    names = [n for n in ORDER if n in patterns] + [n for n in patterns if n not in ORDER]
-    for name in names:
-        token = f"[{name.upper().replace('_', ' ')}]"
+        pat = r"\s+".join(map(re.escape, value.split()))
+        text = re.sub(pat, token, text, flags=re.I)
+    names = FIRST + [n for n in patterns if n not in FIRST + LAST] + LAST
+    for name in (n for n in names if n in patterns):
+        token = TOKENS.get(name, f"[{name.upper().replace('_', ' ')}]")
         text = re.sub(patterns[name], token, text, flags=re.I)
+    for i, original in enumerate(held):
+        text = text.replace(chr(HOLD + i), original)
     return text

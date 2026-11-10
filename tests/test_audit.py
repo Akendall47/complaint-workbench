@@ -58,3 +58,29 @@ def test_append_does_not_commit(conn):
     assert conn.in_transaction
     conn.rollback()
     assert conn.execute("SELECT COUNT(*) FROM audit").fetchone()[0] == 0
+
+
+@pytest.mark.parametrize("sql", [
+    "INSERT INTO staff(id, role) VALUES ('X','handler')",
+    "INSERT INTO staff(id, name) VALUES ('X','n')",
+    "INSERT INTO cases(id, state) VALUES ('C','new')",
+    "INSERT INTO cases(id, received_at) VALUES ('C','2026-01-01')",
+    "INSERT INTO notes(seq) VALUES (1)",
+    "INSERT INTO claims(seq) VALUES (1)",
+    "INSERT INTO events(at) VALUES ('x')",
+    "INSERT INTO events(case_id) VALUES ('x')",
+    "INSERT INTO audit(actor_id,role,action,prev_hash,hash) VALUES ('a','r','x','p','h')",
+    "INSERT INTO audit(at,role,action,prev_hash,hash) VALUES ('t','r','x','p','h')",
+    "INSERT INTO audit(at,actor_id,action,prev_hash,hash) VALUES ('t','a','x','p','h')",
+    "INSERT INTO audit(at,actor_id,role,prev_hash,hash) VALUES ('t','a','r','p','h')",
+    "INSERT INTO audit(at,actor_id,role,action,hash) VALUES ('t','a','r','x','h')",
+    "INSERT INTO audit(at,actor_id,role,action,prev_hash) VALUES ('t','a','r','x','p')",
+])
+def test_not_null_enforced(conn, sql):
+    with pytest.raises(sqlite3.IntegrityError):
+        conn.execute(sql)
+
+
+def test_nullable_columns_stay_nullable(conn):
+    conn.execute("INSERT INTO cases(id, received_at, state) VALUES ('C','2026-01-01','new')")
+    conn.execute("INSERT INTO audit(at,actor_id,role,action,prev_hash,hash) VALUES ('t','a','r','x','p','h')")

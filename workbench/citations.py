@@ -1,5 +1,10 @@
+import unicodedata
+
+_QUOTES = str.maketrans({"‘": "'", "’": "'", "“": '"', "”": '"'})
+
+
 def _norm(s: str) -> str:
-    return " ".join(s.split()).casefold()
+    return " ".join(unicodedata.normalize("NFKC", s).translate(_QUOTES).split()).casefold()
 
 
 def quote_in_source(quote: str, source: str) -> bool:

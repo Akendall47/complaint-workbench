@@ -56,4 +56,13 @@ def test_days_left_is_int_for_dates(cfg, a, b):
     hol = {date.fromisoformat(d) for d in cfg["bank_holidays"]}
     r = business_days_left(a, b, hol)
     assert type(r) is int
-    assert (r < 0) == (a < b and business_days_left(b, a, hol) > 0)
+    assert (r < 0) if a < b else (r >= 0)
+
+
+def test_weekend_only_gap_is_negative(hol):
+    assert business_days_left(date(2026, 11, 14), date(2026, 11, 15), hol) < 0
+
+
+def test_unknown_product_kind_rejected(cfg):
+    with pytest.raises(ValueError):
+        deadline_for(date(2026, 11, 10), "mortgage", cfg)

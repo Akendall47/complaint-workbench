@@ -52,12 +52,15 @@ urgent:
   classifier_threshold: 0.7
 rise: {ratio: 2.0, minimum_cases: 10, baseline_weeks: 4}
 masking:
-  card: '\b\d(?:[ -]?\d){12,18}\b'
-  account: '\b\d{8}\b'
-  sort_code: '\b\d{2}[-. ]\d{2}[-. ]\d{2}\b'
-  phone: '(?:\+44\s?7\d{3}|\b07\d{3})\s?\d{3}\s?\d{3}\b'
-  email: '\b[\w.+-]+@[\w-]+\.[\w.-]+\b'
+  # Shared separator class [ .-]: space, dot, hyphen. No slash, so 10/11/2026 survives.
+  email: '\b[\w.+-]{1,64}@[\w-]+(?:\.[\w-]+)+\b'
+  card: '(?<!\d)(?!\d{2}[ .-]\d{2}[ .-]\d{2}[ .-]\d{8}(?!\d))\d(?:[ .-]?\d){12,18}(?!\d)'
+  sort_code_account: '(?<!\d)\d{2}[ .-]\d{2}[ .-]\d{2} \d{8}(?!\d)'
+  sort_code: '(?<!\d)\d{2}[ .-]\d{2}[ .-]\d{2}(?!\d)'
+  account: '(?<!\d)\d{8}(?!\d)'
+  phone: '(?:\+44[ .-]?\(?0?\)?[ .-]?|(?<!\d)0)[1-9]\d{1,3}(?:[ .-]?\d{3,4}){2}(?!\d)'
   postcode: '\b[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2}\b'
+  number: '\d{9,}'
 model: qwen3:4b-instruct
 prompt_version: 1
 stages: [new, in_review, handed_over, returned, accepted]

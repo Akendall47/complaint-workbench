@@ -1,30 +1,30 @@
 CREATE TABLE staff(
-  id TEXT PRIMARY KEY, name TEXT, role TEXT, department TEXT);
+  id TEXT PRIMARY KEY, name TEXT NOT NULL, role TEXT NOT NULL, department TEXT);
 CREATE TABLE cases(
-  id TEXT PRIMARY KEY, received_at TEXT, source TEXT, product_kind TEXT,
+  id TEXT PRIMARY KEY, received_at TEXT NOT NULL, source TEXT, product_kind TEXT,
   department TEXT, department_pred TEXT, department_conf REAL, department_true TEXT,
   type TEXT, type_conf REAL, type_true TEXT,
-  state TEXT, owner_id TEXT, urgent INTEGER, urgent_manual INTEGER,
+  state TEXT NOT NULL, owner_id TEXT, urgent INTEGER, urgent_manual INTEGER,
   return_count INTEGER DEFAULT 0, deadline TEXT, handed_over_at TEXT, accepted_at TEXT,
   duplicate_of TEXT, draft_state TEXT,
   customer_json TEXT, handover_json TEXT, handover_true_json TEXT,
   version INTEGER DEFAULT 0);
 CREATE TABLE notes(
-  id INTEGER PRIMARY KEY, case_id TEXT, seq INTEGER,
+  id INTEGER PRIMARY KEY, case_id TEXT NOT NULL, seq INTEGER,
   author TEXT, written_at TEXT, body TEXT);
 CREATE TABLE claims(
-  id INTEGER PRIMARY KEY, case_id TEXT, seq INTEGER,
+  id INTEGER PRIMARY KEY, case_id TEXT NOT NULL, seq INTEGER,
   text TEXT, quote TEXT, note_id INTEGER,
   inferred INTEGER, supported INTEGER, status TEXT, original_text TEXT);
 CREATE TABLE events(
-  id INTEGER PRIMARY KEY, case_id TEXT, at TEXT,
+  id INTEGER PRIMARY KEY, case_id TEXT NOT NULL, at TEXT NOT NULL,
   kind TEXT, from_state TEXT, to_state TEXT, actor_id TEXT);
 CREATE TABLE policies(
   id TEXT PRIMARY KEY, section TEXT, title TEXT, body TEXT);
 CREATE VIRTUAL TABLE policies_fts USING fts5(id, title, body);
 CREATE TABLE audit(
-  id INTEGER PRIMARY KEY AUTOINCREMENT, at TEXT, actor_id TEXT, role TEXT,
-  case_id TEXT, action TEXT, detail_json TEXT, prev_hash TEXT, hash TEXT);
+  id INTEGER PRIMARY KEY AUTOINCREMENT, at TEXT NOT NULL, actor_id TEXT NOT NULL, role TEXT NOT NULL,
+  case_id TEXT, action TEXT NOT NULL, detail_json TEXT, prev_hash TEXT NOT NULL, hash TEXT NOT NULL);
 
 CREATE INDEX idx_cases_state_deadline ON cases(state, deadline);
 CREATE INDEX idx_cases_dept_type ON cases(department, type);
