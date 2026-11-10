@@ -12,3 +12,4 @@ inspo/
 .hypothesis/
 data/*.db-wal
 data/*.db-shm
+*.egg-info/

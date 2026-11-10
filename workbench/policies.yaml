@@ -1,0 +1,323 @@
+# Fictional internal policy for Alder Bank. Invented for this prototype; not taken from any real rulebook.
+- id: POL-1.1
+  section: Complaint handling
+  title: Acknowledging a complaint
+  body: >-
+    Every complaint must be logged and acknowledged in writing on the day it is received, or on the next
+    business day if it arrives out of hours. The acknowledgement names the case reference, the handler
+    and the date by which the customer will hear from us. Staff must never ask a customer to repeat a
+    complaint that has already been recorded. Complaints made by phone are summarised back to the
+    customer before the call ends.
+- id: POL-1.2
+  section: Complaint handling
+  title: Complaint clock and deadlines
+  body: >-
+    The clock starts on the day the complaint is first received through any channel, not the day it is
+    logged. Payment complaints must be answered within fifteen business days. All other complaints must
+    be answered within eight weeks. A handler who expects to miss a deadline must tell the team lead at
+    least five business days before it falls, and must tell the customer why in plain words.
+- id: POL-1.3
+  section: Complaint handling
+  title: Urgent and vulnerable customers
+  body: >-
+    A case is urgent when the deadline is close, when the customer describes a vulnerability or money
+    hardship, or when fraud is still happening. Urgent cases move to the top of the queue and must be
+    opened by a handler within one business day. The reason for urgency is written on the case so that
+    the next person understands it without reading every note. Handlers must be patient and avoid
+    jargon.
+- id: POL-1.4
+  section: Complaint handling
+  title: Routing to the right team
+  body: >-
+    Each complaint is routed to the department that best matches the main problem the customer
+    describes. If two departments could own the case, the handler chooses the one holding the more
+    serious part and records why. A suggested route from the triage tool is advice only. The handler
+    reads the notes and confirms or changes the route before any handover is made.
+- id: POL-1.5
+  section: Complaint handling
+  title: Writing the final response
+  body: >-
+    The final response must be written in plain British English, in short sentences, without
+    unexplained terms. It states what we found, what we will do and what the customer can do next if
+    they are still unhappy. A second person checks any response that offers money above the handler's
+    limit. Every response is saved on the case before it is sent.
+- id: POL-2.1
+  section: Data and records
+  title: Keeping accurate notes
+  body: >-
+    Case notes record what was said and done, by whom and when. Notes must be factual and free of
+    opinions about the customer. A note is never edited after it is saved; corrections are added as a
+    new note that refers to the old one. Dates, amounts and the channel used must be written exactly as
+    the customer gave them so a reader can check them later.
+- id: POL-2.2
+  section: Data and records
+  title: Personal data in summaries
+  body: >-
+    Names, addresses, account numbers, sort codes, phone numbers, email addresses and postcodes are
+    removed before case text is sent to any automated tool. Staff must check that the masked text still
+    makes sense. A summary written by a tool is a draft. The handler reads it against the notes and
+    removes anything the notes do not support.
+- id: POL-2.3
+  section: Data and records
+  title: Access to case records
+  body: >-
+    Staff may open only the cases they need for their work. Every view of a case, every change and
+    every handover is written to the audit log with the person's identifier and the time. The audit log
+    cannot be edited or deleted by complaints staff. Attempts to look at records without a work reason
+    are reported to the team lead.
+- id: POL-2.4
+  section: Data and records
+  title: Retention of complaint files
+  body: >-
+    A complaint file is kept for six years after the case is accepted and closed. After that period a
+    file is reviewed and either archived or destroyed by the records team. Files subject to an open
+    request, dispute or investigation are kept until it ends. Staff never keep private copies of
+    complaint material on personal devices, email accounts or paper.
+- id: POL-2.5
+  section: Data and records
+  title: Quoting sources in drafts
+  body: >-
+    Every claim in a draft summary must point to words in the case notes. If a statement is an
+    inference rather than a fact stated in the notes, it must be labelled as an inference. A claim with
+    no supporting quote is removed or rewritten before the draft is used. Handlers confirm each claim
+    they keep, and the system records who confirmed it.
+- id: POL-3.1
+  section: Fraud claims
+  title: First response to a fraud claim
+  body: >-
+    When a customer reports payments they did not authorise, the handler first checks that the card or
+    account is blocked and that the customer is safe from further loss. Only then are the details taken.
+    The handler records the amount disputed, the date of transaction and the merchant name exactly as
+    the customer states them, even if the customer is unsure.
+- id: POL-3.2
+  section: Fraud claims
+  title: Card and police details
+  body: >-
+    For card payments the handler records the card last four digits and never the full number. If the
+    customer has reported the matter to the police, the police reference is written on the case. If no
+    report has been made, the handler writes that none exists and explains the customer's options
+    without pressure. Missing details are chased within two business days.
+- id: POL-3.3
+  section: Fraud claims
+  title: Handover to the fraud specialist
+  body: >-
+    A fraud case is ready for handover when the amount disputed, date of transaction, merchant name,
+    card last four and police reference are all present on the case. If one is missing, the handler
+    says so in the handover note and states what has been done to find it. The specialist can send a
+    handover back if the missing detail is needed to decide the claim.
+- id: POL-3.4
+  section: Fraud claims
+  title: Scams where the customer paid
+  body: >-
+    When the customer was tricked into making a payment themselves, the case is treated with care and
+    without blame. The handler records how the customer was contacted, what they were told and which
+    account received the money. The recipient bank is contacted on the same business day. The customer
+    is told plainly that recovery is not guaranteed.
+- id: POL-3.5
+  section: Fraud claims
+  title: Keeping the customer informed
+  body: >-
+    The customer receives an update at least every five business days while a fraud claim is open, even
+    when there is no news. Updates say what has been done, what is waiting and who holds the case now.
+    If the claim is refused, the response sets out the reason in plain words and explains how to take
+    the matter further.
+- id: POL-4.1
+  section: Financial difficulty
+  title: Recognising money worries
+  body: >-
+    Handlers must listen for signs that a customer is struggling to meet payments, even when the
+    complaint is about something else. If the customer mentions lost income, unpaid bills or fear of
+    losing their home, the handler asks gently whether they would like help. The handler records
+    whether a vulnerability was noted and what the customer said in their own words.
+- id: POL-4.2
+  section: Financial difficulty
+  title: Income and spending
+  body: >-
+    With the customer's agreement, the handler records monthly income and monthly outgoings, and the
+    total arrears owed at the date of the call. Figures are written as the customer gives them. The
+    handler does not judge the customer's spending or press for documents on the first call. Where the
+    customer is distressed, the call is paused and offered again later.
+- id: POL-4.3
+  section: Financial difficulty
+  title: Pausing collections activity
+  body: >-
+    While a financial difficulty complaint is being reviewed, the handler asks the collections team to
+    pause letters and calls for up to fourteen days. The pause is written on the case. It can be
+    extended only by the specialist. Charges that arise during the pause are listed so the specialist
+    can decide whether they should be refunded.
+- id: POL-4.4
+  section: Financial difficulty
+  title: Offering a payment plan
+  body: >-
+    The handler may explain the standard repayment plans and record whether a payment plan was offered
+    and whether the customer accepted it. The handler must not promise a particular outcome. Any
+    arrangement that reduces or freezes interest or charges is agreed by the specialist. The customer
+    receives the agreed terms in writing before the first payment is due.
+- id: POL-4.5
+  section: Financial difficulty
+  title: Handover to the financial support specialist
+  body: >-
+    A financial difficulty handover must show monthly income, monthly outgoings, total arrears,
+    vulnerability noted and payment plan offered. If any of these is missing, the handler states why
+    and what was tried. The specialist reads the notes and may send the case back with a clear request.
+    A customer must never be asked to explain their circumstances twice.
+- id: POL-5.1
+  section: Bereavement
+  title: First contact after a death
+  body: >-
+    The first call about a death is handled by one named person wherever possible. The handler offers
+    condolences, says what will happen next and avoids asking more than is needed. The handler records
+    the date of death and the caller's relationship to deceased. No fees or interest are applied to the
+    account while the notification is being processed.
+- id: POL-5.2
+  section: Bereavement
+  title: Dealing with the executor
+  body: >-
+    Only the executor or a person with legal authority may give instructions about the accounts. The
+    handler records the executor name and the document that proves the role. If the caller is not the
+    executor, the handler explains what can be shared and what cannot, and offers to speak to the
+    executor directly. The explanation is kind, short and clear.
+- id: POL-5.3
+  section: Bereavement
+  title: Accounts and proof of death
+  body: >-
+    The handler lists every product held by the deceased as accounts affected, including joint
+    accounts, cards, loans and savings. A death certificate must be seen before accounts are closed or
+    money is released, and the handler records whether the death certificate seen is the original or a
+    copy. The document is returned to the sender safely and the return is noted on the case.
+- id: POL-5.4
+  section: Bereavement
+  title: Complaints about how a death was handled
+  body: >-
+    If a family member complains about the way a bereavement was handled, the case is marked urgent. A
+    senior handler reads all previous notes before calling. The call begins with an apology where one
+    is due. The handler explains what went wrong, what will be corrected and by when. The family is
+    given one direct contact number for the case.
+- id: POL-5.5
+  section: Bereavement
+  title: Handover for bereavement cases
+  body: >-
+    A bereavement handover must include the date of death, executor name, relationship to deceased,
+    accounts affected and whether the death certificate was seen. Where a field is unknown, the handler
+    writes unknown and records how it will be found. The receiving team must not ask the family for
+    details that are already on the case.
+- id: POL-6.1
+  section: Data protection
+  title: Recognising a data request
+  body: >-
+    A customer asking what information we hold about them is making a data request, even if they do not
+    use those words. The handler logs the data requested in the customer's own terms and records the
+    request date as the day it was first made. The one month response period runs from that date, and
+    the case is passed to the data protection team the same day.
+- id: POL-6.2
+  section: Data protection
+  title: Checking identity
+  body: >-
+    Before any personal data is released, the handler confirms that the person asking is the customer
+    or is acting with written permission. The handler records identity verified, with the evidence seen,
+    and never copies identity documents onto the case. If identity cannot be confirmed, the handler
+    explains what is needed and the clock is paused only when the specialist agrees.
+- id: POL-6.3
+  section: Data protection
+  title: Searching our systems
+  body: >-
+    The handler lists the systems searched, including the case system, call recordings, card records
+    and any archive. The data protection specialist decides whether further systems must be searched.
+    Records about other people are marked for removal before release. The search is repeated if the
+    customer later names a record that was not found the first time.
+- id: POL-6.4
+  section: Data protection
+  title: Data shared in error
+  body: >-
+    If a customer says their details were sent to the wrong person or address, the handler treats the
+    case as urgent and informs the data protection specialist at once. The handler records what was
+    shared, who received it and how we found out. The customer is told what has been done to get the
+    information back and what they can do to protect themselves.
+- id: POL-6.5
+  section: Data protection
+  title: Handover to data protection
+  body: >-
+    A data protection handover must state the data requested, request date, whether identity was
+    verified and the systems searched. The specialist can return a case that omits any of these. The
+    handover also notes whether the customer has asked for a correction or deletion, because these are
+    handled separately from a request for a copy.
+- id: POL-7.1
+  section: Mis-selling review
+  title: What counts as a sale complaint
+  body: >-
+    A complaint that a product or advice was unsuitable, misdescribed or sold without proper
+    explanation belongs in the mis-selling review team. The handler records the product name and the
+    date of sale as the customer remembers them, then checks them against the account records. If the
+    two disagree, both are written down and the difference is noted for the reviewer.
+- id: POL-7.2
+  section: Mis-selling review
+  title: Sale channel and adviser
+  body: >-
+    The handler records the sale channel, such as branch, phone or online, and the adviser name if the
+    customer can give it. If the customer does not know the adviser, the handler searches the sales
+    records and notes the search. The handler never suggests that the adviser acted wrongly. The review
+    team decides that after reading the sale file.
+- id: POL-7.3
+  section: Mis-selling review
+  title: Describing the loss
+  body: >-
+    The handler writes down the amount lost as the customer calculates it and says how the figure was
+    reached. The handler explains that the review team will work out any loss itself, and records
+    whether the loss explained to the customer was understood. Charges, missed returns and fall in
+    value are listed separately so the reviewer can tell them apart.
+- id: POL-7.4
+  section: Mis-selling review
+  title: Gathering the sale file
+  body: >-
+    Within three business days of receiving a sale complaint, the handler requests the sale file from
+    the archive. This includes the fact find, the risk questionnaire and the suitability report. The
+    handler checks that the file is complete and lists any missing document. A missing document is
+    reported to the team lead and does not delay the acknowledgement to the customer.
+- id: POL-7.5
+  section: Mis-selling review
+  title: Handover to the review team
+  body: >-
+    A mis-selling handover includes the product name, date of sale, sale channel, adviser name, amount
+    lost and loss explained. The handler adds a short neutral summary of what the customer says
+    happened. The review team may return a handover that lacks any of these items. Returned cases come
+    back to the original handler with a written reason.
+- id: POL-8.1
+  section: General service
+  title: Understanding the problem
+  body: >-
+    For service complaints the handler writes an issue summary in one or two plain sentences, then
+    checks it with the customer. The handler records the date of incident and, if the problem has
+    happened more than once, lists the dates separately. The handler thanks the customer for raising
+    the matter and says who will look into it.
+- id: POL-8.2
+  section: General service
+  title: Branch or channel
+  body: >-
+    The handler records the branch or channel where the problem occurred, whether a branch, the phone
+    line, the mobile app or the website. If the issue involves a named member of staff, the name is
+    noted without comment. The handler checks whether other customers reported the same problem
+    recently and tells the team lead if a pattern is appearing.
+- id: POL-8.3
+  section: General service
+  title: What the customer wants
+  body: >-
+    Every service complaint records the customer outcome wanted, for example an apology, a refund or a
+    change to a process. The handler asks this near the start of the case and records the answer in
+    the customer's words. If the outcome cannot be given, the final response explains why and offers
+    the nearest alternative the bank can provide.
+- id: POL-8.4
+  section: General service
+  title: Digital service faults
+  body: >-
+    For faults with the website or app, the handler records the device, the version of the app and the
+    time of the problem. The handler checks the service status log for known outages on that date. If
+    several customers report the same fault within a week, the handler tells the digital team and the
+    team lead and adds a note to each affected case.
+- id: POL-8.5
+  section: General service
+  title: Goodwill payments
+  body: >-
+    A handler may offer a small goodwill payment up to their personal limit when we have made a
+    mistake and the customer has lost time or money. The reason and amount are written on the case. Any
+    larger amount needs the approval of the team lead before it is offered. A goodwill payment never
+    replaces a refund of money the customer is owed.
