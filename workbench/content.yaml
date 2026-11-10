@@ -3,10 +3,10 @@ views:
   overview:
     purpose: See how the complaints team is doing this morning.
     steps:
-      - Read the headline figures at the top.
-      - Check Needs attention today and the unusual rise card.
-      - Select a figure or a chart bar to open the matching cases in the Queue.
-    layout_reason: Grouped under plain headings so the morning check takes a minute.
+      - Open one of the cases under Needs attention today. They are the ones closest to their deadline.
+      - If a line says there is an unusual rise, select it to see those cases in the Queue.
+      - Select Show the numbers under the chart to read its figures as a table.
+    layout_reason: Typical days open is the median, the middle value, so a few very old cases do not distort it. Handovers returned is the share of handed-over cases a specialist sent back. The deadline figures stay in the strip at the top of every page.
   queue:
     purpose: Pick the next case to work on. The case closest to its deadline comes first.
     steps:

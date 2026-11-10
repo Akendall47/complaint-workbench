@@ -40,7 +40,7 @@ def step_line(series, title="", summary="") -> Markup:
     """A step line over (label, value) points in order, each point labelled with its value."""
     if not series:
         return EMPTY
-    n, top, H = len(series), max(v for _, v in series) or 1, 220
+    n, top, H = len(series), max(v for _, v in series) or 1, 170
     xs = [30 + (W - 60) * (i / (n - 1) if n > 1 else .5) for i in range(n)]
     ys = [30 + (H - 70) * (1 - v / top) for _, v in series]
     path = f"M{xs[0]:.1f},{ys[0]:.1f}" + "".join(f" H{xs[i]:.1f} V{ys[i]:.1f}" for i in range(1, n))
@@ -49,7 +49,7 @@ def step_line(series, title="", summary="") -> Markup:
             f'<path class="step" d="{path}" aria-hidden="true"/>']
     for i, (k, v) in enumerate(series):
         body.append(f'<circle class="dot" cx="{xs[i]:.1f}" cy="{ys[i]:.1f}" r="4" aria-hidden="true"/>'
-                    f'<text class="lbl" x="{xs[i]:.1f}" y="{ys[i] - 10:.1f}" text-anchor="middle">{_e(v)}</text>')
+                    f'<text class="lbl halo" x="{xs[i]:.1f}" y="{ys[i] - 10:.1f}" text-anchor="middle">{_e(v)}</text>')
         if i % every == 0:
             body.append(f'<text class="lbl" x="{xs[i]:.1f}" y="{H - 14}" text-anchor="middle">{_e(k)}</text>')
     return _fig("".join(body), H, title, summary, ["Point", "Value"], series)

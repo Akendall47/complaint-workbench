@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% from "partials/help.html" import help_panel %}
+{% block title %}Overview{% endblock %}
+{% block strip %}{% include "partials/deadline_strip.html" %}{% endblock %}
+{% block purpose %}{{ content.views.overview.purpose }}{% endblock %}
+{% block hint %}{% endblock %}
+{% block help %}{{ help_panel("overview") }}{% endblock %}
+{% block content %}
+<ul class="figures">
+  {% for label, value, href in figures %}
+  <li class="figure"><span class="figure-label">{{ label }}</span>
+    <span class="figure-value">{% if href %}<a href="{{ href }}">{{ value }}</a>{% else %}{{ value }}{% endif %}</span></li>
+  {% endfor %}
+</ul>
+
+<section class="card" aria-labelledby="attention-h">
+  <h2 id="attention-h">Needs attention today</h2>
+  {% if attention %}
+  <ol class="attention">
+    {% for c in attention %}
+    <li><a href="/cases/{{ c.id }}" class="plain-id">{{ c.id }}</a>
+      <span>{{ c.type or "Type not set" }}, {{ c.department or "needs routing" }}</span>
+      <span class="chip{{ ' warn' if c.when.endswith('past deadline') }}">{{ c.when }}</span>
+      {% if c.urgent %}<span class="urgent-tag">Urgent</span>{% endif %}</li>
+    {% endfor %}
+  </ol>
+  {% else %}<p class="empty">Nothing needs you today.</p>{% endif %}
+</section>
+
+{% if rise %}
+<p class="rise"><b>Unusual rise:</b> <a href="/queue?{{ rise_query }}">{{ rise.department }}, {{ rise.type }}</a>.
+  {{ rise.this_week }} this week against about {{ "%.0f"|format(rise.usual) }} in a usual week.</p>
+{% endif %}
+
+<section class="card" aria-labelledby="chart-h">
+  <h2 id="chart-h">{{ chart_title }}</h2>
+  {{ chart }}
+</section>
+
+<p class="source"><a href="/settings#data-sources">Where these numbers come from</a></p>
+{% endblock %}

@@ -23,6 +23,7 @@ from .classify import MODELS_DIR, ensure_models
 from .config import load_config
 from .db import connect
 from .deadlines import business_days_left, due_soon_edge
+from . import charts, stats
 from .stats import rise_pairs
 
 HERE = Path(__file__).parent
@@ -194,6 +195,31 @@ def create_app(db_path="data/workbench.db", config_path="config/pipeline.yaml", 
     def queue(request: Request):
         with db() as conn:
             return page(request, conn, "queue.html", **queue_ctx(conn, current_actor(request), parse_qs(request.url.query), edge_of(request)))
+
+    # ---- Overview: what needs me today ----
+    def when(days: int) -> str:
+        n = abs(days)
+        unit = f"{n} business day{'' if n == 1 else 's'}"
+        return f"{unit} past deadline" if days < 0 else "Due today" if days == 0 else f"{unit} left"
+
+    @app.get("/", response_class=HTMLResponse)
+    def overview(request: Request):
+        actor = current_actor(request)
+        with db() as conn:
+            h = stats.headline(conn, today, hol, cfg["urgent"]["deadline_within_business_days"])
+            attention = [{**r, "when": when(business_days_left(date.fromisoformat(r["deadline"]), today, hol))}
+                         for r in stats.needs_attention(conn, actor, today)]
+            rise = next(iter(stats.rises(conn, today, cfg)), None)
+            weeks = stats.trend(conn, today)
+            items = [(f"{date.fromisoformat(w['week']).day} {date.fromisoformat(w['week']):%b}", w["new"]) for w in weeks]
+            title = "Complaints per week, last 8 weeks"
+            figures = [("Open complaints", f"{h['open']:,}", "/queue?owner=all"),
+                       ("Typical days open", "–" if h["avg_days_open"] is None else f"{h['avg_days_open']:.0f}", None),
+                       ("Handovers returned", "–" if h["returned_share"] is None else f"{h['returned_share']:.0%}", None)]
+            return page(request, conn, "overview.html", figures=figures, attention=attention, rise=rise,
+                        rise_query=urlencode({"owner": "all", "department": rise["department"], "type": rise["type"]}) if rise else "",
+                        chart=charts.step_line(items, summary=stats.sentence("bars", {"title": title, "items": items}) if items else ""),
+                        chart_title=title, state_name=STATE_NAME)
 
     def back_to(nxt: str) -> str:
         return safe_path(nxt) or "/queue"

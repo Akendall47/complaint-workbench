@@ -125,3 +125,32 @@ button.primary:disabled{background:#c9c9d3;color:#4a4a55;cursor:not-allowed}
   .topbar,.page,.footer{padding-left:20px;padding-right:20px}
   .case-table td,.case-table th{padding:8px 6px}
 }
+
+/* Overview and charts */
+.figures{display:flex;gap:16px;flex-wrap:wrap;list-style:none;padding:0;margin:0 0 16px}
+.figure{background:white;border-radius:18px;box-shadow:var(--shadow);padding:16px 22px;display:grid;gap:2px;min-width:200px;flex:1 1 200px}
+.figure-label{font-size:14px;color:var(--muted)}
+.figure-value{font-size:34px;font-weight:600;letter-spacing:-.6px;font-variant-numeric:tabular-nums;line-height:1.2}
+.figure-value a{color:var(--ink);text-decoration-color:var(--strong)}
+.attention{list-style:none;padding:0;margin:10px 0 0;display:grid;gap:2px}
+.attention li{display:flex;gap:6px 14px;flex-wrap:wrap;align-items:center;padding:9px 0;border-bottom:1px solid #ededf2;font-size:15px}
+.attention li:last-child{border-bottom:0}
+.rise{margin:0 0 16px;padding:10px 16px;border-radius:12px;background:var(--tint);color:var(--ink)}
+.chart{margin:10px 0 0}
+.chart-svg{display:block;width:100%;max-width:640px;height:auto}
+.chart-svg .lbl{font-size:14px;fill:var(--ink)}
+.chart-svg .lbl.hi{font-weight:700}
+.chart-svg .halo{paint-order:stroke;stroke:white;stroke-width:4px;font-weight:600}
+.chart-svg .axis{stroke:var(--strong);stroke-width:1}
+.chart-svg .step{fill:none;stroke:var(--indigo-dark);stroke-width:2.5}
+.chart-svg .dot{fill:var(--indigo-dark)}
+.chart-svg .bar{fill:var(--indigo)}
+.chart-svg .bar.hi{fill:var(--accent-dark)}
+.chart-svg .cell{fill:var(--indigo)}
+.chart-svg .l0{fill-opacity:.04}.chart-svg .l1{fill-opacity:.15}.chart-svg .l2{fill-opacity:.3}.chart-svg .l3{fill-opacity:.5}.chart-svg .l4{fill-opacity:.7}
+.chart-svg .band{stroke:var(--indigo);stroke-opacity:.35}
+.chart-svg .band.mark{stroke:var(--accent);stroke-opacity:.6}
+.chart-svg a:hover .band{stroke-opacity:.6}
+.chart-data{margin-top:8px;font-size:14px}
+.chart-data summary{color:var(--indigo-dark);width:fit-content;padding:4px 0}
+.spark{width:120px;height:24px;vertical-align:middle}

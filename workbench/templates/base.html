@@ -40,7 +40,7 @@
     <button type="button" class="help-button" data-open="help" aria-expanded="false" aria-controls="help">How this page works</button>
   </header>
   <main id="main" class="page" tabindex="-1">
-    <p id="hint" class="hint" hidden>New here? Select “How this page works” at the top right. <button type="button" id="hint-dismiss">Dismiss</button></p>
+    {% block hint %}<p id="hint" class="hint" hidden>New here? Select “How this page works” at the top right. <button type="button" id="hint-dismiss">Dismiss</button></p>{% endblock %}
     <div class="page-heading">
       <div>
         <h1 class="view-title">{% block title_h %}{{ self.title() }}{% endblock %}</h1>
