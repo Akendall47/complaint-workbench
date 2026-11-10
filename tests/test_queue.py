@@ -22,7 +22,7 @@ def test_no_match_message_and_clear_link(app_db):
     c = sqlite3.connect(app_db)
     c.execute("DELETE FROM cases WHERE department = 'Bereavement' AND urgent = 1")
     c.commit()
-    r = TestClient(create_app(str(app_db), models_dir=None)).get("/queue?department=Bereavement&urgent=1&due=past")
+    r = TestClient(create_app(str(app_db), models_dir=None), base_url="http://127.0.0.1:8000").get("/queue?department=Bereavement&urgent=1&due=past")
     assert r.status_code == 200
     assert "No cases match these filters" in r.text and "Clear filters" in r.text
     assert "<table" not in r.text

@@ -39,6 +39,15 @@ PER_PAGE = 50
 NOT_FOUND = "Database not found. Run: uv run python -m workbench.generate"
 
 
+def safe_path(url: str) -> str | None:
+    """The url if it is a path on this app (a known route or a case page), else None. Used for every redirect back."""
+    u = urlparse(url)
+    if u.scheme or u.netloc or not url.startswith("/") or url.startswith("//"):
+        return None
+    ok = u.path in KNOWN_PATHS or (u.path.startswith("/cases/") and CASE_ID.match(u.path.removeprefix("/cases/")))
+    return url if ok else None
+
+
 def current_actor(request) -> Actor:
     role, sid = request.cookies.get("role"), request.cookies.get("staff_id")
     if role in DEMO and sid == DEMO[role]:
@@ -76,7 +85,7 @@ def create_app(db_path="data/workbench.db", config_path="config/pipeline.yaml", 
     def secure(resp):
         resp.headers["Content-Security-Policy"] = "default-src 'self'"
         resp.headers["X-Content-Type-Options"] = "nosniff"
-        resp.headers["Referrer-Policy"] = "no-referrer"
+        resp.headers["Referrer-Policy"] = "same-origin"
         return resp
 
     def from_this_app(request) -> bool:
@@ -85,16 +94,21 @@ def create_app(db_path="data/workbench.db", config_path="config/pipeline.yaml", 
         if urlparse("//" + host).hostname not in LOCAL_HOSTS:
             return False
         origin = request.headers.get("origin")
+        if request.headers.get("sec-fetch-site") == "cross-site":
+            return False
         if origin is not None:
             o = urlparse(origin)
             return o.scheme == request.url.scheme and o.netloc == host
         if request.headers.get("sec-fetch-site") in ("same-origin", "none"):
             return True
         ref = request.headers.get("referer")
-        return bool(ref) and urlparse(ref).netloc == host
+        r = urlparse(ref or "")
+        return bool(ref) and r.netloc == host and r.scheme == request.url.scheme
 
     @app.middleware("http")
     async def guard(request: Request, call_next):
+        if urlparse("//" + request.headers.get("host", "")).hostname not in LOCAL_HOSTS:
+            return secure(PlainTextResponse("Request refused: unknown host.", status_code=403))
         if request.method == "POST" and not from_this_app(request):
             return secure(PlainTextResponse("Request refused: it did not come from this app.", status_code=403))
         return secure(await call_next(request))
@@ -178,7 +192,7 @@ def create_app(db_path="data/workbench.db", config_path="config/pipeline.yaml", 
             return page(request, conn, "queue.html", **queue_ctx(conn, current_actor(request), parse_qs(request.url.query), edge_of(request)))
 
     def back_to(nxt: str) -> str:
-        return nxt if nxt.startswith("/queue") and not nxt.startswith("//") else "/queue"
+        return safe_path(nxt) or "/queue"
 
     @app.post("/cases/{case_id}/assign")
     def assign(request: Request, case_id: str, version: str = Form(""), next: str = Form("/queue")):
@@ -205,8 +219,8 @@ def create_app(db_path="data/workbench.db", config_path="config/pipeline.yaml", 
             resp = HTMLResponse(templates.get_template("partials/role_notice.html").render(), headers={"HX-Refresh": "true"})
         else:  # no script: go back to the same page
             ref = urlparse(request.headers.get("referer", ""))
-            same = ref.netloc == request.headers.get("host") and (ref.path in KNOWN_PATHS or CASE_ID.match(ref.path.removeprefix("/cases/")))
-            resp = RedirectResponse((ref.path + ("?" + ref.query if ref.query else "")) if same else "/queue", status_code=303)
+            same = ref.netloc == request.headers.get("host") and ref.scheme == request.url.scheme
+            resp = RedirectResponse((same and safe_path(ref.path + ("?" + ref.query if ref.query else ""))) or "/queue", status_code=303)
         resp.set_cookie("role", role, httponly=True, samesite="lax")
         resp.set_cookie("staff_id", DEMO[role], httponly=True, samesite="lax")
         return resp

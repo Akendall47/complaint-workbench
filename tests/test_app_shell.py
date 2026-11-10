@@ -99,7 +99,7 @@ def test_post_from_another_site_is_refused(client):
 def test_headers(client):
     h = client.get("/queue").headers
     assert h["content-security-policy"] == "default-src 'self'"
-    assert h["x-content-type-options"] == "nosniff" and h["referrer-policy"] == "no-referrer"
+    assert h["x-content-type-options"] == "nosniff" and h["referrer-policy"] == "same-origin"
 
 
 def test_no_external_urls_no_inline_script(client):
@@ -144,7 +144,7 @@ def test_security_headers_on_every_response(app_db):
               c.get("/nope"), c.delete("/queue"), c.get("/boom"), c.get("/static/app.css"),
               c.post("/role", headers={"Origin": "http://127.0.0.1:8000"})):  # 422 validation
         assert r.headers["content-security-policy"] == "default-src 'self'", r.status_code
-        assert r.headers["x-content-type-options"] == "nosniff" and r.headers["referrer-policy"] == "no-referrer"
+        assert r.headers["x-content-type-options"] == "nosniff" and r.headers["referrer-policy"] == "same-origin"
     boom = c.get("/boom")
     assert boom.status_code == 500 and boom.text == "Something went wrong" and "Traceback" not in boom.text
 
@@ -173,3 +173,31 @@ def test_htmx_eval_off_tabs_and_pager(client):
     assert '"allowEval": false' in html
     assert re.search(r'class="segmented".*?aria-current="page"', html, re.S)
     assert '<nav class="pager" aria-label="Pages"' in html
+
+
+def test_host_checked_on_every_request(app_db):
+    c = TestClient(_app(app_db), base_url="http://127.0.0.1:8000")
+    r = c.get("/queue", headers={"Host": "evil.example"})
+    assert r.status_code == 403 and r.headers["content-security-policy"] == "default-src 'self'"
+    assert c.get("/queue").status_code == 200
+
+
+def test_guard_cross_site_fetch_and_referer_scheme(app_db):
+    c = TestClient(_app(app_db), base_url="http://127.0.0.1:8000")
+    go = lambda **h: c.post("/role", data={"role": "team_lead"}, headers=h).status_code  # noqa: E731
+    assert go(Referer="http://127.0.0.1:8000/queue", **{"Sec-Fetch-Site": "cross-site"}) == 403
+    assert go(Referer="https://127.0.0.1:8000/queue") == 403
+
+
+def test_role_switch_without_script_uses_same_origin_referer(client):
+    r = client.post("/role", data={"role": "specialist"}, headers={"Referer": "http://127.0.0.1:8000/cases/AB-2026-00001"}, follow_redirects=False)
+    assert r.status_code == 303 and r.headers["location"] == "/cases/AB-2026-00001"
+
+
+def test_safe_return_path(client, app_db):
+    from workbench.app import safe_path
+    assert safe_path("/queue?owner=all") == "/queue?owner=all" and safe_path("/cases/AB-2026-00001") == "/cases/AB-2026-00001"
+    for bad in ("/queuefoo", "//evil", "/\evil", "http://evil.example", "/nonsense"):
+        assert safe_path(bad) is None, bad
+    r = client.post("/cases/AB-2026-00001/assign", data={"version": 0, "next": "/queuefoo"})
+    assert "/queuefoo" not in r.text

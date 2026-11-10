@@ -1,8 +1,5 @@
-"""Popover and role switch in a real browser. Uses the base and browser fixtures from test_queue_e2e."""
-from tests.e2e.test_queue_e2e import base, browser  # noqa: F401  (fixtures)
-
-
-def test_help_popover_and_role_switch(base, browser):  # noqa: F811
+"""Popover and role switch in a real browser."""
+def test_help_popover_and_role_switch(base, browser):
     page = browser.new_page(viewport={"width": 1440, "height": 768})
     page.goto(base + "/queue?owner=all&due=past")
     page.get_by_role("button", name="How this page works").click()
