@@ -99,7 +99,7 @@ Routing runs once when a case arrives. The predicted department and the words th
 
 **Pipeline view.** A new view draws the complaint process as a flow diagram: stages as nodes, paths as bands whose width is the number of cases, with the count on each. It shows the normal path, the fast path for urgent cases, and the loop for cases a specialist returned. Selecting a stage or path filters the Queue. A case returned once goes back to its handler. A case returned a second time takes a different path, to the team lead. **(my call on the second-return rule)**
 
-**Editing the pipeline.** The pipeline is defined in one configuration file (stages, paths, and the rules that choose a path), and the diagram is drawn from that file. Changing the process means changing the file, which leaves a reviewable history. A drag-and-drop editor in the browser is not built: it is a large piece of work, and changing a regulated process needs its own approval and audit controls. It is described in the deck as a next step. **(my call, awaiting the owner's agreement)**
+**Editing the pipeline.** The pipeline is defined in one configuration file (stages, paths, and the rules that choose a path), and the diagram is drawn from that file. Changing the process means changing the file, which leaves a reviewable history. A drag-and-drop editor in the browser is not built: it is a large piece of work, and changing a regulated process needs its own approval and audit controls. It is described in the deck as a next step. **(my call, agreed by the owner)**
 
 ## 7. Where each technique is used
 
