@@ -7,7 +7,7 @@ import socket
 import sys
 import threading
 import webbrowser
-from datetime import date, datetime, timedelta
+from datetime import date, datetime
 from pathlib import Path
 from urllib.parse import parse_qs, urlencode, urlparse
 
@@ -22,8 +22,8 @@ from .cases import Actor, NotAllowed, StaleCase
 from .classify import MODELS_DIR, ensure_models
 from .config import load_config
 from .db import connect
-from .deadlines import add_business_days, business_days_left
-from .urgency import urgent_reasons
+from .deadlines import business_days_left, due_soon_edge
+from .stats import rise_pairs
 
 HERE = Path(__file__).parent
 DEMO = {"handler": "H1", "specialist": "S1", "team_lead": "T1"}
@@ -32,7 +32,8 @@ HOME = {"handler": "/queue", "specialist": "/departments", "team_lead": "/"}
 STATE_NAME = {"new": "New", "in_review": "In review", "handed_over": "Handed over", "returned": "Returned", "accepted": "Accepted"}
 NAV = [("Overview", "/"), ("Queue", "/queue"), ("Case", None), ("Departments", "/departments"), ("Team", "/team"),
        ("Pipeline", "/pipeline"), ("Policy library", "/policies"), ("Audit log", "/audit"), ("Settings", "/settings")]
-LOCAL_HOSTS = {"127.0.0.1", "localhost", "testserver"}
+LOCAL_HOSTS = {"127.0.0.1", "localhost"}
+KNOWN_PATHS = {p for _, p in NAV if p}
 CASE_ID = re.compile(r"^AB-\d{4}-\d{5}$")
 PER_PAGE = 50
 NOT_FOUND = "Database not found. Run: uv run python -m workbench.generate"
@@ -45,23 +46,8 @@ def current_actor(request) -> Actor:
     return Actor("H1", "handler")
 
 
-def rise_pairs(conn, cfg) -> list[tuple[str, str]]:
-    """Department and type pairs whose count this week is at least ratio x the average of the previous weeks."""
-    r, today = cfg["rise"], date.fromisoformat(cfg["today"])
-    day = lambda n: str(today - timedelta(days=n))  # noqa: E731
-    q = ("SELECT department, type, COUNT(*) FROM cases WHERE department IS NOT NULL AND type IS NOT NULL"
-         " AND substr(received_at,1,10) BETWEEN ? AND ? GROUP BY 1,2")
-    now = {(d, t): n for d, t, n in conn.execute(q, (day(6), day(0)))}
-    w = r["baseline_weeks"]
-    before = {(d, t): n for d, t, n in conn.execute(q, (day(7 * w + 6), day(7)))}
-    return sorted(k for k, n in now.items() if n >= r["minimum_cases"] and n >= r["ratio"] * before.get(k, 0) / w)
-
-
-def strip(conn, cfg) -> dict:
-    today = date.fromisoformat(cfg["today"])
-    hol = {date.fromisoformat(d) for d in cfg["bank_holidays"]}
+def strip(conn, cfg, edge: str) -> dict:
     limit = cfg["urgent"]["deadline_within_business_days"]
-    edge = str(add_business_days(today, limit + 1, hol) - timedelta(days=1))  # last date still within the limit
     one = lambda q, *a: conn.execute(q, a).fetchone()[0]  # noqa: E731
     open_ = "state != 'accepted' AND "
     rises = rise_pairs(conn, cfg)
@@ -69,7 +55,7 @@ def strip(conn, cfg) -> dict:
             "soon": one(f"SELECT COUNT(*) FROM cases WHERE {open_}deadline >= ? AND deadline <= ?", cfg["today"], edge),
             "urgent": one(f"SELECT COUNT(*) FROM cases WHERE {open_}urgent = 1"),
             "rises": len(rises), "rise_query": urlencode({"owner": "all", "department": rises[0][0], "type": rises[0][1]}) if rises else "",
-            "limit": limit, "edge": edge, "updated": audit.now()[11:16]}
+            "limit": limit, "updated": audit.now()[11:16]}
 
 
 def create_app(db_path="data/workbench.db", config_path="config/pipeline.yaml", models_dir=MODELS_DIR) -> FastAPI:
@@ -87,17 +73,40 @@ def create_app(db_path="data/workbench.db", config_path="config/pipeline.yaml", 
     templates = Jinja2Templates(directory=HERE / "templates")  # autoescape on for .html
     templates.env.globals["content"] = content
 
-    @app.middleware("http")
-    async def guard(request: Request, call_next):
-        if request.method == "POST":
-            host, origin = request.headers.get("host", ""), request.headers.get("origin")
-            if host.split(":")[0] not in LOCAL_HOSTS or (origin and urlparse(origin).netloc != host):
-                return PlainTextResponse("Request refused: it did not come from this app.", status_code=403)
-        resp = await call_next(request)
+    def secure(resp):
         resp.headers["Content-Security-Policy"] = "default-src 'self'"
         resp.headers["X-Content-Type-Options"] = "nosniff"
         resp.headers["Referrer-Policy"] = "no-referrer"
         return resp
+
+    def from_this_app(request) -> bool:
+        """Cross-site request guard: the request must come from this same origin (scheme, host and port)."""
+        host = request.headers.get("host", "")
+        if urlparse("//" + host).hostname not in LOCAL_HOSTS:
+            return False
+        origin = request.headers.get("origin")
+        if origin is not None:
+            o = urlparse(origin)
+            return o.scheme == request.url.scheme and o.netloc == host
+        if request.headers.get("sec-fetch-site") in ("same-origin", "none"):
+            return True
+        ref = request.headers.get("referer")
+        return bool(ref) and urlparse(ref).netloc == host
+
+    @app.middleware("http")
+    async def guard(request: Request, call_next):
+        if request.method == "POST" and not from_this_app(request):
+            return secure(PlainTextResponse("Request refused: it did not come from this app.", status_code=403))
+        return secure(await call_next(request))
+
+    @app.exception_handler(Exception)
+    async def failed(request: Request, exc: Exception):  # the outer error layer skips the middleware above
+        return secure(PlainTextResponse("Something went wrong", status_code=500))
+
+    def edge_of(request) -> str:  # once per request, used by the strip and the due filter
+        if not hasattr(request.state, "edge"):
+            request.state.edge = str(due_soon_edge(today, cfg["urgent"]["deadline_within_business_days"], hol))
+        return request.state.edge
 
     @contextlib.contextmanager
     def db():
@@ -115,9 +124,9 @@ def create_app(db_path="data/workbench.db", config_path="config/pipeline.yaml", 
                 "current": request.url.path.startswith("/cases/") if href is None else request.url.path == href,
                 "home": href == HOME[actor.role]} for label, href in NAV]
         return templates.TemplateResponse(request, name, {"actor": actor, "role_name": ROLE_NAME, "roles": DEMO, "nav": nav,
-                                                          "strip": strip(conn, cfg), "cfg": cfg, **ctx}, status_code=status)
+                                                          "strip": strip(conn, cfg, edge_of(request)), "cfg": cfg, **ctx}, status_code=status)
 
-    def queue_ctx(conn, actor, q: dict) -> dict:
+    def queue_ctx(conn, actor, q: dict, edge: str) -> dict:
         one = lambda k: (q.get(k) or [""])[0] if isinstance(q.get(k), list) else (q.get(k) or "")  # noqa: E731
         owner = one("owner")
         if owner not in ("me", "unassigned", "all"):
@@ -142,12 +151,11 @@ def create_app(db_path="data/workbench.db", config_path="config/pipeline.yaml", 
         if urgent:
             where.append("c.urgent = 1")
         if due:
-            s = strip(conn, cfg)
             where.append("c.state != 'accepted'")
             if due == "past":
                 where.append("c.deadline < ?"); args.append(cfg["today"])  # noqa: E702
             else:
-                where.append("c.deadline >= ? AND c.deadline <= ?"); args += [cfg["today"], s["edge"]]  # noqa: E702
+                where.append("c.deadline >= ? AND c.deadline <= ?"); args += [cfg["today"], edge]  # noqa: E702
         w = " AND ".join(where)
         total = conn.execute(f"SELECT COUNT(*) FROM cases c WHERE {w}", args).fetchone()[0]
         pages = max(1, -(-total // PER_PAGE))
@@ -157,27 +165,17 @@ def create_app(db_path="data/workbench.db", config_path="config/pipeline.yaml", 
             pg = 1
         got = conn.execute(f"SELECT c.* FROM cases c WHERE {w} ORDER BY c.deadline, c.urgent DESC, c.id LIMIT ? OFFSET ?",
                            (*args, PER_PAGE, (pg - 1) * PER_PAGE)).fetchall()
-        expand = one("expand")
-        rows = [{"c": r, "days": business_days_left(date.fromisoformat(r["deadline"]), today, hol), "open": r["id"] == expand}
-                for r in got]
-        detail = None
-        for row in rows:
-            if row["open"]:
-                c = row["c"]
-                notes = " ".join(n[0] for n in conn.execute("SELECT body FROM notes WHERE case_id = ?", (c["id"],)))
-                detail = row["detail"] = {"reasons": urgent_reasons(c, notes, today, cfg),
-                                          "next": cases.next_action(conn, c["id"], actor.role)}
+        rows = [{"c": r, "days": business_days_left(date.fromisoformat(r["deadline"]), today, hol)} for r in got]
         keep = {k: v for k, v in f.items() if v}
         link = lambda **kw: "/queue?" + urlencode({**keep, **{k: v for k, v in kw.items() if v}})  # noqa: E731
         sel = {"departments": list(cfg["departments"]), "types": cfg["types"], "states": list(STATE_NAME)}
         return {"rows": rows, "f": f, "page_no": pg, "pages": pages, "link": link, "state_name": STATE_NAME,
-                "filtered": bool(keep.keys() - {"owner"}), "here": link(page=str(pg) if pg > 1 else "", expand=one("expand")),
-                "sel": sel, "detail": detail}
+                "filtered": bool(keep.keys() - {"owner"}), "here": link(page=str(pg) if pg > 1 else ""), "sel": sel}
 
     @app.get("/queue", response_class=HTMLResponse)
     def queue(request: Request):
         with db() as conn:
-            return page(request, conn, "queue.html", **queue_ctx(conn, current_actor(request), parse_qs(request.url.query)))
+            return page(request, conn, "queue.html", **queue_ctx(conn, current_actor(request), parse_qs(request.url.query), edge_of(request)))
 
     def back_to(nxt: str) -> str:
         return nxt if nxt.startswith("/queue") and not nxt.startswith("//") else "/queue"
@@ -186,17 +184,18 @@ def create_app(db_path="data/workbench.db", config_path="config/pipeline.yaml", 
     def assign(request: Request, case_id: str, version: str = Form(""), next: str = Form("/queue")):
         actor, nxt = current_actor(request), back_to(next)
         try:
+            try:
+                ver = int(version)
+            except ValueError:
+                raise NotAllowed("That form was not valid. Reload the page.")
             with db() as conn:
-                try:
-                    cases.assign(conn, case_id, actor, int(version), actor.id)
-                except ValueError:
-                    raise NotAllowed("That form was not valid. Reload the page.")
+                cases.assign(conn, case_id, actor, ver, actor.id)
                 return RedirectResponse(nxt, status_code=303)
         except (NotAllowed, StaleCase) as e:
             with db() as conn:
                 q = parse_qs(urlparse(nxt).query)
                 return page(request, conn, "queue.html", status=409 if isinstance(e, StaleCase) else 403,
-                            message=str(e), **queue_ctx(conn, actor, q))
+                            message=str(e), **queue_ctx(conn, actor, q, edge_of(request)))
 
     @app.post("/role")
     def role(request: Request, role: str = Form("")):
@@ -206,7 +205,7 @@ def create_app(db_path="data/workbench.db", config_path="config/pipeline.yaml", 
             resp = HTMLResponse(templates.get_template("partials/role_notice.html").render(), headers={"HX-Refresh": "true"})
         else:  # no script: go back to the same page
             ref = urlparse(request.headers.get("referer", ""))
-            same = ref.netloc == request.headers.get("host") and ref.path.startswith("/") and not ref.path.startswith("//")
+            same = ref.netloc == request.headers.get("host") and (ref.path in KNOWN_PATHS or CASE_ID.match(ref.path.removeprefix("/cases/")))
             resp = RedirectResponse((ref.path + ("?" + ref.query if ref.query else "")) if same else "/queue", status_code=303)
         resp.set_cookie("role", role, httponly=True, samesite="lax")
         resp.set_cookie("staff_id", DEMO[role], httponly=True, samesite="lax")

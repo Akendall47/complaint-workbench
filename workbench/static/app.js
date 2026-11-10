@@ -1,4 +1,4 @@
-// Three small jobs: popovers (open, Escape closes, focus returns), the one-screen switch, the first-visit hint.
+// Three small jobs: popovers (open, Escape closes, focus returns) and the first-visit hint (the one-screen switch comes with the Case view).
 (function () {
   var opener = null;
   function close(el) {
@@ -17,12 +17,6 @@
       (el.querySelector('button') || el).focus();
     } else if (shut) {
       close(document.getElementById(shut.getAttribute('data-close')));
-    }
-    var sw = e.target.closest('[data-one-screen]');
-    if (sw) {
-      var on = sw.getAttribute('aria-pressed') !== 'true';
-      sw.setAttribute('aria-pressed', String(on));
-      document.body.classList.toggle('one-screen', on);
     }
   });
   document.addEventListener('keydown', function (e) {

@@ -67,11 +67,10 @@ def test_filters_narrow_rows(client, app_db):
     assert client.get("/queue?owner=zzz&due=zzz&urgent=x&department=%27%3B--").status_code == 200
 
 
-def test_one_expanded_row(client):
+def test_no_details_row_and_no_urgent_chip(client):
     first = rows(client.get("/queue?owner=all").text)[0][0]
     html = client.get(f"/queue?owner=all&expand={first}").text
-    assert html.count('class="detail-row"') == 1 and "Received" in html and f"/cases/{first}" in html
-    assert 'class="detail-row"' not in client.get("/queue?owner=all&expand=nope").text
+    assert "detail-row" not in html and ">Details<" not in html and 'class="urgent-tag"' not in html
 
 
 def test_assign_to_me_and_stale(client, app_db):
@@ -84,3 +83,8 @@ def test_assign_to_me_and_stale(client, app_db):
     assert r.status_code == 409 and "changed since you opened it" in r.text and "Traceback" not in r.text
     r = client.post("/cases/NOPE/assign", data={"version": 0, "next": "http://evil.example"})
     assert r.status_code == 403 and "does not exist" in r.text
+
+
+def test_assign_bad_version_is_plain_message(client):
+    r = client.post("/cases/AB-2026-00001/assign", data={"version": "abc", "next": "/queue"})
+    assert r.status_code == 403 and "not valid" in r.text and "Traceback" not in r.text

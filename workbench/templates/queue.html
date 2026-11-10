@@ -10,7 +10,7 @@
   <div class="toolbar">
     <nav class="segmented" aria-label="Whose cases">
       {% for k, label in [("me", "Mine"), ("unassigned", "Unassigned"), ("all", "All")] %}
-      <a href="{{ link(owner=k) }}"{% if f.owner == k %} aria-current="true"{% endif %}>{{ label }}</a>
+      <a href="{{ link(owner=k) }}"{% if f.owner == k %} aria-current="page"{% endif %}>{{ label }}</a>
       {% endfor %}
     </nav>
     {% if filtered %}<a class="clear" href="/queue?owner={{ f.owner }}">Clear filters</a>{% endif %}
@@ -34,8 +34,7 @@
       <tbody>
       {% for r in rows %}{% set c = r.c %}
       <tr class="case-row" data-case="{{ c.id }}" data-days="{{ r.days }}">
-        <td><a class="plain-id" href="/cases/{{ c.id }}">{{ c.id }}</a>{% if c.urgent %} <span class="urgent-tag">Urgent</span>{% endif %}
-          <a class="more" href="{{ link(expand='' if r.open else c.id, page=page_no if page_no > 1 else '') }}" aria-expanded="{{ 'true' if r.open else 'false' }}">{{ 'Hide details' if r.open else 'Details' }}</a></td>
+        <td><a class="plain-id" href="/cases/{{ c.id }}">{{ c.id }}</a></td>
         <td class="{{ 'deadline-past' if r.days < 0 else '' }}">{% if r.days < 0 %}{{ -r.days }} past{% else %}{{ r.days }}{% endif %}</td>
         <td>{{ c.type or "–" }}</td>
         <td>{{ c.department or "Needs routing" }}</td>
@@ -43,26 +42,16 @@
         <td>{% if c.owner_id %}{{ c.owner_id }}{% else %}
           <form method="post" action="/cases/{{ c.id }}/assign"><input type="hidden" name="version" value="{{ c.version }}"><input type="hidden" name="next" value="{{ here }}"><button type="submit">Assign to me</button></form>{% endif %}</td>
       </tr>
-      {% if r.open %}
-      <tr class="detail-row"><td colspan="6">
-        <dl>
-          <dt>Received</dt><dd>{{ c.received_at[:10] }} by {{ c.source or "unknown" }}</dd>
-          <dt>Deadline</dt><dd>{{ c.deadline }}</dd>
-          {% if r.detail.reasons %}<dt>Urgent because</dt><dd>{{ r.detail.reasons | join(", ") }}</dd>{% endif %}
-          <dt>Next</dt><dd>{{ r.detail.next }}</dd>
-        </dl>
-      </td></tr>
-      {% endif %}
       {% endfor %}
       </tbody>
     </table>
   </div>
   {% if pages > 1 %}
-  <p class="pager">
+  <nav class="pager" aria-label="Pages">
     {% if page_no > 1 %}<a href="{{ link(page=page_no - 1) }}">Previous</a>{% endif %}
     Page {{ page_no }} of {{ pages }}
     {% if page_no < pages %}<a href="{{ link(page=page_no + 1) }}">Next</a>{% endif %}
-  </p>
+  </nav>
   {% endif %}
   {% else %}
   <p class="empty">No cases match these filters. <a href="/queue?owner=all">Clear filters</a></p>

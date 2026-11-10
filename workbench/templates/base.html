@@ -1,12 +1,11 @@
 <!DOCTYPE html>
 {# htmx 2.0.4 vendored in static/htmx.min.js from https://github.com/bigskysoftware/htmx/releases/download/v2.0.4/htmx.min.js
    SHA-256 e209dda5c8235479f3166defc7750e1dbcd5a5c1808b7792fc2e6733768fb447. Nothing loads from the network. #}
-{% from "partials/help.html" import help_panel %}
 <html lang="en-GB">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="htmx-config" content='{"includeIndicatorStyles": false}'>
+<meta name="htmx-config" content='{"includeIndicatorStyles": false, "allowEval": false}'>
 <title>{% block title %}{% endblock %} · Alder Bank complaints</title>
 <link rel="stylesheet" href="/static/app.css">
 <script src="/static/htmx.min.js" defer></script>

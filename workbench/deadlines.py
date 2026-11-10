@@ -31,3 +31,8 @@ def business_days_left(deadline: date, today: date, holidays: set[date]) -> int:
     # Counts business days in (lo, hi].
     n = sum(_is_business(lo + timedelta(days=i), holidays) for i in range(1, (hi - lo).days + 1))
     return sign * max(1, n) if sign < 0 else n
+
+
+def due_soon_edge(today: date, limit: int, holidays: set[date]) -> date:
+    """The last deadline date that still has at most `limit` business days left."""
+    return add_business_days(today, limit + 1, holidays) - timedelta(days=1)

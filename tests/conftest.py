@@ -77,4 +77,5 @@ def app_db(app_db_file, tmp_path):
 def client(app_db):
     from fastapi.testclient import TestClient
     from workbench.app import create_app
-    return TestClient(create_app(str(app_db), models_dir=None))
+    return TestClient(create_app(str(app_db), models_dir=None), base_url="http://127.0.0.1:8000",
+                      headers={"Origin": "http://127.0.0.1:8000"})

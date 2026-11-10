@@ -13,7 +13,7 @@ NAV = ["/", "/queue", "/departments", "/team", "/pipeline", "/policies", "/audit
 BUILT = {"/queue"}
 
 
-@pytest.mark.parametrize("path", [pytest.param(p, marks=[] if p in BUILT else pytest.mark.xfail(reason="view not built yet"))
+@pytest.mark.parametrize("path", [pytest.param(p, marks=[] if p in BUILT else pytest.mark.xfail(reason="view not built yet", strict=True))
                                   for p in NAV])
 def test_navigation_link_returns_200(client, path):
     assert client.get(path).status_code == 200
@@ -51,7 +51,7 @@ def test_strip_shows_rise_when_one_exists(app_db):
         c.execute("INSERT INTO cases(id, received_at, state, department, type, deadline, urgent, version, product_kind)"
                   " VALUES (?, '2026-11-09T10:00:00', 'new', 'Bereavement', 'Service', '2027-01-01', 0, 0, 'other')", (f"X{i}",))
     c.commit()
-    html = TestClient(create_app(str(app_db), models_dir=None)).get("/queue").text
+    html = TestClient(create_app(str(app_db), models_dir=None), base_url="http://127.0.0.1:8000").get("/queue").text
     assert re.search(r"Rises <b>1</b>", html)
     assert "department=Bereavement" in html
 
@@ -77,15 +77,17 @@ def test_current_actor():
 
 
 def test_post_role_stays_on_page(client):
-    r = client.post("/role", data={"role": "team_lead"}, headers={"HX-Request": "true", "Referer": "http://testserver/queue?due=past"})
+    r = client.post("/role", data={"role": "team_lead"}, headers={"HX-Request": "true", "Referer": "http://127.0.0.1:8000/queue?due=past"})
     assert r.status_code == 200 and r.headers["HX-Refresh"] == "true"
     assert "Demo only" in r.text
     assert client.cookies.get("role") == "team_lead" and client.cookies.get("staff_id") == "T1"
-    r = client.post("/role", data={"role": "specialist"}, headers={"Referer": "http://testserver/queue?due=past"}, follow_redirects=False)
+    r = client.post("/role", data={"role": "specialist"}, headers={"Referer": "http://127.0.0.1:8000/queue?due=past"}, follow_redirects=False)
     assert r.status_code == 303 and r.headers["location"] == "/queue?due=past"
     r = client.post("/role", data={"role": "specialist"}, headers={"Referer": "http://evil.example/steal"}, follow_redirects=False)
     assert r.headers["location"] == "/queue"
     assert client.post("/role", data={"role": "admin"}).status_code == 400
+    r = client.post("/role", data={"role": "specialist"}, headers={"Referer": "http://127.0.0.1:8000/nonsense"}, follow_redirects=False)
+    assert r.headers["location"] == "/queue"
 
 
 def test_post_from_another_site_is_refused(client):
@@ -128,3 +130,46 @@ def test_main_exits_when_port_in_use(app_db, monkeypatch, capsys):
     s.close()
     assert e.value.code == 1
     assert "in use" in capsys.readouterr().err
+
+
+def _app(app_db):
+    return create_app(str(app_db), models_dir=None)
+
+
+def test_security_headers_on_every_response(app_db):
+    app = _app(app_db)
+    app.add_api_route("/boom", lambda: 1 / 0)
+    c = TestClient(app, base_url="http://127.0.0.1:8000", raise_server_exceptions=False)
+    for r in (c.post("/role", data={"role": "team_lead"}),  # 403 from the guard
+              c.get("/nope"), c.delete("/queue"), c.get("/boom"), c.get("/static/app.css"),
+              c.post("/role", headers={"Origin": "http://127.0.0.1:8000"})):  # 422 validation
+        assert r.headers["content-security-policy"] == "default-src 'self'", r.status_code
+        assert r.headers["x-content-type-options"] == "nosniff" and r.headers["referrer-policy"] == "no-referrer"
+    boom = c.get("/boom")
+    assert boom.status_code == 500 and boom.text == "Something went wrong" and "Traceback" not in boom.text
+
+
+def test_post_guard_origin_rules(app_db):
+    c = TestClient(_app(app_db), base_url="http://127.0.0.1:8000")
+    go = lambda **h: c.post("/role", data={"role": "team_lead"}, headers=h).status_code  # noqa: E731
+    assert go() == 403  # no Origin, no Referer
+    assert go(Origin="http://127.0.0.1:9999") == 403
+    assert go(Origin="https://127.0.0.1:8000") == 403
+    assert go(Origin="null") == 403
+    assert go(**{"Sec-Fetch-Site": "cross-site"}) == 403
+    assert go(Referer="http://127.0.0.1:9999/queue") == 403
+    assert go(Origin="http://127.0.0.1:8000", **{"HX-Request": "true"}) == 200
+    assert go(**{"Sec-Fetch-Site": "same-origin", "HX-Request": "true"}) == 200
+    assert go(Referer="http://127.0.0.1:8000/queue", **{"HX-Request": "true"}) == 200
+
+
+def test_unknown_host_refused(app_db):
+    c = TestClient(_app(app_db), base_url="http://testserver")
+    assert c.post("/role", data={"role": "team_lead"}, headers={"Origin": "http://testserver"}).status_code == 403
+
+
+def test_htmx_eval_off_tabs_and_pager(client):
+    html = client.get("/queue?owner=all").text
+    assert '"allowEval": false' in html
+    assert re.search(r'class="segmented".*?aria-current="page"', html, re.S)
+    assert '<nav class="pager" aria-label="Pages"' in html
