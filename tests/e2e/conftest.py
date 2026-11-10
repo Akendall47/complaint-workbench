@@ -14,11 +14,16 @@ SHOTS = Path(__file__).resolve().parents[2] / "docs" / "screenshots"
 
 
 @pytest.fixture(scope="module")
-def base(tmp_path_factory):
+def dbfile(tmp_path_factory):
+    return tmp_path_factory.mktemp("e2e") / "workbench.db"
+
+
+@pytest.fixture(scope="module")
+def base(dbfile):
     from workbench.config import load_config
     from workbench.db import connect, init_db
     from workbench.generate import generate
-    db = tmp_path_factory.mktemp("e2e") / "workbench.db"
+    db = dbfile
     c = connect(db)
     init_db(c)
     cfg = load_config()
