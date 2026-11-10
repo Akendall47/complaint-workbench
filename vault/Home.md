@@ -16,6 +16,7 @@ Ankura AI by Design internship build task, Scenario 1: a fictional bank with a g
 - [[06-interface-design]]
 - [[07-ux-evidence]]
 - [[08-verification]]
+- [[09-how-bank-complaint-systems-work]]
 
 Each note states what was verified and what was not. Anything marked UNVERIFIED is checked against a primary source before it appears in the deck or the report.
 
@@ -38,7 +39,7 @@ Four ways into the same notes.
 
 One note per design decision: who made it, why, the evidence, the cost, and what would change it.
 
-[[person-approves-everything]] · [[use-cheapest-tool-per-job]] · [[route-with-small-classifier]] · [[search-with-sqlite-fts5]] · [[mask-before-the-model]] · [[check-citations-word-for-word]] · [[limit-what-the-model-can-do]] · [[record-ai-answers-in-advance]] · [[use-local-open-model]] · [[synthetic-data-only]] · [[hash-chain-the-audit-log]] · [[lock-approve-until-claims-checked]] · [[flags-not-confidence-percentages]] · [[require-reason-to-reject]] · [[dashboard-first-left-navigation]] · [[minimal-style-effective-wins]] · [[three-roles-with-switcher]] · [[five-case-states]] · [[add-complaint-type-label]] · [[urgent-by-stated-rules]] · [[pipeline-defined-in-configuration]] · [[one-configuration-file]] · [[respond-under-100-ms]] · [[server-rendered-stack]] · [[build-with-closed-loop]] · [[stated-non-goals]] · [[verify-before-quoting]] · [[deliverables-and-cut-order]]
+[[person-approves-everything]] · [[use-cheapest-tool-per-job]] · [[route-with-small-classifier]] · [[search-with-sqlite-fts5]] · [[mask-before-the-model]] · [[check-citations-word-for-word]] · [[limit-what-the-model-can-do]] · [[record-ai-answers-in-advance]] · [[use-local-open-model]] · [[synthetic-data-only]] · [[hash-chain-the-audit-log]] · [[lock-approve-until-claims-checked]] · [[flags-not-confidence-percentages]] · [[require-reason-to-reject]] · [[dashboard-first-left-navigation]] · [[minimal-style-effective-wins]] · [[three-roles-with-switcher]] · [[five-case-states]] · [[add-complaint-type-label]] · [[urgent-by-stated-rules]] · [[pipeline-defined-in-configuration]] · [[one-configuration-file]] · [[respond-under-100-ms]] · [[server-rendered-stack]] · [[build-with-closed-loop]] · [[stated-non-goals]] · [[verify-before-quoting]] · [[deliverables-and-cut-order]] · [[guide-first-time-users]] · [[place-by-cost-of-missing-it]] · [[show-where-data-comes-from]] · [[alert-on-unusual-rise]] · [[prove-robustness-with-a-test-bench]] · [[assign-cases-without-scoring-people]]
 
 ## Features (folder `features/`)
 
