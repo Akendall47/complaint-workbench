@@ -28,8 +28,6 @@ def urgent_reasons(case: Mapping, notes_text: str, today: date, cfg: dict) -> li
             out.append("Deadline within 5 business days")
     text = _norm(notes_text)
     out += [label for label, key in _GROUPS if _mentions(text, u[key])]
-    if (case["return_count"] or 0) >= 1:
-        out.append("Returned before")
     return out
 
 

@@ -40,11 +40,11 @@ def columns(series, title="", summary="", axis="") -> Markup:
     """Vertical columns over (label, value) points in order, the value above each column. The axis caption sits under the labels."""
     if not series:
         return EMPTY
-    n, top, base = len(series), max(v for _, v in series) or 1, 190
+    n, top, base = len(series), max(v for _, v in series) or 1, 118  # 170 high in all: the page shows it at a fixed 160px
     slot = (W - 20) / n
     body = [f'<line class="axis" x1="10" y1="{base}" x2="{W - 10}" y2="{base}" aria-hidden="true"/>']
     for i, (k, v) in enumerate(series):
-        h, x = max(2.0, 150 * v / top), 10 + i * slot + slot * .2
+        h, x = max(2.0, 90 * v / top), 10 + i * slot + slot * .2
         body.append(f'<rect class="bar" x="{x:.1f}" y="{base - h:.1f}" width="{slot * .6:.1f}" height="{h:.1f}" aria-hidden="true"/>'
                     f'<text class="lbl" x="{x + slot * .3:.1f}" y="{base - h - 6:.1f}" text-anchor="middle">{_e(v)}</text>'
                     f'<text class="lbl" x="{x + slot * .3:.1f}" y="{base + 20}" text-anchor="middle">{_e(k)}</text>')
@@ -66,41 +66,3 @@ def heatmap(grid, title="", summary="") -> Markup:
             body.append(f'<rect class="cell l{min(4, round(4 * v / top))}" x="{60 + c * 50}" y="{r * 30 + 28}" width="48" height="28" aria-hidden="true"/>'
                         f'<text class="lbl" x="{60 + c * 50 + 24}" y="{r * 30 + 48}" text-anchor="middle">{_e(v)}</text>')
     return _fig("".join(body), 7 * 30 + 36, title, summary, ["Day"] + [f"{h}:00" for h in HOURS], [[WEEKDAYS[r]] + row for r, row in enumerate(grid)])
-
-
-def band_flow(left, right, bands, marks=(), title="", summary="") -> Markup:
-    """Bands from left labels to right labels. bands: (left, right, count, href[, kind]); the kind is a class, so two paths between the same labels both show. Each band is a link with a title and a drawn count.
-    Marked bands (left, right) get a heavier colour and the word rising. Minimum band width 3."""
-    if not bands:
-        return EMPTY
-    bands = [(*b, "") if len(b) == 4 else tuple(b) for b in bands]
-    top = max(b[2] for b in bands) or 1
-    thick = lambda c: max(3.0, 30 * c / top)  # noqa: E731
-    slot = lambda c: max(thick(c), 18.0) + 4  # noqa: E731  room for the drawn count
-    ypos, ends = {}, {}
-    for side, names, idx in (("l", left, 0), ("r", right, 1)):
-        y = 6.0
-        for name in names:
-            start = y
-            for i, b in enumerate(bands):
-                if b[idx] == name:
-                    ypos[(side, i)] = y + slot(b[2]) / 2
-                    y += slot(b[2])
-            ends[(side, name)] = (start + y) / 2 if y > start else None
-            y += 12 if y > start else 0
-        ends[side] = y
-    H = int(max(ends["l"], ends["r"]) + 6)
-    body = []
-    for side, names, x, anchor in (("l", left, 170, "end"), ("r", right, 470, "start")):
-        for name in names:
-            if ends[(side, name)] is not None:
-                body.append(f'<text class="lbl" x="{x}" y="{ends[(side, name)] + 5:.1f}" text-anchor="{anchor}">{_e(name)}</text>')
-    marks = set(map(tuple, marks))
-    for i, (l, r, c, href, kind) in enumerate(bands):
-        y1, y2, mk = ypos[("l", i)], ypos[("r", i)], (l, r) in marks
-        label = f"{l} to {r}: {c}" + (", rising" if mk else "") + (f", {kind}" if kind else "")
-        body.append(f'<a href="{_e(href)}"><title>{_e(label)}</title>'
-                    f'<path class="band{" mark" if mk else ""}{" " + _e(kind) if kind else ""}" d="M180,{y1:.1f} C320,{y1:.1f} 320,{y2:.1f} 460,{y2:.1f}" fill="none" stroke-width="{thick(c):.1f}"/>'
-                    f'<text class="lbl halo" x="320" y="{(y1 + y2) / 2 + 5:.1f}" text-anchor="middle">{"▲ " if mk else ""}{_e(c)}</text></a>')
-    return _fig("".join(body), H, title, summary, ["From", "To", "Count", "Marked"],
-                [(l, r, c, "rising" if (l, r) in marks else kind) for l, r, c, _, kind in bands])

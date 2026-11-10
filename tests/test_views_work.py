@@ -22,7 +22,7 @@ def data_rows(html):
 
 def test_handler_sees_one_team_row_and_lead_sees_eleven(client):
     html = client.get("/team").text  # default identity is the handler H1
-    assert len(data_rows(html)) == 1 and "Team lead sees the whole team." in text_of(main_of(html))
+    assert len(data_rows(html)) == 1 and "Switch to Team lead (bottom left) to see the whole team." in text_of(main_of(html))
     as_role(client, "team_lead", "T1")
     lead = client.get("/team").text
     assert len(data_rows(lead)) == 11 and "Unassigned" in lead
@@ -37,26 +37,38 @@ def test_team_rows_sorted_by_past_deadline(client):
     assert past == sorted(past, reverse=True) and len(past) == 11
 
 
-def test_pipeline_counts_sum_to_open_cases_and_link_to_queue(client, app_db):
+def test_pipeline_boxes_count_open_cases_link_to_queue_and_say_returns(client, app_db):
     html = main_of(client.get("/pipeline").text)
-    open_ = sqlite3.connect(app_db).execute("SELECT COUNT(*) FROM cases WHERE state != 'accepted'").fetchone()[0]
-    table = next(t for t in re.findall(r'<table.*?</table>', html, re.S) if 'Open cases</th>' in t)
-    assert sum(int(n) for n in re.findall(r'<td class="num-col">(\d+)</td>', table)) == open_
-    assert 'href="/queue?owner=all&amp;stage=in_review"' in html
-    for label in ("Normal path", "Urgent fast path", "Returned for more work"):
-        assert label in html
+    db = sqlite3.connect(app_db)
+    open_ = db.execute("SELECT COUNT(*) FROM cases WHERE state != 'accepted'").fetchone()[0]
+    boxes = re.findall(r'<a class="stage" href="/queue\?owner=all&amp;stage=(\w+)"><span>([^<]+)</span><b>(\d+)</b>', html)
+    assert [b[1] for b in boxes] == ["New", "In review", "Handed over", "Returned"]
+    assert sum(int(b[2]) for b in boxes) == open_
+    back, ho = db.execute("SELECT SUM(return_count > 0), COUNT(*) FROM cases WHERE handed_over_at IS NOT NULL").fetchone()
+    assert f"{back} of {ho} handovers were returned for more work." in text_of(html)
+    assert "band" not in html and "Stage</th>" not in html  # no flow diagram, no second stage table
 
 
-def test_removing_a_path_removes_it_from_the_diagram(app_db, tmp_path):
+def test_removing_a_path_removes_it_from_the_numbers(app_db, tmp_path):
     cfg = yaml.safe_load(open("config/pipeline.yaml", encoding="utf-8"))
-    paths = [p for p in cfg["paths"] if p["kind"] != "returned"]
-    cfg["paths"] = paths
+    cfg["paths"] = [p for p in cfg["paths"] if p["kind"] != "returned"]
     alt = tmp_path / "pipeline.yaml"
     alt.write_text(yaml.safe_dump(cfg), encoding="utf-8")
     c = TestClient(create_app(str(app_db), str(alt), models_dir=None), base_url="http://127.0.0.1:8000")
     full = TestClient(create_app(str(app_db), models_dir=None), base_url="http://127.0.0.1:8000")
-    assert "Handed over to Returned" in full.get("/pipeline").text
-    assert "Handed over to Returned" not in c.get("/pipeline").text
+    row = "<td>Handed over</td><td>Returned</td>"
+    assert row in full.get("/pipeline").text
+    assert row not in c.get("/pipeline").text
+
+
+def test_departments_waiting_list_is_capped_with_plain_deadline_words(client, app_db):
+    c = sqlite3.connect(app_db)  # the plain test data has no departments yet
+    c.execute("UPDATE cases SET department = 'Fraud claims' WHERE state = 'handed_over'")
+    c.commit()
+    as_role(client, "specialist", "S1")
+    html = main_of(client.get("/departments").text)
+    assert html.count('class="plain-id"') <= 8
+    assert re.search(r"\d+ business days? (past deadline|left)|Due today", html)
 
 
 def test_specialist_departments_lists_only_their_handovers(client, app_db):
@@ -67,7 +79,7 @@ def test_specialist_departments_lists_only_their_handovers(client, app_db):
     html = main_of(client.get("/departments?department=Bereavement").text)
     ids = re.findall(r'href="/cases/(AB-\d{4}-\d{5})"', html)
     rows = sqlite3.connect(app_db).execute("SELECT id FROM cases WHERE state = 'handed_over' AND department = 'Fraud claims' ORDER BY deadline, id").fetchall()
-    assert ids == [r[0] for r in rows][:10]
+    assert ids == [r[0] for r in rows][:8]
     assert "Waiting for Fraud claims" in html and "Bereavement" not in html
     assert "Accept" in html and "Past deadline" in html
     assert html.index("Past deadline") < html.index("Open</th>")  # first number column

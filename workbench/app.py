@@ -196,17 +196,12 @@ def create_app(db_path="data/workbench.db", config_path="config/pipeline.yaml", 
             return page(request, conn, "queue.html", **queue_ctx(conn, current_actor(request), parse_qs(request.url.query), edge_of(request)))
 
     # ---- Overview: what needs me today ----
-    def when(days: int) -> str:
-        n = abs(days)
-        unit = f"{n} business day{'' if n == 1 else 's'}"
-        return f"{unit} past deadline" if days < 0 else "Due today" if days == 0 else f"{unit} left"
-
     @app.get("/", response_class=HTMLResponse)
     def overview(request: Request):
         actor = current_actor(request)
         with db() as conn:
             h = stats.headline(conn, today, hol, cfg["urgent"]["deadline_within_business_days"])
-            attention = [{**r, "when": when(business_days_left(date.fromisoformat(r["deadline"]), today, hol))}
+            attention = [{**r, "days": business_days_left(date.fromisoformat(r["deadline"]), today, hol)}
                          for r in stats.needs_attention(conn, actor)]
             rises = stats.rises(conn, today, cfg)
             rise = rises[0] if rises else None
@@ -235,7 +230,7 @@ def create_app(db_path="data/workbench.db", config_path="config/pipeline.yaml", 
             if mine:  # a specialist sees their own department only
                 rows = [r for r in rows if r["department"] == mine]
             chosen = mine or (q.get("department") if q.get("department") in cfg["departments"] else rows[0]["department"])
-            waiting, n_waiting = stats.handovers(conn, chosen, source, type_)
+            waiting, n_waiting = stats.handovers(conn, chosen, source, type_, limit=8)
             missing = stats.missing_by_field(conn, cfg, chosen, source, type_)[:6]
             title = f"Fields most often missing, {chosen}"
             keep = {k: v for k, v in (("source", source), ("type", type_)) if v}
@@ -261,24 +256,18 @@ def create_app(db_path="data/workbench.db", config_path="config/pipeline.yaml", 
 
     @app.get("/pipeline", response_class=HTMLResponse)
     def pipeline(request: Request):
-        order = {s: i for i, s in enumerate(cfg["stages"])}
-        by = lambda names: sorted(set(names), key=lambda n: (order.get(n, len(order)), n))  # noqa: E731
-        href = lambda p: "/queue?" + urlencode({"owner": "all", "stage": p["to"] if p["to"] in order else p["from"]})  # noqa: E731
+        kind = {"normal": "Normal", "urgent": "Urgent", "returned": "Returned", "second_return": "Second return"}
+        nm = lambda n: STATE_NAME.get(n, n.capitalize())  # noqa: E731
         with db() as conn:
-            paths = stats.pipeline_paths(conn, cfg)
             states = dict(stats.by_stage(conn))
             stages = [(s, states.get(s, 0)) for s in cfg["stages"] if s != "accepted"]  # accepted is closed, so not an open count
-            title = "How cases move between stages"
-            nm = lambda n: STATE_NAME.get(n, n.capitalize())  # noqa: E731
-            summary = "Cases that took each path: " + ", ".join(f"{nm(p['from'])} to {nm(p['to'])} {p['count']} ({p['kind']})" for p in paths) + "."
-            flow = charts.band_flow([nm(n) for n in by(p["from"] for p in paths)], [nm(n) for n in by(p["to"] for p in paths)],
-                                    [(nm(p["from"]), nm(p["to"]), p["count"], href(p), p["kind"]) for p in paths], title=title, summary=summary)
+            moves = [(nm(p["from"]), nm(p["to"]), kind.get(p["kind"], p["kind"]), p["count"]) for p in stats.pipeline_paths(conn, cfg)]
+            back, ho = stats.handover_returns(conn)
             dept_title = "Open complaints by department"
             by_dept = [(r["department"], r["open"]) for r in stats.by_department(conn)]
             more = [(dept_title, charts.bars(by_dept, title=dept_title, summary=stats.sentence("bars", {"title": dept_title, "items": by_dept}) if by_dept else "")),
                     ("When complaints arrive", charts.heatmap(stats.heatmap(conn), title="Complaints received by weekday and hour", summary="Darker cells are busier hours."))]
-            return page(request, conn, "pipeline.html", flow=flow, stages=stages, stage_name=STATE_NAME, more=more, title=title,
-                        legend=[("normal", "Normal path"), ("urgent", "Urgent fast path"), ("returned", "Returned for more work")])
+            return page(request, conn, "pipeline.html", stages=stages, stage_name=STATE_NAME, moves=moves, back=back, handovers=ho, more=more)
 
     def back_to(nxt: str) -> str:
         return safe_path(nxt) or "/queue"

@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% from "partials/help.html" import help_panel %}
+{% from "partials/macros.html" import deadline_chip %}
 {% block title %}Departments{% endblock %}
 {% block strip %}{% include "partials/deadline_strip.html" %}{% endblock %}
 {% block purpose %}{{ content.views.departments.purpose }}{% endblock %}
@@ -42,7 +43,7 @@
     {% for c in waiting %}
     <li><a href="/cases/{{ c.id }}" class="plain-id">{{ c.id }}</a>
       <span>{{ c.type or "Type not set" }}, {{ c.source }}</span>
-      {% set d = days(c.deadline) %}<span class="chip{{ ' warn' if d < 0 }}">{% if d < 0 %}{{ -d }} past deadline{% else %}{{ d }} left{% endif %}</span>
+      {{ deadline_chip(days(c.deadline)) }}
       {% if can_act %}
       <form method="post" action="/cases/{{ c.id }}/accept"><input type="hidden" name="version" value="{{ c.version }}"><button type="submit" class="primary">Accept<span class="sr-only"> {{ c.id }}</span></button></form>
       <details class="inline"><summary>Return<span class="sr-only"> {{ c.id }}</span></summary>

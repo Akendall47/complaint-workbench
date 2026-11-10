@@ -49,7 +49,7 @@ a.nav-link[aria-current=page]{background:white;color:var(--ink);font-weight:600;
 .popover ol{padding-left:22px}
 .popover li{margin-bottom:6px}
 
-.table-card{background:white;border-radius:18px;box-shadow:var(--shadow);padding:18px 20px;min-width:0}
+.table-card{background:white;border-radius:18px;box-shadow:var(--shadow);padding:18px 20px;min-width:0;margin-bottom:16px}
 .toolbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
 .segmented{display:flex;padding:4px;border-radius:13px;background:#e3e3ea;gap:2px}
 .segmented a{padding:6px 14px;border-radius:10px;color:var(--ink);text-decoration:none;font-size:14px;min-height:34px;display:flex;align-items:center}
@@ -128,17 +128,17 @@ button.primary:disabled{background:#c9c9d3;color:#4a4a55;cursor:not-allowed}
 
 /* Overview and charts */
 .figures{display:flex;gap:16px;flex-wrap:wrap;list-style:none;padding:0;margin:0 0 16px}
-.figure{background:white;border-radius:18px;box-shadow:var(--shadow);padding:16px 22px;display:grid;gap:2px;min-width:200px;flex:1 1 200px}
+.figure{background:white;border-radius:18px;box-shadow:var(--shadow);padding:10px 22px;display:grid;gap:0;min-width:200px;flex:1 1 200px}
 .figure-label{font-size:14px;color:var(--muted)}
 .figure-value{font-size:34px;font-weight:600;letter-spacing:-.6px;font-variant-numeric:tabular-nums;line-height:1.2}
 .figure-value a{color:var(--ink);text-decoration-color:var(--strong)}
-.attention{list-style:none;padding:0;margin:10px 0 0;display:grid;gap:2px}
-.attention li{display:flex;gap:6px 14px;flex-wrap:wrap;align-items:center;padding:9px 0;border-bottom:1px solid #ededf2;font-size:15px}
+.attention{list-style:none;padding:0;margin:6px 0 0;display:grid;gap:2px}
+.attention li{display:flex;gap:6px 14px;flex-wrap:wrap;align-items:center;padding:5px 0;border-bottom:1px solid #ededf2;font-size:15px}
 .attention li:last-child{border-bottom:0}
 .rise{margin:0 0 16px;padding:10px 16px;border-radius:12px;background:var(--tint);color:var(--ink)}
 .chart{margin:10px 0 0}
 .chart-svg{display:block;width:100%;max-width:640px;height:auto}
-.chart-svg.wide{max-width:none}
+.chart-svg.wide{max-width:none;height:160px}
 .chart-svg .lbl{font-size:14px;fill:var(--ink)}
 .chart-svg .lbl.hi{font-weight:700}
 .chart-svg .halo{paint-order:stroke;stroke:white;stroke-width:4px;font-weight:600}
@@ -149,9 +149,6 @@ button.primary:disabled{background:#c9c9d3;color:#4a4a55;cursor:not-allowed}
 .chart-svg .bar.hi{fill:var(--accent-dark)}
 .chart-svg .cell{fill:var(--indigo)}
 .chart-svg .l0{fill-opacity:.04}.chart-svg .l1{fill-opacity:.15}.chart-svg .l2{fill-opacity:.3}.chart-svg .l3{fill-opacity:.5}.chart-svg .l4{fill-opacity:.7}
-.chart-svg .band{stroke:var(--indigo);stroke-opacity:.35}
-.chart-svg .band.mark{stroke:var(--accent);stroke-opacity:.6}
-.chart-svg a:hover .band{stroke-opacity:.6}
 .chart-data{margin-top:8px;font-size:14px}
 .chart-data summary{color:var(--indigo-dark);width:fit-content;padding:4px 0}
 .spark{width:120px;height:24px;vertical-align:middle}
@@ -167,9 +164,8 @@ button.primary:disabled{background:#c9c9d3;color:#4a4a55;cursor:not-allowed}
 .more>summary{cursor:pointer;font-weight:600;padding:4px 0}
 .more h3{font-size:16px;margin:16px 0 0}
 .chips{list-style:none;padding:0;margin:0}
-.legend{list-style:none;display:flex;flex-wrap:wrap;gap:6px 20px;padding:0;margin:8px 0}
-.key{display:inline-block;width:34px;margin-right:8px;vertical-align:middle;border-top:4px solid var(--indigo-dark)}
-.key.urgent{border-top-style:dashed}
-.key.returned{border-top-style:dotted;background:none;padding:0;border-radius:0}
-.chart-svg .band.urgent{stroke-dasharray:10 5}
-.chart-svg .band.returned,.chart-svg .band.second_return{stroke-dasharray:2 4}
+.stages{display:flex;gap:8px;align-items:stretch;list-style:none;padding:0;margin:12px 0}
+.stages li{display:flex;align-items:center;gap:8px;flex:1 1 0}
+.stage{flex:1;display:grid;gap:2px;padding:14px 16px;border-radius:14px;background:#f1f1f6;text-align:center;text-decoration:none;color:var(--ink)}
+.stage b{font-size:28px;font-variant-numeric:tabular-nums}
+.stages .arrow{color:var(--muted);font-size:20px}

@@ -10,6 +10,8 @@ VIEWS = [("/departments", "departments"), ("/team", "team"), ("/pipeline", "pipe
 @pytest.mark.parametrize("path,name", VIEWS)
 def test_work_view_in_browser(base, browser, width, path, name):
     page = browser.new_page(viewport={"width": width, "height": 900})
+    if name == "team":  # the screenshot shows the whole team
+        page.context.add_cookies([{"name": "role", "value": "team_lead", "url": base}, {"name": "staff_id", "value": "T1", "url": base}])
     errors, hosts = [], set()
     page.on("console", lambda m: errors.append(m.text) if m.type == "error" else None)
     page.on("pageerror", lambda e: errors.append(str(e)))

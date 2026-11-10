@@ -33,6 +33,12 @@ def headline(conn, today, holidays, limit=5) -> dict:
             "returned_share": back / ho if ho else None}
 
 
+def handover_returns(conn) -> tuple[int, int]:
+    """(handovers returned for more work, handovers made)."""
+    back, ho = conn.execute("SELECT COALESCE(SUM(return_count > 0),0), COUNT(*) FROM cases WHERE handed_over_at IS NOT NULL").fetchone()
+    return back, ho
+
+
 def deadline_buckets(conn, today, holidays, limit=5) -> list[tuple[str, int]]:
     h = headline(conn, today, holidays, limit)
     return [("Past deadline", h["past_deadline"]), ("Due soon", h["due_soon"]), ("Later", h["open"] - h["past_deadline"] - h["due_soon"])]

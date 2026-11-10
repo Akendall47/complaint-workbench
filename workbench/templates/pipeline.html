@@ -7,25 +7,19 @@
 {% block help %}{{ help_panel("pipeline") }}{% endblock %}
 {% block content %}
 <section class="card" aria-labelledby="flow-h">
-  <h2 id="flow-h">{{ title }}</h2>
-  <ul class="legend" aria-label="Key">
-    {% for kind, label in legend %}<li><span class="key {{ kind }}" aria-hidden="true"></span>{{ label }}</li>{% endfor %}
-  </ul>
-  {{ flow }}
-</section>
-
-<section class="table-card" aria-labelledby="stages-h">
-  <h2 id="stages-h" class="sr-only">Open cases by stage</h2>
-  <div class="table-wrap">
-    <table class="case-table">
-      <thead><tr><th scope="col">Stage</th><th scope="col">Open cases</th></tr></thead>
-      <tbody>
-      {% for s, n in stages %}
-      <tr><th scope="row"><a href="/queue?owner=all&amp;stage={{ s }}">{{ stage_name[s] }}</a></th><td class="num-col">{{ n }}</td></tr>
-      {% endfor %}
-      </tbody>
-    </table>
-  </div>
+  <h2 id="flow-h">Open cases by stage</h2>
+  <ol class="stages">
+    {% for s, n in stages %}
+    <li><a class="stage" href="/queue?owner=all&amp;stage={{ s }}"><span>{{ stage_name[s] }}</span><b>{{ n }}</b></a>{% if not loop.last %}<span class="arrow" aria-hidden="true">&rarr;</span>{% endif %}</li>
+    {% endfor %}
+  </ol>
+  <p>{{ back }} of {{ handovers }} handovers were returned for more work.</p>
+  <details class="chart-data"><summary>Show the numbers</summary>
+    <div class="table-wrap"><table class="case-table">
+      <thead><tr><th scope="col">From</th><th scope="col">To</th><th scope="col">Path</th><th scope="col">Cases</th></tr></thead>
+      <tbody>{% for f, t, k, n in moves %}<tr><td>{{ f }}</td><td>{{ t }}</td><td>{{ k }}</td><td class="num-col">{{ n }}</td></tr>{% endfor %}</tbody>
+    </table></div>
+  </details>
 </section>
 
 <details class="card more">

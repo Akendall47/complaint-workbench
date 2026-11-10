@@ -17,6 +17,8 @@ def test_overview_in_browser(base, browser, width):
     assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth"), "sideways scroll"
     assert not errors, errors
     assert hosts <= {base.split("/")[2]}, hosts
+    if width == 1440:  # the whole page fits: the foot link is inside the viewport
+        assert page.evaluate("document.querySelector('.source a').getBoundingClientRect().bottom <= window.innerHeight")
 
     page.keyboard.press("Tab")
     assert page.evaluate("document.activeElement.className") == "skip"

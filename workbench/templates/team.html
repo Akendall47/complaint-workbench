@@ -21,7 +21,8 @@
       </tbody>
     </table>
   </div>
-  {% if not lead %}<p class="muted">Team lead sees the whole team.</p>{% endif %}
+  {% if not lead %}<p class="muted">Switch to Team lead (bottom left) to see the whole team.</p>{% endif %}
+  <p class="muted">This page is for sharing out work. It does not show speed per case, because a speed target pushes people to approve AI drafts without checking.</p>
 </section>
 {% if lead %}
 <section class="card" aria-labelledby="load-h">
@@ -29,6 +30,5 @@
   {{ chart }}
 </section>
 {% endif %}
-<p class="muted">This page is for sharing out work. It does not show speed per case, because a speed target pushes people to approve AI drafts without checking.</p>
 <p class="source"><a href="/settings#data-sources">Where these numbers come from</a></p>
 {% endblock %}

@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% from "partials/help.html" import help_panel %}
+{% from "partials/macros.html" import deadline_chip %}
 {% block title %}Overview{% endblock %}
 {% block strip %}{% include "partials/deadline_strip.html" %}{% endblock %}
 {% block purpose %}{{ content.views.overview.purpose }}{% endblock %}
@@ -20,7 +21,7 @@
     {% for c in attention %}
     <li><a href="/cases/{{ c.id }}" class="plain-id">{{ c.id }}</a>
       <span>{{ c.type or "Type not set" }}, {{ c.department or "needs routing" }}</span>
-      <span class="chip{{ ' warn' if c.when.endswith('past deadline') }}">{{ c.when }}</span>
+      {{ deadline_chip(c.days) }}
       {% if c.urgent %}<span class="urgent-tag">Urgent</span>{% endif %}</li>
     {% endfor %}
   </ol>

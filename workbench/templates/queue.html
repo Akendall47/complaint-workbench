@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% from "partials/help.html" import help_panel %}
+{% from "partials/macros.html" import deadline_chip %}
 {% from "partials/source.html" import source_link %}
 {% block title %}Queue{% endblock %}
 {% block strip %}{% include "partials/deadline_strip.html" %}{% endblock %}
@@ -31,12 +32,12 @@
   {% if rows %}
   <div class="table-wrap">
     <table class="case-table">
-      <thead><tr><th scope="col">Case</th><th scope="col">Days left</th><th scope="col">Type</th><th scope="col">Department</th><th scope="col">State</th><th scope="col">Owner</th></tr></thead>
+      <thead><tr><th scope="col">Case</th><th scope="col">Deadline</th><th scope="col">Type</th><th scope="col">Department</th><th scope="col">State</th><th scope="col">Owner</th></tr></thead>
       <tbody>
       {% for r in rows %}{% set c = r.c %}
       <tr class="case-row" data-case="{{ c.id }}" data-days="{{ r.days }}">
         <td><a class="plain-id" href="/cases/{{ c.id }}">{{ c.id }}</a></td>
-        <td class="{{ 'deadline-past' if r.days < 0 else '' }}">{% if r.days < 0 %}{{ -r.days }} past{% else %}{{ r.days }}{% endif %}</td>
+        <td>{{ deadline_chip(r.days) }}</td>
         <td>{{ c.type or "–" }}</td>
         <td>{{ c.department or "Needs routing" }}</td>
         <td><span class="status-label">{{ state_name[c.state] }}</span></td>

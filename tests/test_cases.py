@@ -226,7 +226,6 @@ def test_first_return_goes_to_handler_second_to_team_lead(k):
     cases.return_case(k, "C1", S1, ver(k), "Police reference missing")
     r = row(k)
     assert (r["state"], r["return_count"], r["owner_id"]) == ("returned", 1, "H1")
-    assert r["urgent"] == 1  # returned before
     cases.open_case(k, "C1", H1, ver(k))
     cases.approve(k, "C1", H1, ver(k))
     assert row(k)["owner_id"] == "S1"

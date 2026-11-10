@@ -18,7 +18,6 @@ def case(**kw):
     (case(), "My husband has Dementia.", "Signs of a vulnerable customer"),
     (case(), "I am behind on payments and cannot afford rent.", "Financial hardship"),
     (case(), "It was a SCAM by a fraudster.", "Ongoing fraud"),
-    (case(return_count=1), "all fine", "Returned before"),
 ])
 def test_each_reason_fires_alone(cfg, c, text, reason):
     assert urgent_reasons(c, text, TODAY, cfg) == [reason]
@@ -41,13 +40,13 @@ def test_whole_words_only(cfg):
 def test_order(cfg):
     r = urgent_reasons(case(deadline="2026-11-11", return_count=2), "cancer, food bank, phishing", TODAY, cfg)
     assert r == ["Deadline within 5 business days", "Signs of a vulnerable customer", "Financial hardship",
-                 "Ongoing fraud", "Returned before"]
+                 "Ongoing fraud"]
 
 
 def test_manual_override(cfg):
     assert is_urgent(case(urgent_manual=0, return_count=3), "", TODAY, cfg) is False
     assert is_urgent(case(urgent_manual=1), "", TODAY, cfg) is True
-    assert is_urgent(case(return_count=1), "", TODAY, cfg) is True
+    assert is_urgent(case(return_count=1), "", TODAY, cfg) is False  # a returned case is shown by its state, not flagged urgent
 
 
 def test_scammed_counts_as_fraud(cfg):
