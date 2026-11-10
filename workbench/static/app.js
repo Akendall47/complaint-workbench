@@ -33,7 +33,7 @@
     if (!c || c.id !== 'case') return;
     var live = document.getElementById('live'), bar = document.getElementById('bar-text');
     if (live && bar) live.textContent = bar.textContent;
-    (c.querySelector('[data-focus]') || c.querySelector('button.primary:not([disabled])') || c).focus();
+    (c.querySelector('[data-focus]') || c.querySelector('button.primary:not([disabled]), a.primary') || c).focus();
   });
   var hint = document.getElementById('hint');
   try {

@@ -1,4 +1,5 @@
 today: 2026-11-10
+demo_case: AB-2026-00768  # the walk-through and the browser tests use this case
 # Dates fetched from https://www.gov.uk/bank-holidays.json (england-and-wales) on 2026-11-10.
 bank_holidays:
   - 2026-01-01

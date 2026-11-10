@@ -57,9 +57,15 @@ class Count:
         """Tab to the next Confirm button and press Enter, as a keyboard user would."""
         for _ in range(80):
             if self.page.evaluate("document.activeElement.classList.contains('confirm')"):
+                before = self.page.locator("#live").inner_text()
                 with self.page.expect_response(lambda r: r.request.method == "POST"):
                     self.press("Enter")
                 self.page.wait_for_timeout(250)
+                inside = self.page.evaluate("!!document.activeElement.closest('#case') && document.activeElement.tagName !== 'DIV'")
+                assert inside, "focus fell out of the case after a swap"
+                if self.page.locator("button.confirm").count():
+                    assert self.page.evaluate("document.activeElement.classList.contains('confirm')")
+                assert self.page.locator("#live").inner_text() != before, "no announcement after the swap"
                 return True
             self.press("Tab")
         return False
@@ -80,16 +86,42 @@ def switch(page, name):
     page.wait_for_load_state("networkidle")
 
 
+def test_screenshots_from_a_fresh_database(base, dbfile, browser):
+    """Run first in this module: viewport-size shots before the flow writes anything."""
+    from workbench import drafts
+    from workbench.config import load_config
+    from workbench.db import connect
+    SHOTS.mkdir(parents=True, exist_ok=True)
+    cfg = load_config()
+    mid, handed = candidates(dbfile)[3], candidates(dbfile)[4]
+    c = connect(dbfile)  # the second case is handed over the way a handler would leave it: claims confirmed, handover saved
+    c.execute("UPDATE claims SET status='confirmed' WHERE case_id=? AND supported=1", (handed,))
+    c.execute("UPDATE claims SET status='removed' WHERE case_id=? AND status='draft'", (handed,))
+    pack = drafts.load_handover(c, handed, cfg)
+    c.execute("UPDATE cases SET state='handed_over', handover_json=?, owner_id='S1' WHERE id=?", (json.dumps(pack), handed))
+    c.commit()
+    c.close()
+    page = new_page(browser, base)
+    page.goto(f"{base}/cases/{mid}")
+    page.locator("button.confirm").first.click()
+    expect(page.locator(".stepper a").first).to_contain_text("1 of")
+    page.screenshot(path=str(SHOTS / "case.png"))
+    switch(page, "Specialist")
+    page.goto(f"{base}/cases/{handed}")
+    page.screenshot(path=str(SHOTS / "case-specialist.png"))
+    page.close()
+
+
 def test_full_flow(base, dbfile, browser):
     cid = candidates(dbfile)[0]
     page = new_page(browser, base)
     n = Count(page)
-    page.goto(base + "/queue")
-    link = page.locator(f'a[href="/cases/{cid}"]')
-    if not link.count():
-        page.goto(base + "/queue?owner=me&department=Fraud+claims")
-        link = page.locator(f'a[href="/cases/{cid}"]')
-    n.click(link.first)
+    from workbench.config import load_config
+    assert cid == load_config()["demo_case"]
+    page.goto(base + "/queue?owner=me&state=in_review&department=Fraud+claims")  # a filtered Queue (the URL stands in for the Filters form)
+    first = page.locator("tr.case-row a").first
+    assert first.get_attribute("href") == f"/cases/{cid}"
+    n.click(first)
     page.wait_for_load_state("networkidle")
     assert page.url == f"{base}/cases/{cid}"
 
@@ -140,7 +172,6 @@ def test_full_flow(base, dbfile, browser):
     switch(page, "Specialist")
     assert page.url == url
     page.goto(url)
-    page.screenshot(path=str(SHOTS / "case-specialist.png"), full_page=True)
     assert page.get_by_role("button", name="Accept").is_visible() and not page.get_by_role("button", name="Approve and send").count()
     page.locator("summary", has_text="Return to the handler").click()
     page.get_by_label("Reason").last.fill("Police reference does not match.")
@@ -148,7 +179,8 @@ def test_full_flow(base, dbfile, browser):
     expect(page.locator("#bar-text")).to_contain_text("Nothing for you")
     switch(page, "Handler")
     page.goto(base + "/queue")
-    row = page.locator(f'tr[data-case="{cid}"]')
+    page.goto(base + "/queue?owner=me&state=returned&department=Fraud+claims")
+    row = page.locator(f'tr[data-case="{cid}"]')  # not first: an older returned case of H1 is above it
     assert "Returned" in row.inner_text()
     # resend, then the specialist returns again: the team lead owns it
     row.locator("a").click()
@@ -192,7 +224,6 @@ def test_case_in_browser(base, dbfile, browser, width):
     if width == 1440:  # mid-check: one claim confirmed
         page.locator("button.confirm").first.click()
         expect(page.locator(".stepper a").first).to_contain_text("1 of")
-        page.screenshot(path=str(SHOTS / "case.png"))
     for url in (f"{base}/cases/{cid}", f"{base}/cases/{cid}?all=1"):
         page.goto(url)
         page.wait_for_load_state("networkidle")

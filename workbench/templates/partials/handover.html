@@ -11,6 +11,6 @@
     <button type="submit">Save handover</button>
   </form>
   {% else %}
-  <dl class="pairs">{% for f in v.fields %}<dt>{{ f.label }}</dt><dd>{{ f.value or "Missing" }}</dd>{% endfor %}</dl>
+  <dl class="pairs">{% for f in v.fields %}<dt>{{ f.label }}</dt><dd>{% if f.money and f.value %}£{% endif %}{{ f.value or "Missing" }}</dd>{% endfor %}</dl>
   {% endif %}
 </section>
