@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" width="1200" height="600" role="img" aria-labelledby="t d" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif">
+  <title id="t">How a complaint moves through the Complaint Workbench</title>
+  <desc id="d">Ten stages in two rows. Row one: intake, mask, classify, policy search, draft. Row two, read right to left: citation check, person confirms, handover, specialist decides, audit. Only the draft stage uses a language model. Every other stage uses classic tools or a person.</desc>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#52525b"/></marker>
+  </defs>
+  <rect width="1200" height="600" fill="#fafafa"/>
+  <text x="40" y="60" font-size="26" font-weight="700" fill="#27272a">How a complaint moves through the workbench</text>
+  <text x="40" y="92" font-size="17" fill="#52525b">Ten stages. One uses a language model. A person decides at every hand-off.</text>
+
+  <g stroke="#52525b" stroke-width="2" fill="none" marker-end="url(#a)">
+    <path d="M220 190 H273"/><path d="M455 190 H508"/><path d="M690 190 H743"/><path d="M925 190 H978"/>
+    <path d="M1070 240 V338"/>
+    <path d="M980 390 H927"/><path d="M745 390 H692"/><path d="M510 390 H457"/><path d="M275 390 H222"/>
+  </g>
+
+  <g font-size="18" font-weight="700" fill="#27272a" text-anchor="middle">
+    <g>
+      <rect x="40" y="140" width="180" height="100" rx="14" fill="#fff" stroke="#d4d4d8" stroke-width="2"/>
+      <text x="130" y="184">1 Intake</text><text x="130" y="214" font-size="16" font-weight="400" fill="#52525b">checks the text</text>
+    </g>
+    <g>
+      <rect x="275" y="140" width="180" height="100" rx="14" fill="#fff" stroke="#d4d4d8" stroke-width="2"/>
+      <text x="365" y="184">2 Mask</text><text x="365" y="214" font-size="16" font-weight="400" fill="#52525b">patterns, known values</text>
+    </g>
+    <g>
+      <rect x="510" y="140" width="180" height="100" rx="14" fill="#fff" stroke="#d4d4d8" stroke-width="2"/>
+      <text x="600" y="184">3 Classify</text><text x="600" y="214" font-size="16" font-weight="400" fill="#52525b">TF-IDF, logistic</text>
+    </g>
+    <g>
+      <rect x="745" y="140" width="180" height="100" rx="14" fill="#fff" stroke="#d4d4d8" stroke-width="2"/>
+      <text x="835" y="184">4 Policy search</text><text x="835" y="214" font-size="16" font-weight="400" fill="#52525b">SQLite FTS5, BM25</text>
+    </g>
+    <g>
+      <rect x="980" y="140" width="180" height="100" rx="14" fill="#eef2ff" stroke="#4338ca" stroke-width="3"/>
+      <text x="1070" y="184" fill="#4338ca">5 Draft</text><text x="1070" y="214" font-size="16" font-weight="700" fill="#4338ca">language model</text>
+    </g>
+
+    <g>
+      <rect x="980" y="340" width="180" height="100" rx="14" fill="#fff" stroke="#d4d4d8" stroke-width="2"/>
+      <text x="1070" y="384">6 Citation check</text><text x="1070" y="414" font-size="16" font-weight="400" fill="#52525b">word-for-word match</text>
+    </g>
+    <g>
+      <rect x="745" y="340" width="180" height="100" rx="14" fill="#fff" stroke="#d4d4d8" stroke-width="2"/>
+      <text x="835" y="384">7 Person confirms</text><text x="835" y="414" font-size="16" font-weight="400" fill="#52525b">handler, each claim</text>
+    </g>
+    <g>
+      <rect x="510" y="340" width="180" height="100" rx="14" fill="#fff" stroke="#d4d4d8" stroke-width="2"/>
+      <text x="600" y="384">8 Handover</text><text x="600" y="414" font-size="16" font-weight="400" fill="#52525b">pack to department</text>
+    </g>
+    <g>
+      <rect x="275" y="340" width="180" height="100" rx="14" fill="#fff" stroke="#d4d4d8" stroke-width="2"/>
+      <text x="365" y="384">9 Specialist</text><text x="365" y="414" font-size="16" font-weight="400" fill="#52525b">accepts or returns</text>
+    </g>
+    <g>
+      <rect x="40" y="340" width="180" height="100" rx="14" fill="#fff" stroke="#d4d4d8" stroke-width="2"/>
+      <text x="130" y="384">10 Audit</text><text x="130" y="414" font-size="16" font-weight="400" fill="#52525b">hash-chained log</text>
+    </g>
+  </g>
+
+  <rect x="40" y="490" width="26" height="26" rx="6" fill="#eef2ff" stroke="#4338ca" stroke-width="3"/>
+  <text x="80" y="510" font-size="16" fill="#27272a">Uses a language model. Its draft is recorded, then checked by stage 6 and a person.</text>
+  <rect x="40" y="530" width="26" height="26" rx="6" fill="#fff" stroke="#d4d4d8" stroke-width="2"/>
+  <text x="80" y="550" font-size="16" fill="#27272a">Classic tool or a person. All data in the prototype is synthetic.</text>
+</svg>

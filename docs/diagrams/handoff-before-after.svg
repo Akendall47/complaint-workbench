@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" width="1200" height="600" role="img" aria-labelledby="t d" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif">
+  <title id="t">Staff handoff, before and after the tool</title>
+  <desc id="d">Two rows of four steps. Before: the handler reads all the notes, searches policy by hand, types the handover, and the specialist finds gaps and sends it back. With the tool: the tool masks and drafts claims, the handler checks each claim, the pack names missing fields, and the specialist accepts or returns it with every step logged.</desc>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#52525b"/></marker>
+    <marker id="b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#4338ca"/></marker>
+  </defs>
+  <rect width="1200" height="600" fill="#fafafa"/>
+  <text x="40" y="60" font-size="26" font-weight="700" fill="#27272a">The same handoff, before and after</text>
+  <text x="40" y="92" font-size="17" fill="#52525b">The handler still decides. The tool finds, drafts and checks.</text>
+
+  <text x="40" y="205" font-size="18" font-weight="700" fill="#52525b">Before</text>
+  <text x="40" y="425" font-size="18" font-weight="700" fill="#4338ca">With the tool</text>
+
+  <g stroke="#52525b" stroke-width="2" fill="none" marker-end="url(#a)">
+    <path d="M390 200 H438"/><path d="M640 200 H688"/><path d="M890 200 H938"/>
+  </g>
+  <g stroke="#4338ca" stroke-width="2" fill="none" marker-end="url(#b)">
+    <path d="M390 420 H438"/><path d="M640 420 H688"/><path d="M890 420 H938"/>
+  </g>
+
+  <g font-size="17" fill="#27272a" text-anchor="middle">
+    <g stroke="#d4d4d8" stroke-width="2" fill="#fff">
+      <rect x="190" y="150" width="200" height="100" rx="14"/><rect x="440" y="150" width="200" height="100" rx="14"/>
+      <rect x="690" y="150" width="200" height="100" rx="14"/><rect x="940" y="150" width="200" height="100" rx="14"/>
+    </g>
+    <g stroke="#4338ca" stroke-width="3" fill="#eef2ff">
+      <rect x="190" y="370" width="200" height="100" rx="14"/><rect x="440" y="370" width="200" height="100" rx="14"/>
+      <rect x="690" y="370" width="200" height="100" rx="14"/><rect x="940" y="370" width="200" height="100" rx="14"/>
+    </g>
+    <text x="290" y="196">Handler reads</text><text x="290" y="222">all the notes</text>
+    <text x="540" y="196">Searches policy</text><text x="540" y="222">by hand</text>
+    <text x="790" y="196">Types the handover</text><text x="790" y="222">from memory</text>
+    <text x="1040" y="196">Specialist finds gaps,</text><text x="1040" y="222">sends it back</text>
+
+    <text x="290" y="416">Tool masks and</text><text x="290" y="442">drafts claims</text>
+    <text x="540" y="416">Handler checks</text><text x="540" y="442">each claim</text>
+    <text x="790" y="416">Pack names the</text><text x="790" y="442">missing fields</text>
+    <text x="1040" y="416">Specialist accepts</text><text x="1040" y="442">or returns, logged</text>
+  </g>
+
+  <text x="40" y="550" font-size="16" fill="#27272a">The "before" row is our description of a typical process, not a measurement. The prototype uses synthetic data only.</text>
+</svg>
