@@ -167,7 +167,7 @@ def test_handover_only_required_fields(k):
     cases.set_handover(k, "C1", H1, 1, {"merchant_name": " Shop "})
     assert json.loads(row(k)["handover_json"]) == {"merchant_name": "Shop"}
     with pytest.raises(NotAllowed):
-        cases.set_handover(k, "C1", H1, 2, {"merchant_name": "x" * 501})
+        cases.set_handover(k, "C1", H1, 2, {"merchant_name": "x" * 301})
 
 
 def test_incomplete_handover_is_sent_and_logged(k):
@@ -311,20 +311,27 @@ def test_stale_version_raises_and_changes_nothing(k):
 
 
 def test_every_action_adds_one_audit_row_and_chain_verifies(k):
-    calls = [lambda v: cases.open_case(k, "C1", H1, v),
-             lambda v: cases.confirm_claim(k, "C1", H1, v, claim_ids(k)[0]),
-             lambda v: cases.edit_claim(k, "C1", H1, v, claim_ids(k)[1], "e"),
-             lambda v: cases.remove_claim(k, "C1", H1, v, claim_ids(k)[2]),
-             lambda v: cases.add_claim(k, "C1", H1, v, "a"),
-             lambda v: cases.set_handover(k, "C1", H1, v, FRAUD),
-             lambda v: cases.set_urgent(k, "C1", H1, v, True, "A good reason here"),
-             lambda v: cases.set_department(k, "C1", H1, v, "Fraud claims"),
-             lambda v: cases.approve(k, "C1", H1, v),
-             lambda v: cases.accept(k, "C1", S1, v)]
-    for f in calls:
+    ids = claim_ids(k)
+    steps = [(lambda v: cases.open_case(k, "C1", H1, v), True),
+             (lambda v: cases.confirm_claim(k, "C1", H1, v, ids[0]), True),
+             (lambda v: cases.edit_claim(k, "C1", H1, v, ids[1], "e"), True),
+             (lambda v: cases.remove_claim(k, "C1", H1, v, ids[2]), True),
+             (lambda v: cases.add_claim(k, "C1", H1, v, "a"), True),
+             (lambda v: cases.set_handover(k, "C1", H1, v, FRAUD), True),
+             (lambda v: cases.set_urgent(k, "C1", H1, v, True, "A good reason here"), True),
+             (lambda v: cases.set_department(k, "C1", H1, v, "Fraud claims"), True),
+             (lambda v: cases.reject_draft(k, "C1", H1, v, "Draft was not usable"), True),
+             (lambda v: cases.approve(k, "C1", H1, v), True),
+             (lambda v: cases.assign(k, "C1", T1, v, "H3"), True),
+             (lambda v: cases.return_case(k, "C1", S1, v, "Police reference missing"), True),
+             (lambda v: cases.open_case(k, "C1", H1, v), True),
+             (lambda v: cases.approve(k, "C1", H1, v), True),
+             (lambda v: cases.accept(k, "C1", S1, v), True),
+             (lambda v: cases.unmask(k, "C1", S1, v, "Need to check the account"), False)]
+    for f, bumps in steps:
         n, v = audits(k), ver(k)
         f(v)
-        assert audits(k) == n + 1 and ver(k) == v + 1
+        assert audits(k) == n + 1 and ver(k) == v + bumps
     assert audit.verify_chain(k) is None
 
 
@@ -345,3 +352,130 @@ def test_next_action_lines(k):
     k.commit()
     assert cases.next_action(k, "C1", "specialist") == "Accept, or return with a reason"
     assert cases.next_action(k, "C1", "handler") == "Waiting for Fraud claims to accept"
+
+
+# ---- fix round 1 ----
+def test_unmask_specialist_scope(k):
+    with pytest.raises(NotAllowed):
+        cases.unmask(k, "C1", S1, 0, "Need to check the account")  # new case
+    ready(k)
+    cases.approve(k, "C1", H1, ver(k))
+    n = audits(k)
+    with pytest.raises(NotAllowed):
+        cases.unmask(k, "C1", S2, ver(k), "Need to check the account")
+    assert audits(k) == n
+    cases.unmask(k, "C1", S1, ver(k), "Need to check the account")
+    assert audits(k) == n + 1
+
+
+def test_audit_never_holds_claim_text(k):
+    cases.open_case(k, "C1", H1, 0)
+    cases.edit_claim(k, "C1", H1, 1, claim_ids(k)[0], "card 12345678 here")
+    cases.add_claim(k, "C1", H1, 2, "account 12345678 too")
+    assert not [r for r in k.execute("SELECT detail_json FROM audit") if "12345678" in r[0]]
+
+
+def test_nested_transaction_refused(k):
+    k.execute("UPDATE cases SET owner_id='H1'")  # opens a transaction
+    with pytest.raises(RuntimeError, match="outside a transaction"):
+        cases.open_case(k, "C1", H1, 0)
+    k.rollback()
+
+
+def test_actor_must_be_in_staff_before_case_lookup(k):
+    for a in (Actor("ZZ", "team_lead"), Actor("H1", "team_lead")):
+        with pytest.raises(NotAllowed, match="not recognised"):
+            cases.open_case(k, "C1", a, 0)
+        with pytest.raises(NotAllowed, match="not recognised"):
+            cases.open_case(k, "NOPE", a, 0)
+
+
+def test_confirm_only_a_draft_and_original_only_with_quote(k):
+    cases.open_case(k, "C1", H1, 0)
+    c1 = claim_ids(k)[0]
+    cases.confirm_claim(k, "C1", H1, 1, c1)
+    with pytest.raises(NotAllowed, match="draft"):
+        cases.confirm_claim(k, "C1", H1, 2, c1)
+    cases.add_claim(k, "C1", H1, 2, "mine")
+    mine = claim_ids(k)[-1]
+    cases.edit_claim(k, "C1", H1, 3, mine, "mine again")
+    assert k.execute("SELECT original_text FROM claims WHERE id=?", (mine,)).fetchone()[0] is None
+
+
+def test_handover_input_checks(k):
+    cases.open_case(k, "C1", H1, 0)
+    for bad in (["x"], {"merchant_name": 5}, {"merchant_name": None}):
+        with pytest.raises(NotAllowed):
+            cases.set_handover(k, "C1", H1, 1, bad)
+    k.execute("UPDATE cases SET department='Nowhere'")
+    k.commit()
+    with pytest.raises(NotAllowed):
+        cases.set_handover(k, "C1", H1, 1, {"merchant_name": "x"})
+
+
+def test_accepted_case_refuses_assign_urgent_department(k):
+    ready(k)
+    cases.approve(k, "C1", H1, ver(k))
+    cases.accept(k, "C1", S1, ver(k))
+    n = audits(k)
+    for f in (lambda: cases.assign(k, "C1", T1, ver(k), "H3"),
+              lambda: cases.set_urgent(k, "C1", H1, ver(k), True, "A good reason here"),
+              lambda: cases.set_department(k, "C1", H1, ver(k), "Bereavement")):
+        with pytest.raises(NotAllowed):
+            f()
+    assert audits(k) == n
+
+
+def test_assign_to_current_owner_refused(k):
+    with pytest.raises(NotAllowed, match="Already assigned to H1"):
+        cases.assign(k, "C1", T1, 0, "H1")
+    assert audits(k) == 0
+
+
+def test_one_timestamp_per_action(k):
+    ticks = iter(range(100))
+    audit.set_clock(lambda: datetime(2026, 11, 10, 12, 30, next(ticks)))
+    ready(k)
+    cases.approve(k, "C1", H1, ver(k))
+    t = row(k)["handed_over_at"]
+    assert k.execute("SELECT at FROM events WHERE kind='handed_over'").fetchone()[0] == t
+    assert k.execute("SELECT at FROM audit WHERE action='approve'").fetchone()[0] == t
+
+
+def test_now_format_is_naive_seconds():
+    audit.set_clock(None)
+    n = audit.now()
+    assert len(n) == 19 and "+" not in n and n[10] == "T"
+
+
+def test_closed_to_claims_and_handover_once_handed_over(k):
+    ready(k)
+    cases.approve(k, "C1", H1, ver(k))
+    c = claim_ids(k)[0]
+    for f in (lambda: cases.confirm_claim(k, "C1", H1, ver(k), c),
+              lambda: cases.edit_claim(k, "C1", H1, ver(k), c, "x"),
+              lambda: cases.remove_claim(k, "C1", H1, ver(k), c),
+              lambda: cases.add_claim(k, "C1", H1, ver(k), "x"),
+              lambda: cases.set_handover(k, "C1", H1, ver(k), {"merchant_name": "x"})):
+        with pytest.raises(NotAllowed):
+            f()
+
+
+def test_return_by_other_department_refused(k):
+    ready(k)
+    cases.approve(k, "C1", H1, ver(k))
+    with pytest.raises(NotAllowed):
+        cases.return_case(k, "C1", S2, ver(k), "Not our department")
+
+
+def test_exception_midway_leaves_no_partial_write(k, monkeypatch):
+    cases.open_case(k, "C1", H1, 0)
+    c1 = claim_ids(k)[0]
+
+    def boom(*a, **kw):
+        raise ValueError("boom")
+    monkeypatch.setattr(audit, "append", boom)
+    with pytest.raises(ValueError):
+        cases.edit_claim(k, "C1", H1, 1, c1, "changed")
+    r = k.execute("SELECT text, status FROM claims WHERE id=?", (c1,)).fetchone()
+    assert (r["text"], r["status"]) == ("claim 1", "draft") and ver(k) == 1 and not k.in_transaction

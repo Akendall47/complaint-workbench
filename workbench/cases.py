@@ -26,12 +26,19 @@ class NotAllowed(Exception):
     pass
 
 
+AT = object()  # in a changes dict: replaced by the action's one timestamp
+
+
 def _do(conn, case_id, actor, version, action, roles, fn, bump=True):
-    """The shared steps: lock, role check, version check, run fn, write, event, audit, commit.
-    fn(case) returns (detail, changes) where changes is a dict of cases columns to set."""
+    """The shared steps: lock, actor check, role check, version check, run fn, write, event, audit, commit.
+    fn(case) returns (detail, changes) where changes is a dict of cases columns to set.
+    The connection must be outside a transaction on entry: the action owns the whole transaction."""
+    if conn.in_transaction:
+        raise RuntimeError("cases actions must start outside a transaction")
     try:
-        if not conn.in_transaction:
-            conn.execute("BEGIN IMMEDIATE")  # take the write lock before reading
+        conn.execute("BEGIN IMMEDIATE")  # take the write lock before reading
+        if not conn.execute("SELECT 1 FROM staff WHERE id = ? AND role = ?", (actor.id, actor.role)).fetchone():
+            raise NotAllowed("Your sign-in is not recognised.")
         case = conn.execute("SELECT * FROM cases WHERE id = ?", (case_id,)).fetchone()
         if case is None:
             raise NotAllowed("That case does not exist.")
@@ -40,7 +47,8 @@ def _do(conn, case_id, actor, version, action, roles, fn, bump=True):
         if case["version"] != version:
             raise StaleCase("This case changed since you opened it. Reload to see the latest.")
         detail, changes = fn(case)
-        at = audit.now()
+        at = audit.now()  # the one timestamp for the case columns, the event and the audit row
+        changes = {k: at if v is AT else v for k, v in changes.items()}
         if bump:
             sets = {**changes, "version": version + 1}
             cur = conn.execute(
@@ -58,7 +66,7 @@ def _do(conn, case_id, actor, version, action, roles, fn, bump=True):
                 cfg = load_config()
                 u = int(is_urgent(fresh, notes, date.fromisoformat(cfg["today"]), cfg))
                 conn.execute("UPDATE cases SET urgent = ? WHERE id = ?", (u, case_id))
-        audit.append(conn, actor_id=actor.id, role=actor.role, action=action, case_id=case_id, detail=detail)
+        audit.append(conn, actor_id=actor.id, role=actor.role, action=action, case_id=case_id, detail=detail, at=at)
         conn.commit()
     except BaseException:
         conn.rollback()
@@ -112,6 +120,8 @@ def confirm_claim(conn, case_id, actor, version, claim_id):
     def fn(c):
         _need_state(c, "in_review")
         cl = _claim(conn, c, claim_id)
+        if cl["status"] != "draft":
+            raise NotAllowed("Only a draft claim can be confirmed.")
         if not cl["supported"]:
             raise NotAllowed("This claim has no matching quote in the notes. Edit it or remove it.")
         conn.execute("UPDATE claims SET status = 'confirmed' WHERE id = ?", (claim_id,))
@@ -125,8 +135,8 @@ def edit_claim(conn, case_id, actor, version, claim_id, text):
         cl = _claim(conn, c, claim_id)
         t = _text(text, 1, 600, "The claim")
         conn.execute("UPDATE claims SET text = ?, status = 'edited', original_text = COALESCE(original_text, ?) WHERE id = ?",
-                     (t, cl["text"], claim_id))
-        return {"claim_id": claim_id, "was": cl["text"], "now": t}, {}
+                     (t, cl["text"] if cl["quote"] else None, claim_id))
+        return {"claim_id": claim_id, "was_length": len(cl["text"]), "now_length": len(t)}, {}
     _do(conn, case_id, actor, version, "edit_claim", WORKERS, fn)
 
 
@@ -146,7 +156,7 @@ def add_claim(conn, case_id, actor, version, text):
         seq = conn.execute("SELECT COALESCE(MAX(seq), 0) + 1 FROM claims WHERE case_id = ?", (case_id,)).fetchone()[0]
         conn.execute("INSERT INTO claims(case_id, seq, text, inferred, supported, status) VALUES (?,?,?,0,0,'edited')",
                      (case_id, seq, t))
-        return {"text": t}, {}
+        return {"length": len(t)}, {}
     _do(conn, case_id, actor, version, "add_claim", WORKERS, fn)
 
 
@@ -166,11 +176,16 @@ def set_handover(conn, case_id, actor, version, fields):
         _need_state(c, "in_review")
         if not c["department"]:
             raise NotAllowed("Set the department first.")
-        allowed = load_config()["departments"][c["department"]]["required_fields"]
+        if not isinstance(fields, dict) or not all(isinstance(v, str) for v in fields.values()):
+            raise NotAllowed("The handover fields must be text.")
+        dept = load_config()["departments"].get(c["department"])
+        if dept is None:
+            raise NotAllowed("Set the department first.")
+        allowed = dept["required_fields"]
         bad = [f for f in fields if f not in allowed]
         if bad:
             raise NotAllowed(f"{bad[0]} is not part of the {c['department']} handover.")
-        new = {f: _text(v, 0, 500, "A handover field") if v and str(v).strip() else "" for f, v in fields.items()}
+        new = {f: _text(v, 0, 300, "A handover field") if v.strip() else "" for f, v in fields.items()}
         pack = {**json.loads(c["handover_json"] or "{}"), **new}
         return {"fields": sorted(new)}, {"handover_json": json.dumps(pack)}
     _do(conn, case_id, actor, version, "set_handover", WORKERS, fn)
@@ -201,7 +216,7 @@ def approve(conn, case_id, actor, version):
         # Same as the generator: T1 keeps a case returned twice; else the specialist if the department has one; else the handler.
         owner = c["owner_id"] if (c["return_count"] or 0) >= 2 else (spec[0] if spec else c["owner_id"])
         return ({"missing": missing, "incomplete": bool(missing), "department": c["department"]},
-                {"state": "handed_over", "owner_id": owner, "handed_over_at": audit.now()})
+                {"state": "handed_over", "owner_id": owner, "handed_over_at": AT})
     _do(conn, case_id, actor, version, "approve", WORKERS, fn)
 
 
@@ -209,7 +224,7 @@ def accept(conn, case_id, actor, version):
     def fn(c):
         _need_state(c, "handed_over")
         _specialist(conn, c, actor)
-        return {}, {"state": "accepted", "accepted_at": audit.now()}
+        return {}, {"state": "accepted", "accepted_at": AT}
     _do(conn, case_id, actor, version, "accept", {"specialist"}, fn)
 
 
@@ -228,8 +243,11 @@ def return_case(conn, case_id, actor, version, reason):
 
 def assign(conn, case_id, actor, version, owner_id):
     def fn(c):
+        _need_state(c, "new", "in_review", "handed_over", "returned")
         if not conn.execute("SELECT 1 FROM staff WHERE id = ?", (owner_id,)).fetchone():
             raise NotAllowed("No such member of staff.")
+        if c["owner_id"] == owner_id:
+            raise NotAllowed(f"Already assigned to {owner_id}.")
         if actor.role == "handler":
             if c["owner_id"]:
                 raise NotAllowed("This case already has an owner. Ask a team lead to reassign it.")
@@ -241,6 +259,7 @@ def assign(conn, case_id, actor, version, owner_id):
 
 def set_urgent(conn, case_id, actor, version, urgent, reason):
     def fn(c):
+        _need_state(c, "new", "in_review", "handed_over", "returned")
         r = _reason(reason)
         return {"urgent": bool(urgent), "reason": r}, {"urgent": int(bool(urgent)), "urgent_manual": int(bool(urgent))}
     _do(conn, case_id, actor, version, "set_urgent", WORKERS, fn)
@@ -256,8 +275,14 @@ def set_department(conn, case_id, actor, version, department):
 
 
 def unmask(conn, case_id, actor, version, reason) -> None:
-    """Logged only. The route then shows the unmasked notes once. The case does not change, so the version stays."""
-    _do(conn, case_id, actor, version, "unmask", WORKERS | {"specialist"}, lambda c: ({"reason": _reason(reason)}, {}), bump=False)
+    """Logged only. The route then shows the unmasked notes once. The case does not change, so the version stays.
+    A specialist may unmask only a handed-over or accepted case of their own department."""
+    def fn(c):
+        if actor.role == "specialist":
+            _need_state(c, "handed_over", "accepted")
+            _specialist(conn, c, actor)
+        return {"reason": _reason(reason)}, {}
+    _do(conn, case_id, actor, version, "unmask", WORKERS | {"specialist"}, fn, bump=False)
 
 
 def next_action(conn, case_id, role) -> str:

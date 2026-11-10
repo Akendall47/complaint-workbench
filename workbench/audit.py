@@ -16,7 +16,7 @@ def set_clock(fn=None) -> None:
 
 def now() -> str:
     """The one clock for audit entries and case events."""
-    return _clock().isoformat(timespec="seconds")
+    return _clock().replace(tzinfo=None).isoformat(timespec="seconds")  # naive ISO, the same shape as events.at
 
 
 def _hash(prev, at, actor_id, role, case_id, action, detail_json):
@@ -24,10 +24,10 @@ def _hash(prev, at, actor_id, role, case_id, action, detail_json):
 
 
 def append(conn: sqlite3.Connection, *, actor_id: str, role: str, action: str,
-           case_id: str | None = None, detail: dict | None = None) -> int:
+           case_id: str | None = None, detail: dict | None = None, at: str | None = None) -> int:
     row = conn.execute("SELECT hash FROM audit ORDER BY id DESC LIMIT 1").fetchone()
     prev = row["hash"] if row else ZEROS
-    at = now()
+    at = at or now()
     detail_json = json.dumps(detail, sort_keys=True)
     h = _hash(prev, at, actor_id, role, case_id, action, detail_json)
     cur = conn.execute(
