@@ -13,19 +13,19 @@ TAG = re.compile(r"<[^>]*>")
 
 
 ROOT = Path(__file__).resolve().parent.parent
-CASE_ID = re.compile(r"AB-\d{4}-\d{5}")
-MAX_RAW = 200_000
+CASE_ID = re.compile(r"AB-\d{4}-\d{5}", re.ASCII)
+MAX_RAW = 20_000
 
 
 def clean(s: str) -> str:
     """Remove links, images and tags until nothing changes, then any leftover markup characters."""
     while True:
         t = TAG.sub("", LINK.sub(r"\1", IMAGE.sub("", s)))
+        for bad in ("<", ">", "](", "!["):
+            t = t.replace(bad, "")
         if t == s:
             break
         s = t
-    for bad in ("<", ">", "](", "!["):
-        s = s.replace(bad, "")
     return " ".join(s.split())
 
 

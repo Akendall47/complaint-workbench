@@ -5,7 +5,6 @@ uv run python -m workbench.record --db data/workbench.db --limit 150 [--dev 10]
 import argparse
 import hashlib
 import json
-import re
 import shutil
 import statistics
 import time
@@ -19,7 +18,6 @@ from .db import connect
 OLLAMA = "http://localhost:11434/api/generate"
 SEED = 7
 TIMEOUT = 120
-NOTES_TAG = re.compile(r"<\s*/?\s*notes\s*>", re.I)  # note text must not close the data block
 OPEN = "('new','in_review','returned')"
 
 PROMPTS = {
@@ -82,7 +80,9 @@ def fields_for(conn, case_id: str, cfg: dict) -> list[str]:
 
 
 def build_prompt(conn, case_id: str, cfg: dict) -> str:
-    notes = "\n".join(f"[Note {seq}] {NOTES_TAG.sub('[notes]', text)}" for seq, _, text in drafts.masked_notes(conn, case_id, cfg))
+    # Angle brackets become single quotes so a note cannot close the data block. The quote check uses the
+    # masked note as stored, so a quote with a changed bracket fails: the safe direction.
+    notes = "\n".join(f"[Note {seq}] {text.replace('<', chr(0x2039)).replace('>', chr(0x203a))}" for seq, _, text in drafts.masked_notes(conn, case_id, cfg))
     return PROMPTS[cfg["prompt_version"]].format(notes=notes, fields=", ".join(fields_for(conn, case_id, cfg)))
 
 
@@ -144,6 +144,18 @@ def summary(conn, ids: list[str], cfg: dict, withheld: int = 0) -> dict:
             "p95": secs[min(len(secs) - 1, int(0.95 * len(secs)))] if secs else 0, "total": sum(secs), "withheld": withheld}
 
 
+def verify(conn, ids: list[str], cfg: dict) -> tuple[int, int]:
+    """Rebuild each recorded prompt and count those matching the stored prompt_sha256."""
+    ok = n = 0
+    for i in ids:
+        p = drafts.rec_path(cfg, i)
+        if p.exists():
+            n += 1
+            sha = json.loads(p.read_text(encoding="utf-8")).get("prompt_sha256")
+            ok += sha == hashlib.sha256(build_prompt(conn, i, cfg).encode()).hexdigest()
+    return ok, n
+
+
 def write_results(s: dict, cfg: dict, path: str = "docs/test-results.md") -> None:
     share = 100 * s["unsupported"] / s["claims"] if s["claims"] else 0
     sec = (f"## Drafts\n\nModel `{cfg['model']}`, prompt version {cfg['prompt_version']}, seed {SEED}, run locally through Ollama. "
@@ -154,7 +166,10 @@ def write_results(s: dict, cfg: dict, path: str = "docs/test-results.md") -> Non
            f"- Total model time: {s['total'] / 60:.1f} minutes\n")
     if s.get("withheld"):
         sec += f"- Cases withheld because masking missed a customer value: {s['withheld']}\n"
-    sec += "\n"
+    sec += (f"\nA passing citation check proves only that the quoted words are in the cited note. It does not prove the "
+            f"claim is a fair summary, which is why a person confirms each claim. The {s['unsupported']} failing claims "
+            f"were counted and kept, and are shown to the handler as unsupported. Cases with no department (below the "
+            f"routing threshold) get no draft and show \"No draft recorded\".\n\n")
     p = Path(path)
     old = p.read_text(encoding="utf-8")
     i = old.find("## Drafts\n")
@@ -169,10 +184,15 @@ def main() -> None:
     ap.add_argument("--db", default="data/workbench.db")
     ap.add_argument("--limit", type=int, default=150)
     ap.add_argument("--dev", type=int, default=0, help="tune on N cases from outside the final set")
+    ap.add_argument("--verify", action="store_true", help="rebuild recorded prompts and compare their hashes")
     ap.add_argument("--max-minutes", type=float, default=0, help="stop starting new cases after this long")
     a = ap.parse_args()
     cfg = load_config()
     conn = connect(a.db)
+    if a.verify:
+        ok, n = verify(conn, choose(conn, a.limit), cfg)
+        print(f"{ok} of {n} prompts match prompt_sha256", flush=True)
+        raise SystemExit(0 if ok == n else 1)
     dev = a.dev > 0
     ids = choose(conn, a.dev, skip=a.limit) if dev else choose(conn, a.limit)
     if dev:
