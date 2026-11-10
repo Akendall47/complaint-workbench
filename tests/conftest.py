@@ -41,3 +41,10 @@ def db_timed():
 @pytest.fixture(scope="session")
 def db(db_timed):
     return db_timed[0]
+
+
+@pytest.fixture(scope="session")
+def built(db):
+    """Models trained once on the shared generated database (80% split, seed 7)."""
+    from workbench.classify import build
+    return build(db, load_config())

@@ -1,0 +1,102 @@
+[
+ {
+  "case_id": "AB-2026-00142",
+  "clause": "POL-4.3",
+  "query": "The collections calls are making my situation worse."
+ },
+ {
+  "case_id": "AB-2026-00165",
+  "clause": "POL-4.4",
+  "query": "I have asked for a payment holiday and heard nothing."
+ },
+ {
+  "case_id": "AB-2026-00187",
+  "clause": "POL-4.1",
+  "query": "I cannot keep up with the monthly payments."
+ },
+ {
+  "case_id": "AB-2026-00215",
+  "clause": "POL-3.4",
+  "query": "I was tricked into approving a payment on my phone."
+ },
+ {
+  "case_id": "AB-2026-00120",
+  "clause": "POL-3.1",
+  "query": "My debit card was used abroad and it has never left my wallet."
+ },
+ {
+  "case_id": "AB-2026-00114",
+  "clause": "POL-5.4",
+  "query": "I keep being asked to repeat that the account holder has died."
+ },
+ {
+  "case_id": "AB-2026-00346",
+  "clause": "POL-5.3",
+  "query": "I have sent the death certificate twice already."
+ },
+ {
+  "case_id": "AB-2026-00193",
+  "clause": "POL-6.1",
+  "query": "I want to know who has looked at my account records."
+ },
+ {
+  "case_id": "AB-2026-00270",
+  "clause": "POL-6.4",
+  "query": "You shared my details with someone who should not have them."
+ },
+ {
+  "case_id": "AB-2026-00209",
+  "clause": "POL-7.1",
+  "query": "My pension transfer was recommended and the value has dropped."
+ },
+ {
+  "case_id": "AB-2026-00172",
+  "clause": "POL-7.3",
+  "query": "The fund I was put into has performed far worse than I was promised."
+ },
+ {
+  "case_id": "AB-2026-00029",
+  "clause": "POL-8.4",
+  "query": "I updated the app on my phone and now it crashes when I open it."
+ },
+ {
+  "case_id": "AB-2026-00113",
+  "clause": "POL-8.3",
+  "query": "The person I spoke to was rude and would not listen."
+ },
+ {
+  "case_id": "AB-2026-00101",
+  "clause": "POL-8.1",
+  "query": "Nobody called me back although I was promised a call within two days."
+ },
+ {
+  "case_id": "AB-2026-00061",
+  "clause": "POL-1.1",
+  "query": "My earlier letter was never acknowledged."
+ },
+ {
+  "case_id": "AB-2026-00106",
+  "clause": "POL-8.2",
+  "query": "The branch staff did not know what to do and sent me away."
+ },
+ {
+  "case_id": "AB-2026-00118",
+  "clause": "POL-6.4",
+  "query": "You sent my statements to my old address."
+ },
+ {
+  "case_id": "AB-2026-00079",
+  "clause": "POL-8.5",
+  "query": "I was charged an overdraft fee that I was never told about."
+ },
+ {
+  "case_id": "AB-2026-00126",
+  "clause": "POL-3.4",
+  "query": "I paid an invoice that looked real but came from a bogus email address."
+ },
+ {
+  "case_id": "AB-2026-00102",
+  "clause": "POL-3.1",
+  "query": "I lost my card last week and think it has been used since."
+ }
+]

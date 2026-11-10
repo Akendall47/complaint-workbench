@@ -13,3 +13,6 @@ inspo/
 data/*.db-wal
 data/*.db-shm
 *.egg-info/
+
+data/models/
+data/*.db
