@@ -1,4 +1,14 @@
-.venv/
 __pycache__/
+.venv/
 *.pyc
+.superpowers/
+graphify-out/cache/
+vault/.obsidian/workspace*.json
+*.aux
+*.log
+*.out
+inspo/
 .pytest_cache/
+.hypothesis/
+data/*.db-wal
+data/*.db-shm

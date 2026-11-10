@@ -15,5 +15,12 @@ testpaths = ["tests"]
 pythonpath = ["."]
 addopts = "--ignore=tests/e2e --ignore=tests/bench"
 
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
 [tool.setuptools]
 packages = ["workbench"]
+
+[tool.setuptools.package-data]
+workbench = ["*.sql", "*.yaml", "templates/**", "static/**"]
