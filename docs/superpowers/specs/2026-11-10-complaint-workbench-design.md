@@ -240,3 +240,12 @@ The vault rebuild found four places where the research and this document differ.
 - **Root-cause analysis.** The research suggests firms must analyse the root causes of complaints (unverified). The prototype does not do this analysis. The complaint map shows where complaint types concentrate, which is the starting point for it. Named as a next step.
 
 The navigation now has eight sections, not seven: Overview, Departments, Queue, Pipeline, Case, Policy library, Audit log, Settings.
+
+## 22. Clarity for first-time users **(owner, shaped by my calls)**
+
+The owner reviewed the mockup on 2026-11-10 and asked that every view be easy for a first-time user to understand.
+
+- **Case view, one step at a time.** The Case view shows one step by default: check the summary (source beside claims), complete the handover, decide. Any step can be opened at any time and each shows its state. The bottom bar always names the one next thing to do. A "show everything on one screen" switch gives experienced handlers the dense three-column layout. This serves new and expert users together, which the research supports ([[07-ux-evidence]] in the vault).
+- **"How this page works" on every view.** A button opens a small panel with a one-sentence purpose and three or four numbered steps. It is not a guided tour and it never blocks the page.
+- **Plain-sentence chart summaries.** Each chart carries one sentence, computed from the data, saying what it shows now. The Overview is grouped under plain headings.
+- **Role switcher.** "View as (demo)" lets a reviewer see the tool as a handler, a specialist or a team lead, because the brief asks how complaints staff and specialists would each use it. Changing role does not move the user to another page. It changes what the Case view offers: a handler approves and sends, or rejects the draft; a specialist accepts, or returns with a reason; a team lead also handles cases returned twice. In a real deployment the role comes from the bank's sign-in system and cannot be switched.
