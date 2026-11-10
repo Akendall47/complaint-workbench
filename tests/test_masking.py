@@ -182,3 +182,18 @@ def test_secret_digits_never_survive(p, a, b, secret):
     digits = "".join(c for c in secret if c.isdigit())
     assert secret not in out
     assert not any(digits[i:i + 6] in "".join(c for c in out if c.isdigit()) for i in range(len(digits) - 5))
+
+
+def test_implausible_date_is_not_held(p):
+    out = mask("49-29-1234 5678 9012 3456", {}, p)
+    assert not any(ch.isdigit() for ch in out), out
+
+
+def test_plausible_date_kept_and_card_masked(p):
+    out = mask("10-11-2026 4929 1234 5678 9012", {}, p)
+    assert out.startswith("10-11-2026 ") and "[CARD]" in out and "4929" not in out
+
+
+def test_implausible_time_not_held(p):
+    from workbench.masking import _plausible
+    assert not _plausible("25:99") and _plausible("23:59") and not _plausible("10.13.2026") and not _plausible("10-11-1850")

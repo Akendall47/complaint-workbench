@@ -48,3 +48,7 @@ def test_manual_override(cfg):
     assert is_urgent(case(urgent_manual=0, return_count=3), "", TODAY, cfg) is False
     assert is_urgent(case(urgent_manual=1), "", TODAY, cfg) is True
     assert is_urgent(case(return_count=1), "", TODAY, cfg) is True
+
+
+def test_scammed_counts_as_fraud(cfg):
+    assert urgent_reasons(case(), "I was scammed yesterday and payments are still leaving", TODAY, cfg) == ["Ongoing fraud"]

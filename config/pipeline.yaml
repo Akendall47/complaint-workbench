@@ -49,7 +49,6 @@ urgent:
   vulnerability_terms: [bereaved, terminally ill, cancer, mental health, dementia, carer, domestic abuse, lost my job, suicidal, disability]
   hardship_terms: [cannot afford, can't afford, no money, food bank, eviction, rent arrears, bailiffs, repossession, behind on payments, struggling to pay]
   fraud_terms: [scam, fraudster, unauthorised transaction, did not make this payment, account taken over, stolen card, phishing, cloned, impersonat]
-  classifier_threshold: 0.7
 rise: {ratio: 2.0, minimum_cases: 10, baseline_weeks: 4}
 masking:
   # Shared separator class [ .-]: space, dot, hyphen (card also takes / and _). Dates, times and money are held before the patterns run.

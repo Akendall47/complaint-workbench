@@ -21,6 +21,21 @@ DATES = re.compile(
 )
 
 
+def _plausible(s: str) -> bool:
+    """Day 1-31, month 1-12, year 1900-2099 (2 digits only with slashes); time 0-23:0-59. Money always passes."""
+    if s.startswith("£"):
+        return True
+    if ":" in s:
+        h, m = s.split(":")
+        return int(h) <= 23 and int(m) <= 59
+    a, b, c = re.split(r"[/.-]", s)
+    if len(a) == 4:
+        a, c = c, a  # ISO order
+    if len(c) == 2:
+        c = "2000"  # slash form with a 2-digit year; the shape check already limited it
+    return 1 <= int(a) <= 31 and 1 <= int(b) <= 12 and 1900 <= int(c) <= 2099
+
+
 def mask(text: str, known: dict[str, str], patterns: dict[str, str]) -> str:
     refs: list[str] = []
     dates: list[str] = []
@@ -30,6 +45,8 @@ def mask(text: str, known: dict[str, str], patterns: dict[str, str]) -> str:
         return HOLD
 
     def hold_date(m):
+        if not _plausible(m.group()):
+            return m.group()  # falls to the normal patterns
         dates.append(m.group())
         return HOLD2
 

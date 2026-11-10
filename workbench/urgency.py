@@ -14,7 +14,7 @@ def _norm(s: str) -> str:
 
 def _mentions(text: str, terms: list[str]) -> bool:
     # Whole words or phrases; a short suffix is allowed because the config lists a stem ("impersonat").
-    return any(re.search(r"(?<!\w)" + re.escape(_norm(t)) + r"(?:e?s|e?d|ing|ions?|ors?)?(?!\w)", text) for t in terms)
+    return any(re.search(r"(?<!\w)" + re.escape(_norm(t)) + r"m?(?:e?s|e?d|ing|ions?|ors?|ers?)?(?!\w)", text) for t in terms)
 
 
 def urgent_reasons(case: Mapping, notes_text: str, today: date, cfg: dict) -> list[str]:
