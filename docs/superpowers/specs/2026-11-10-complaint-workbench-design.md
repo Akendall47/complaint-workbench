@@ -59,7 +59,7 @@ Departments: Fraud claims, Financial difficulty, Bereavement, Data protection, M
 
 Roles **(my call)**: handler, specialist, team lead, chosen from a switcher in the header. The role is recorded in the audit log with each action.
 
-Visual design **(owner)**: minimal and elegant in the manner of Apple's own apps, and still effective for dense case work. Where the two conflict, effective wins. Claude and Codex design it together: one drafts, the other critiques and revises. A Codex redesign of the mockup is in progress. The look is not approved yet. The builder implements the structure above and applies the approved mockup's styling once the owner signs it off. Fixed rules regardless of styling: system fonts, no external requests, status never shown by colour alone, WCAG 2.2 AA, fully keyboard operable, charts as server-rendered inline SVG with values labelled directly.
+Visual design **(owner)**: minimal and elegant in the manner of Apple's own apps, and still effective for dense case work. Where the two conflict, effective wins. Claude and Codex design it together: one drafts, the other critiques and revises. A Codex redesign of the mockup is in progress. The look is not approved yet. The builder implements the structure above and applies the approved mockup's styling once the owner signs it off. The owner's reference images are in `inspo/` (kept out of git because they are other people's work). What they set, as principles and not as a copy: a light grey page with white rounded cards and almost no borders; a row of large headline figures with a change-against-previous-period chip; one strong accent colour reserved for what needs attention, with a calm secondary; flat, quiet charts (step-line trend, horizontal bars with one highlighted, a weekday-by-hour heatmap in tints of one hue, sparklines in table rows); tables with thin row separators and no vertical rules; segmented controls for time range. Navigation stays on the left **(my call, from the owner's earlier request; the first reference image uses top tabs)**. Fixed rules regardless of styling: system fonts, no external requests, status never shown by colour alone, WCAG 2.2 AA, fully keyboard operable, charts as server-rendered inline SVG with values labelled directly.
 
 ## 6. The case flow
 
@@ -192,6 +192,8 @@ The design step already followed this pattern: Claude drafted a mockup, the owne
 4. The Obsidian vault in `vault/`: research with sources, decisions, the loop log. **(owner)**
 5. Diagrams: system architecture, the case flow, the staff handoff before and after, and the build loop. **(owner)**
 6. A knowledge graph of the repository made with graphify. **(owner)**
+
+Design justification **(owner)**: the deck and the technical sheet justify the interface choices from research evidence, covering what works and what does not. Each choice (dashboard first, left navigation, chart types, per-claim confirmation, flags in place of confidence figures, speed targets, colour use) is tied to a source that was read in full. Where the evidence argues against a choice, or is mixed, that is stated. The evidence is collected in `vault/research/07-ux-evidence.md`.
 
 The deck must cover the brief's five considerations: business value, risks and controls and human oversight, changes to roles and workflows, assumptions and limitations and trade-offs, and the AI tools used with an honest assessment of each.
 
