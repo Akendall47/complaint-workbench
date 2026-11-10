@@ -285,6 +285,17 @@ def unmask(conn, case_id, actor, version, reason) -> None:
     _do(conn, case_id, actor, version, "unmask", WORKERS | {"specialist"}, fn, bump=False)
 
 
+def can_decide(conn, case_id, actor) -> tuple[bool, str]:
+    """Whether this person may accept or return the case (a specialist of its department, case handed over)."""
+    c = conn.execute("SELECT state, department FROM cases WHERE id = ?", (case_id,)).fetchone()
+    if c is None or actor.role != "specialist" or c["state"] != "handed_over":
+        return False, ""
+    dept = conn.execute("SELECT department FROM staff WHERE id = ? AND role = 'specialist'", (actor.id,)).fetchone()
+    if dept is None or dept[0] != c["department"]:
+        return False, f"Only the {c['department']} specialist can accept or return this."
+    return True, ""
+
+
 def next_action(conn, case_id, role) -> str:
     c = conn.execute("SELECT state, department FROM cases WHERE id = ?", (case_id,)).fetchone()
     s, d = c["state"], c["department"]

@@ -17,7 +17,7 @@ from fastapi.responses import HTMLResponse, PlainTextResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from . import audit, case_view, cases
+from . import audit, case_view, cases, drafts
 from .cases import Actor, NotAllowed, StaleCase
 from .classify import MODELS_DIR, ensure_models
 from .config import load_config
@@ -34,7 +34,7 @@ NAV = [("Overview", "/"), ("Queue", "/queue"), ("Case", None), ("Departments", "
        ("Pipeline", "/pipeline"), ("Policy library", "/policies"), ("Audit log", "/audit"), ("Settings", "/settings")]
 LOCAL_HOSTS = {"127.0.0.1", "localhost"}
 KNOWN_PATHS = {p for _, p in NAV if p}
-CASE_ID = re.compile(r"^AB-\d{4}-\d{5}$")
+CASE_ID = re.compile(r"^AB-\d{4}-\d{5}\Z")  # \Z: a trailing newline does not match
 PER_PAGE = 50
 NOT_FOUND = "Database not found. Run: uv run python -m workbench.generate"
 
@@ -76,6 +76,10 @@ def create_app(db_path="data/workbench.db", config_path="config/pipeline.yaml", 
     if models_dir is not None:  # trains on first start when the model files are missing
         with contextlib.closing(connect(db_path)) as c:
             ensure_models(c, cfg, models_dir)
+    with contextlib.closing(connect(db_path)) as c:  # recordings become claim rows once, here; no page load writes
+        for (cid,) in c.execute("SELECT id FROM cases WHERE department IS NOT NULL").fetchall():
+            if drafts.rec_path(cfg, cid).exists():
+                drafts.store_claims(c, cid, cfg)
 
     app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
     app.mount("/static", StaticFiles(directory=HERE / "static"), name="static")
@@ -132,7 +136,7 @@ def create_app(db_path="data/workbench.db", config_path="config/pipeline.yaml", 
 
     def page(request, conn, name, status=200, **ctx):
         actor = current_actor(request)
-        last = request.cookies.get("last_case", "")
+        last = ctx.get("case_now") or request.cookies.get("last_case", "")
         nav = [{"label": label, "href": href or (f"/cases/{last}" if CASE_ID.match(last) else None),
                 "sub": last if href is None and CASE_ID.match(last) else "",
                 "current": request.url.path.startswith("/cases/") if href is None else request.url.path == href,
@@ -219,13 +223,22 @@ def create_app(db_path="data/workbench.db", config_path="config/pipeline.yaml", 
         except (TypeError, ValueError):
             return default
 
+    def gone(request):
+        """The case does not exist. A swap target gets a small fragment, a page the not-found page."""
+        if request.headers.get("HX-Request"):
+            return HTMLResponse('<div id="case" hx-history="false"><p class="notice" role="alert">Case not found</p></div>', status_code=404)
+        with db() as conn:
+            return page(request, conn, "not_found.html", status=404)
+
     def case_response(request, case_id, step=1, all_=False, message=None, status=200, unmasked=False):
+        if not CASE_ID.match(case_id):
+            return gone(request)
         actor = current_actor(request)
         with db() as conn:
             v = case_view.build(conn, cfg, case_id, actor, step, all_, unmasked)
             if v is None:
-                return page(request, conn, "not_found.html", status=404)
-            ctx = {"v": v, "state_name": STATE_NAME, "message": message, "stale": status == 409}
+                return gone(request)
+            ctx = {"v": v, "state_name": STATE_NAME, "message": message, "stale": status == 409, "case_now": case_id}
             if request.headers.get("HX-Request"):
                 resp = templates.TemplateResponse(request, "partials/case_main.html", {"actor": actor, "cfg": cfg, **ctx}, status_code=status)
             else:
@@ -237,9 +250,6 @@ def create_app(db_path="data/workbench.db", config_path="config/pipeline.yaml", 
 
     @app.get("/cases/{case_id}", response_class=HTMLResponse)
     def case_page(request: Request, case_id: str, step: str = "1", all: str = "0"):
-        if not CASE_ID.match(case_id):
-            with db() as conn:
-                return page(request, conn, "not_found.html", status=404)
         return case_response(request, case_id, to_int(step, 1), all == "1")
 
     def act(request, case_id, version, step, all_, do, unmask=False):
@@ -308,6 +318,8 @@ def create_app(db_path="data/workbench.db", config_path="config/pipeline.yaml", 
 
     @app.post("/cases/{case_id}/handover")
     async def handover(request: Request, case_id: str):
+        if not CASE_ID.match(case_id):
+            return gone(request)
         form = await request.form()
         with db() as conn:
             row = conn.execute("SELECT department FROM cases WHERE id = ?", (case_id,)).fetchone()

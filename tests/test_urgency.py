@@ -14,7 +14,7 @@ def case(**kw):
 
 @pytest.mark.parametrize("c, text, reason", [
     (case(deadline="2026-11-13"), "all fine", "Deadline within 5 business days"),
-    (case(deadline="2026-11-01"), "all fine", "Deadline within 5 business days"),
+    (case(deadline="2026-11-01"), "all fine", "Past deadline"),
     (case(), "My husband has Dementia.", "Signs of a vulnerable customer"),
     (case(), "I am behind on payments and cannot afford rent.", "Financial hardship"),
     (case(), "It was a SCAM by a fraudster.", "Ongoing fraud"),

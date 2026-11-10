@@ -9,7 +9,7 @@
     <span>Department: <b>{{ c.department or "not set" }}</b></span>
     {% if v.editable and v.all %}<a class="small" href="/cases/{{ v.id }}?step=1&amp;all=0">One step at a time</a>{% elif not v.all %}<a class="small" href="/cases/{{ v.id }}?all=1">Show everything</a>{% endif %}
   </p>
-  {% if c.urgent %}<p class="urgent-line"><span class="urgent-tag">Urgent</span> {{ v.reasons|join(". ") if v.reasons else "Set by hand" }}</p>{% endif %}
+  {% if c.urgent %}<p class="urgent-line"><span class="urgent-tag">Urgent</span>{% if v.reasons %} {{ v.reasons|join(". ") }}{% endif %}</p>{% endif %}
   {% if v.worker and c.state in ("new", "in_review", "returned", "handed_over") %}
   <div class="head-change">
     <details><summary>Change urgent flag</summary>

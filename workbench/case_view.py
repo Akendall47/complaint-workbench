@@ -10,6 +10,7 @@ from .search import search_policies
 from .urgency import urgent_reasons
 
 WORKERS = cases.WORKERS
+MONEY = {"amount_disputed", "monthly_income", "monthly_outgoings", "total_arrears", "amount_lost"}  # shown with a pound sign
 ACTION = {"open_case": "Opened", "confirm_claim": "Claim confirmed", "edit_claim": "Claim edited", "remove_claim": "Claim removed",
           "add_claim": "Claim added", "reject_draft": "AI draft rejected", "set_handover": "Handover saved", "approve": "Approved and sent",
           "accept": "Accepted", "return_case": "Returned", "assign": "Assigned", "set_urgent": "Urgent flag changed",
@@ -47,9 +48,6 @@ def build(conn, cfg, case_id, actor, step=1, all_=False, unmasked=False) -> dict
     c = conn.execute("SELECT * FROM cases WHERE id = ?", (case_id,)).fetchone()
     if c is None:
         return None
-    if c["department"]:  # a case with no department has no draft; store_claims changes nothing if claims exist
-        drafts.store_claims(conn, case_id, cfg)
-        c = conn.execute("SELECT * FROM cases WHERE id = ?", (case_id,)).fetchone()
     today = date.fromisoformat(cfg["today"])
     hol = {date.fromisoformat(d) for d in cfg["bank_holidays"]}
     raw_notes = conn.execute("SELECT id, seq, author, written_at, body FROM notes WHERE case_id = ? ORDER BY seq", (case_id,)).fetchall()
@@ -78,12 +76,15 @@ def build(conn, cfg, case_id, actor, step=1, all_=False, unmasked=False) -> dict
     if dept:
         missing = missing_fields(c["department"], saved, cfg)
         fields = [{"name": f, "label": f.replace("_", " ").capitalize(), "value": saved.get(f) or suggested.get(f, ""),
-                   "missing": f in missing, "suggested": not saved.get(f) and f in suggested}
+                   "money": f in MONEY, "missing": f in missing, "suggested": not saved.get(f) and f in suggested}
                   for f in sorted(dept["required_fields"], key=lambda f: f not in missing)]
     ok, why = cases.can_approve(conn, case_id)
     reviewed = sum(x["status"] in ("confirmed", "edited") for x in claims)
     all_notes = " ".join(n["body"] for n in raw_notes)
-    reasons = urgent_reasons(c, all_notes, today, cfg) if c["urgent"] else []
+    # The days left are already in the header, so deadline reasons are not repeated there.
+    reasons = [r for r in urgent_reasons(c, all_notes, today, cfg) if "deadline" not in r.lower()] if c["urgent"] else []
+    if c["urgent"] and c["urgent_manual"] is not None:
+        reasons.append("Set by hand")
     ret = None
     if c["return_count"] and c["state"] in ("returned", "in_review"):
         r = conn.execute("SELECT detail_json FROM audit WHERE case_id = ? AND action = 'return_case' ORDER BY id DESC LIMIT 1", (case_id,)).fetchone()
@@ -93,6 +94,7 @@ def build(conn, cfg, case_id, actor, step=1, all_=False, unmasked=False) -> dict
              for r in conn.execute("SELECT at, actor_id, role, action, detail_json FROM audit WHERE case_id = ? ORDER BY id", (case_id,))]
     query = " ".join([c["type"] or ""] + [x["text"] for x in claims if x["status"] in ("confirmed", "edited")])
     policies = search_policies(conn, query, 5) if c["state"] != "accepted" or claims else []
+    can_decide, decide_msg = cases.can_decide(conn, case_id, actor)
     all_ = all_ or not editable
     step = step if step in (1, 2, 3) else 1
     return {"c": c, "id": case_id, "step": step, "all": all_, "unmasked": unmasked, "worker": worker, "editable": editable,
@@ -100,4 +102,4 @@ def build(conn, cfg, case_id, actor, step=1, all_=False, unmasked=False) -> dict
             "notes": notes, "claims": claims, "reviewed": reviewed, "fields": fields, "missing": len(missing), "has_dept": bool(dept),
             "can_approve": ok, "why": why, "next_action": cases.next_action(conn, case_id, actor.role), "trail": trail,
             "policies": policies, "departments": list(cfg["departments"]), "draft_state": c["draft_state"],
-            "locked": editable and not ok, "first_pending": next((x["id"] for x in claims if x["status"] == "draft" and x["supported"]), None)}
+            "has_decision": (editable and c["state"] in ("new", "returned", "in_review")) or (worker and c["state"] in ("new", "returned")) or can_decide, "can_decide": can_decide, "decide_msg": decide_msg, "locked": editable and not ok, "first_pending": next((x["id"] for x in claims if x["status"] == "draft" and x["supported"]), None)}

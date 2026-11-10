@@ -6,7 +6,7 @@
   <form {{ hx("/cases/" ~ v.id ~ "/handover") }}>{{ hidden() }}
     {% if v.fields|selectattr("suggested")|list %}<p class="muted small">Some values come from the AI draft. Check them, then save.</p>{% endif %}
     <div class="fields">
-    {% for f in v.fields %}<label>{{ f.label }}{% if f.missing %} <span class="chip warn">Missing</span>{% endif %}<input name="f_{{ f.name }}" value="{{ f.value }}" maxlength="300"></label>{% endfor %}
+    {% for f in v.fields %}<label>{{ f.label }}{% if f.missing %} <span class="chip warn">Missing</span>{% endif %}{% if f.money %}<span class="money">£</span>{% endif %}<input name="f_{{ f.name }}" value="{{ f.value }}" maxlength="300"></label>{% endfor %}
     </div>
     <button type="submit">Save handover</button>
   </form>

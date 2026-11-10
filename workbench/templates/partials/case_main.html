@@ -1,4 +1,4 @@
-<div id="case" tabindex="-1">
+<div id="case" tabindex="-1" hx-history="false">
 {% if message %}<p class="notice" role="alert">{{ message }}{% if stale %} <a href="/cases/{{ v.id }}">Reload</a>{% endif %}</p>{% endif %}
 {% include "partials/case_header.html" %}
 {% if v.returned_reason %}<p class="returned"><b>Returned by the specialist.</b> {{ v.returned_reason }}</p>{% endif %}

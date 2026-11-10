@@ -21,7 +21,10 @@ def urgent_reasons(case: Mapping, notes_text: str, today: date, cfg: dict) -> li
     u, out = cfg["urgent"], []
     if case["state"] != "accepted" and case["deadline"]:
         holidays = {date.fromisoformat(d) for d in cfg["bank_holidays"]}
-        if business_days_left(date.fromisoformat(case["deadline"]), today, holidays) <= u["deadline_within_business_days"]:
+        left = business_days_left(date.fromisoformat(case["deadline"]), today, holidays)
+        if left < 0:
+            out.append("Past deadline")
+        elif left <= u["deadline_within_business_days"]:
             out.append("Deadline within 5 business days")
     text = _norm(notes_text)
     out += [label for label, key in _GROUPS if _mentions(text, u[key])]

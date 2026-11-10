@@ -197,7 +197,7 @@ def test_role_switch_without_script_uses_same_origin_referer(client):
 def test_safe_return_path(client, app_db):
     from workbench.app import safe_path
     assert safe_path("/queue?owner=all") == "/queue?owner=all" and safe_path("/cases/AB-2026-00001") == "/cases/AB-2026-00001"
-    for bad in ("/queuefoo", "//evil", "/\evil", "http://evil.example", "/nonsense"):
+    for bad in ("/queuefoo", "//evil", r"/\evil", "http://evil.example", "/nonsense"):
         assert safe_path(bad) is None, bad
     r = client.post("/cases/AB-2026-00001/assign", data={"version": 0, "next": "/queuefoo"})
     assert "/queuefoo" not in r.text

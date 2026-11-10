@@ -3,4 +3,4 @@
 {% block title %}Case {{ v.id }}{% endblock %}
 {% block purpose %}{{ content.views.case.purpose }}{% endblock %}
 {% block help %}{{ help_panel("case") }}{% endblock %}
-{% block content %}{% include "partials/case_main.html" %}{% endblock %}
+{% block content %}<p class="sr-only" role="status" id="live"></p>{% include "partials/case_main.html" %}{% endblock %}

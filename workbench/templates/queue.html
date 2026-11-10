@@ -2,6 +2,7 @@
 {% from "partials/help.html" import help_panel %}
 {% from "partials/source.html" import source_link %}
 {% block title %}Queue{% endblock %}
+{% block strip %}{% include "partials/deadline_strip.html" %}{% endblock %}
 {% block purpose %}{{ content.views.queue.purpose }}{% endblock %}
 {% block help %}{{ help_panel("queue") }}{% endblock %}
 {% block content %}
