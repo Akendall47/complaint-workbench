@@ -67,3 +67,8 @@ def test_too_long(small, cfg, models):
     with pytest.raises(IntakeError, match="Complaint text is too long. The limit is 5,000 characters."):
         receive(small, text="word " * 1001, source="phone", cfg=cfg, models=models)
     receive(small, text=("word " * 999).strip(), source="phone", cfg=cfg, models=models)
+    exact = "word " * 999 + "word!"  # exactly 5,000 characters
+    assert len(exact) == 5000
+    receive(small, text=exact, source="phone", cfg=cfg, models=models)
+    with pytest.raises(IntakeError):
+        receive(small, text=exact + "x", source="phone", cfg=cfg, models=models)

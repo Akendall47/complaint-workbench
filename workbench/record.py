@@ -192,7 +192,7 @@ def main() -> None:
     if a.verify:
         ok, n = verify(conn, choose(conn, a.limit), cfg)
         print(f"{ok} of {n} prompts match prompt_sha256", flush=True)
-        raise SystemExit(0 if ok == n else 1)
+        raise SystemExit(0 if n and ok == n else 1)  # nothing to check is a failure, not a pass
     dev = a.dev > 0
     ids = choose(conn, a.dev, skip=a.limit) if dev else choose(conn, a.limit)
     if dev:

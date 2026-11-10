@@ -67,7 +67,7 @@ def test_no_text_shared_between_train_and_test(built, db):
     body = {r["case_id"]: r["body"] for r in db.execute("SELECT case_id, body FROM notes WHERE seq = 1")}
     seen = {_norm(body[i]) for i in train_ids}
     assert not any(_norm(body[i]) in seen for i in test_ids)
-    assert built["old_split_overlap"] >= 0
+    assert 0 <= built["old_split_overlap"] <= len(test_ids)
 
 
 def test_ensure_models_trains_when_missing(db, cfg, tmp_path):
@@ -90,7 +90,7 @@ def test_cli_rerun_is_stable(db, tmp_path, monkeypatch):
     dst.close()
     report = tmp_path / "r.md"
     report.write_text("# Test results\n\n## Keep me\nhello\n", encoding="utf-8")
-    monkeypatch.setattr(sys, "argv", ["classify", "--db", str(path), "--models-dir", str(tmp_path / "m"), "--report", str(report)])
+    monkeypatch.setattr(sys, "argv", ["classify", "--db", str(path), "--config", "config/pipeline.yaml", "--models-dir", str(tmp_path / "m"), "--report", str(report)])
     main()
     first = report.read_text(encoding="utf-8")
     main()

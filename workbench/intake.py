@@ -43,6 +43,7 @@ def receive(conn: sqlite3.Connection, *, text: str, source: str, cfg: dict, mode
         # shortcut: scans note 1 of every case per intake (about 1,600 rows, a few ms); store a hash column and index it past ~100k cases.
         dup = next((r["case_id"] for r in conn.execute("SELECT case_id, body FROM notes WHERE seq = 1 ORDER BY case_id")
                     if _norm(r["body"]) == key), None)
+        # the write lock taken above makes MAX(id) + 1 safe: no second intake can read the same maximum
         last = conn.execute("SELECT MAX(id) FROM cases").fetchone()[0]
         cid = f"AB-2026-{(int(last.rsplit('-', 1)[1]) if last else 0) + 1:05d}"
         conn.execute(

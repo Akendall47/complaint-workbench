@@ -83,6 +83,7 @@ def _text(s, lo, hi, what):
 
 
 def _reason(s):
+    # Limits apply to the stripped text, so a reason of spaces counts as empty; 500 keeps audit rows short.
     s = (s or "").strip()
     if len(s) < 10:
         raise NotAllowed("Give a reason of at least 10 characters.")

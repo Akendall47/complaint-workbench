@@ -58,6 +58,7 @@ def looks_english(text: str) -> bool:
 
 def _save(models: dict, d: Path) -> None:
     d.mkdir(parents=True, exist_ok=True)
+    _LOADED.clear()  # saved models replace any loaded copy
     for k, m in models.items():
         joblib.dump(m, d / f"{k}.joblib")
 
@@ -176,11 +177,11 @@ def write_report(built: dict, cfg: dict, path: Path) -> None:
     body = "\n\n".join([
         "## Classifiers",
         "Both models read note 1 only, the customer's own words, because routing happens before staff notes exist. "
-        "Labels are the generator's `department_true` and `type_true`. Split: 80/20 by group (the normalised note 1 text, so no wording is on both sides), seed 7. Under the earlier plain random split with the same seed, {OVERLAP} of the 320 test rows shared their normalised text with a training row; every one of the 1,600 note 1 texts is distinct, so the grouped split only changes which 320 cases are held out. "
+        "Labels are the generator's `department_true` and `type_true`. Split: 80/20 by group (the normalised note 1 text, so no wording is on both sides), seed 7. Under the earlier plain random split with the same seed, {OVERLAP} of the {N_TEST} test rows shared their normalised text with a training row; every one of the {N_ALL} note 1 texts is distinct, so the grouped split only changes which {N_TEST} cases are held out. "
         "Figures come from `uv run python -m workbench.classify`; the generated labels carry deliberate noise, so these are not real-world figures.",
         _section("Department routing", built["department"], thr),
         _section("Complaint type", built["type"], thr),
-    ]).replace("{OVERLAP}", str(built["old_split_overlap"])) + "\n"
+    ]).replace("{OVERLAP}", str(built["old_split_overlap"])).replace("{N_TEST}", f'{len(built["split"][1]):,}').replace("{N_ALL}", f'{sum(map(len, built["split"])):,}') + "\n"
     text = path.read_text(encoding="utf-8") if path.exists() else "# Test results\n"
     text = re.sub(r"\n?## Classifiers\n.*?(?=\n## |\Z)", "", text, flags=re.S).rstrip("\n")
     path.write_text(text + "\n\n" + body, encoding="utf-8")

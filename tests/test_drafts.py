@@ -270,3 +270,10 @@ def test_verify(mdb, rcfg):
     rec["prompt_sha256"] = "0" * 64
     drafts.rec_path(rcfg, cid).write_text(json.dumps(rec), encoding="utf-8")
     assert record.verify(mdb, [cid], rcfg) == (0, 1)
+
+
+def test_clean_is_fast_on_unclosed_brackets():
+    import time
+    t0 = time.perf_counter()
+    drafts.clean("[" * 20000)
+    assert time.perf_counter() - t0 < 1

@@ -7,9 +7,9 @@ from .citations import quote_in_source
 from .masking import mask
 
 MAX_CLAIMS = 8
-IMAGE = re.compile(r"!\[[^\]]*\]\([^)]*\)")
-LINK = re.compile(r"\[([^\]]*)\]\([^)]*\)")
-TAG = re.compile(r"<[^>]*>")
+IMAGE = re.compile(r"!\[[^\[\]]*\]\([^)]*\)")  # no "[" inside: keeps a run of unclosed brackets linear
+LINK = re.compile(r"\[([^\[\]]*)\]\([^)]*\)")
+TAG = re.compile(r"<[^<>]*>")
 
 
 ROOT = Path(__file__).resolve().parent.parent

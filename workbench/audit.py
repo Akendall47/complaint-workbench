@@ -25,6 +25,7 @@ def _hash(prev, at, actor_id, role, case_id, action, detail_json):
 
 def append(conn: sqlite3.Connection, *, actor_id: str, role: str, action: str,
            case_id: str | None = None, detail: dict | None = None, at: str | None = None) -> int:
+    """Add one entry to the chain. `at` is an ISO time for generated history; leave it out to stamp the current clock."""
     row = conn.execute("SELECT hash FROM audit ORDER BY id DESC LIMIT 1").fetchone()
     prev = row["hash"] if row else ZEROS
     at = at or now()

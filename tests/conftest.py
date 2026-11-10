@@ -82,6 +82,13 @@ def client(app_db):
 
 
 @pytest.fixture(autouse=True)
+def real_clock_after_each_test():
+    yield
+    from workbench import audit
+    audit.set_clock(None)
+
+
+@pytest.fixture(autouse=True)
 def session_db_stays_clean(request):
     """Tests never write to the shared session db (they copy it first): an open write transaction would block db.backup for ever."""
     yield

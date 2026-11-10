@@ -8,6 +8,7 @@ vault/.obsidian/workspace*.json
 *.log
 *.out
 inspo/
+.claude/
 .pytest_cache/
 .hypothesis/
 data/*.db-wal
