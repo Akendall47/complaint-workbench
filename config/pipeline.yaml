@@ -61,7 +61,7 @@ masking:
   postcode: '\b[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2}\b'
   number: '\d{9,}'
 model: qwen3:4b-instruct
-prompt_version: 1
+prompt_version: 2
 stages: [new, in_review, handed_over, returned, accepted]
 paths:
   - {from: new, to: in_review, kind: normal}

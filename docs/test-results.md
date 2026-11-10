@@ -77,3 +77,14 @@ Confusion table (rows are the true class, columns the predicted class):
 | Website or app | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 42 |
 
 Most confused pairs: Other read as Fees and charges (1); Other read as Account administration (1).
+
+## Drafts
+
+Model `qwen3:4b-instruct`, prompt version 2, seed 7, run locally through Ollama. One run over the chosen cases; no case was re-run or hand-picked.
+
+- Cases recorded: 150
+- Invalid outputs (not JSON, wrong shape or an error): 0
+- Claims: 864
+- Claims failing the citation check: 42 (4.9%)
+- Seconds per draft: median 12.0, 95th percentile 13.2
+- Total model time: 29.9 minutes

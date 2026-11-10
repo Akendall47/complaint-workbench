@@ -15,3 +15,4 @@ data/*.db-shm
 *.egg-info/
 
 data/models/
+data/recordings-dev/
