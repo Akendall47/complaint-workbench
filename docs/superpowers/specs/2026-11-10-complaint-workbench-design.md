@@ -272,3 +272,20 @@ The owner asked that every section justify its position, and that deadlines be v
 | Left navigation | Queue and Case above Policy, Audit and Settings | Ordered by frequency of use. |
 
 The left-to-right, top-first reading assumption is common design guidance and has not been checked at a primary source for this project. It is stated in the deck as an assumption, and a pilot would test it by watching handlers work.
+
+## 24. Showing where the data comes from **(owner)**
+
+The owner asked that the tool show where its data comes from, in the prototype and in a real bank.
+
+- Every card and table has a "Source" link. It states the table read in this prototype, the system it would be read from in a real bank, and when the data was last updated.
+- Settings has a "Data sources" table:
+
+| Data | In this prototype | In a real bank | Personal data | Refresh |
+|---|---|---|---|---|
+| Cases and case notes | SQLite: `cases`, `notes` | Complaints case management system | Yes | Every 15 minutes |
+| Case events and deadlines | SQLite: `events` | Case management system, event history | No | Every 15 minutes |
+| Policy documents | SQLite full-text index over synthetic policies | The bank's policy document store, approved versions only | No | On publication |
+| AI summaries | Recorded answers from a local model, stored as JSON | A model hosted inside the bank's network | Yes, masked before the model sees it | On request |
+| Audit log | SQLite: `audit`, append-only | An append-only store the complaints team cannot edit | Yes (staff identifiers) | Immediately |
+
+**Database notes (my calls).** The tool reads the bank's systems and writes back only the handover it sends. Personal details are masked before any text reaches the model. The audit log accepts new rows only, enforced by a database trigger in the prototype. SQLite suits one demo user; a real deployment would use the bank's own database with access by role. Overview figures show their refresh time so nobody acts on stale counts. The "real bank" column is an assumption about a typical bank, not a description of any actual one, and the deck says so.
