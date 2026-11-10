@@ -73,6 +73,24 @@ Visual design **(owner)**: minimal and elegant in the manner of Apple's own apps
 8. The specialist sees the handover in the Departments view and can accept it, or return it with a reason. Returned handovers feed the dashboard figure.
 9. Every step writes an audit entry.
 
+### Case states **(my call)**
+
+| State | Meaning | Next |
+|---|---|---|
+| New | Arrived, routed or waiting for routing | Handler opens it |
+| In review | A handler is working on it | Approve, or reject the draft |
+| Handed over | Approve sends the pack to the department | Specialist accepts or returns |
+| Returned | Specialist sent it back with a reason | Back in the handler's queue, at the top |
+| Accepted | Specialist has taken it | End state in this prototype |
+
+- Every case is handed to a department, including General service. Resolving and closing the complaint itself is outside the prototype.
+- Reject means rejecting the AI draft, not the complaint. The draft is discarded, the reason is logged, and the handler completes the summary and pack by hand. The case stays In review.
+- A claim the handler rewrites is relabelled "written by handler" and needs no citation. The edit is logged with the original text. Editing counts as checking, so it unlocks Approve in the same way as confirming.
+
+### Routing in the flow **(my call)**
+
+Routing runs once when a case arrives. The predicted department and the words that drove it are shown at the top of the Case view. The handler can change the department, and the change is logged. A case below the confidence threshold shows "needs routing" in the Queue, and the handler chooses the department before anything else. The generator's true department is used only to measure the classifier.
+
 ## 7. Where each technique is used
 
 | Job | Technique | Why |
@@ -94,6 +112,7 @@ Routing below a confidence threshold goes to a person and is shown as "needs rou
 - Model **(my call)**: an Apache-2.0 Qwen model. `qwen3:4b-instruct` is already installed. If its drafts are too weak, the builder pulls a larger Qwen that fits 8 GB of VRAM.
 - Each recording stores the model name, the prompt version, the masked input and the raw output, so a reviewer can see exactly what the model was given.
 - The recording script is in the repo, so the recordings can be regenerated. A live mode calls Ollama when it is running. Recorded mode is the default.
+- Recording policy **(my call)**: the prompt may be tuned on a small development set first. Then one final run records every case with a fixed prompt version and seed. No case is re-run or hand-picked afterwards, and the raw output ships. The share of claims that fail the citation check is reported as a test result. Unsupported claims appearing in the demo are the control working, not a defect to hide.
 - The recorded output passes through the same schema validation and citation check at display time as live output would. The controls are exercised for real, not bypassed.
 
 ## 9. Data
@@ -135,6 +154,12 @@ One configuration file holds departments, required handover fields per departmen
 ## 13. Technology
 
 **(my call)** Python 3.11, FastAPI, Jinja2 templates, htmx, SQLite with FTS5, scikit-learn, `uv` for the environment. Tests with pytest and Playwright. One command starts it. A hosted copy on a free tier is a stretch goal, not a requirement.
+
+Reviewer environment **(my call)**: Windows, macOS or Linux with Python 3.11 or later. The README gives a `uv` command and a plain `pip` alternative. The database, the trained classifier and the recordings ship prebuilt in the repo, so nothing is generated on first run. The repository must be public, or shared with the reviewers, before submission. That decision is the owner's.
+
+Styling fallback **(my call)**: the builder starts on structure and behaviour straight away. The latest mockup the owner has approved supplies the styling. If none is approved by the time the views are built, the latest Codex mockup is used and the owner is asked to sign it off.
+
+The brief is in `docs/brief.md`, with the sender's contact details removed.
 
 ## 14. Testing
 
