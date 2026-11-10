@@ -1,0 +1,19 @@
+[project]
+name = "complaint-workbench"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = ["fastapi", "uvicorn", "jinja2", "python-multipart", "pyyaml", "scikit-learn", "joblib"]
+
+[project.scripts]
+workbench = "workbench.app:main"
+
+[dependency-groups]
+dev = ["pytest", "hypothesis", "playwright", "pytest-playwright", "httpx"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "--ignore=tests/e2e --ignore=tests/bench"
+
+[tool.setuptools]
+packages = ["workbench"]

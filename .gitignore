@@ -1,10 +1,4 @@
-__pycache__/
 .venv/
+__pycache__/
 *.pyc
-.superpowers/
-graphify-out/cache/
-vault/.obsidian/workspace*.json
-*.aux
-*.log
-*.out
-inspo/
+.pytest_cache/
