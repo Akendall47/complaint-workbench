@@ -19,6 +19,11 @@ def test_navigation_link_returns_200(client, path):
     assert client.get(path).status_code == 200
 
 
+@pytest.mark.xfail(strict=True, reason="Settings is built in Task 11, with the data-sources anchor")
+def test_settings_has_the_data_sources_anchor(client):
+    assert 'id="data-sources"' in client.get("/settings").text
+
+
 def test_navigation_order_and_skip_link_first(client):
     html = client.get("/queue").text
     assert html.index('class="skip"') < html.index("<nav")

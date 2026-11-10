@@ -29,7 +29,7 @@
 
 {% if rise %}
 <p class="rise"><b>Unusual rise:</b> <a href="/queue?{{ rise_query }}">{{ rise.department }}, {{ rise.type }}</a>.
-  {{ rise.this_week }} this week against about {{ "%.0f"|format(rise.usual) }} in a usual week.</p>
+  {{ rise.this_week }} this week against about {{ "%.0f"|format(rise.usual) }} in a usual week.{% if more_rises %} <a href="/queue?owner=all">and {{ more_rises }} more</a>.{% endif %}</p>
 {% endif %}
 
 <section class="card" aria-labelledby="chart-h">

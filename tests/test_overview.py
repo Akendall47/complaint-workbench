@@ -8,6 +8,7 @@ from fastapi.testclient import TestClient
 from workbench import stats
 from workbench.app import create_app
 from workbench.cases import Actor
+from workbench.config import load_config
 from workbench.db import connect, init_db
 
 
@@ -39,7 +40,7 @@ def test_needs_attention_is_five_links_matching_the_stats(client, app_db):
     body = main_of(client.get("/").text)
     got = re.findall(r'<a href="/cases/(AB-\d{4}-\d{5})"', body)
     c = connect(app_db)
-    want = [r["id"] for r in stats.needs_attention(c, Actor("H1", "handler"), date(2026, 11, 10))]
+    want = [r["id"] for r in stats.needs_attention(c, Actor("H1", "handler"))]
     assert got == want and len(got) == 5
     assert "Needs attention today" in body
 
@@ -51,10 +52,16 @@ def test_overview_for_other_roles(client, role, sid):
     assert client.get("/").status_code == 200
 
 
-def test_one_chart_with_text_alternative_and_numbers_in_details(client):
+def test_one_chart_with_text_alternative_and_numbers_in_details(client, app_db):
     body = main_of(client.get("/").text)
     assert body.count("<svg") == 1 and body.count('role="img"') == 1
     assert re.search(r'aria-label="Complaints per week[^"]*"', body)
+    table = re.search(r"<table.*?</table>", body, re.S).group(0)
+    with connect(app_db) as c:
+        weeks = stats.trend(c, date(2026, 11, 10))
+    got = re.findall(r"<tr><td>([^<]*)</td><td>(\d+)</td></tr>", table)
+    assert [(l, int(v)) for l, v in got] == [(f"{date.fromisoformat(w['week']).day} {date.fromisoformat(w['week']):%b}", w["new"]) for w in weeks] and len(got) == 8
+    assert "Week starting" in body
     assert "<details" in body and "<table" in body
     assert "<script" not in body and "style=" not in body
 
@@ -73,6 +80,9 @@ def test_rise_line_links_to_the_queue(app_db):
     cl = TestClient(create_app(str(app_db), models_dir=None), base_url="http://127.0.0.1:8000")
     body = main_of(cl.get("/").text)
     assert body.count("Unusual rise") == 1
+    with connect(app_db) as c2:
+        r = stats.rises(c2, date(2026, 11, 10), load_config())[0]
+    assert f"{r['this_week']} this week against about {r['usual']:.0f} in a usual week" in text_of(body)
     assert 'href="/queue?owner=all&amp;department=Bereavement&amp;type=Service"' in body
 
 
@@ -83,9 +93,13 @@ def test_foot_link_to_data_sources_and_nothing_busy(client):
         assert gone not in body
 
 
-def test_figures_show_typical_days_in_plain_words(client):
+def test_figures_show_typical_days_in_plain_words(client, app_db):
     body = text_of(main_of(client.get("/").text))
-    assert re.search(r"Typical days open \S+ ", body) or "Typical days open" in body
+    with connect(app_db) as c:
+        h = stats.headline(c, date(2026, 11, 10), {date.fromisoformat(d) for d in load_config()["bank_holidays"]})
+    assert f"Open complaints {h['open']:,}" in body
+    assert f"Typical days open {int(h['avg_days_open'] + .5)}" in body
+    assert f"Handovers returned {h['returned_share']:.0%}" in body
     assert "median" not in body.lower()  # said in the help panel only
 
 

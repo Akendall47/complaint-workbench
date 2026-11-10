@@ -17,13 +17,12 @@ from fastapi.responses import HTMLResponse, PlainTextResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from . import audit, case_view, cases, drafts
+from . import audit, case_view, cases, charts, drafts, stats
 from .cases import Actor, NotAllowed, StaleCase
 from .classify import MODELS_DIR, ensure_models
 from .config import load_config
 from .db import connect
 from .deadlines import business_days_left, due_soon_edge
-from . import charts, stats
 from .stats import rise_pairs
 
 HERE = Path(__file__).parent
@@ -208,17 +207,19 @@ def create_app(db_path="data/workbench.db", config_path="config/pipeline.yaml", 
         with db() as conn:
             h = stats.headline(conn, today, hol, cfg["urgent"]["deadline_within_business_days"])
             attention = [{**r, "when": when(business_days_left(date.fromisoformat(r["deadline"]), today, hol))}
-                         for r in stats.needs_attention(conn, actor, today)]
-            rise = next(iter(stats.rises(conn, today, cfg)), None)
+                         for r in stats.needs_attention(conn, actor)]
+            rises = stats.rises(conn, today, cfg)
+            rise = rises[0] if rises else None
             weeks = stats.trend(conn, today)
             items = [(f"{date.fromisoformat(w['week']).day} {date.fromisoformat(w['week']):%b}", w["new"]) for w in weeks]
             title = "Complaints per week, last 8 weeks"
             figures = [("Open complaints", f"{h['open']:,}", "/queue?owner=all"),
-                       ("Typical days open", "–" if h["avg_days_open"] is None else f"{h['avg_days_open']:.0f}", None),
+                       ("Typical days open", "–" if h["avg_days_open"] is None else str(int(h["avg_days_open"] + .5)), None),
                        ("Handovers returned", "–" if h["returned_share"] is None else f"{h['returned_share']:.0%}", None)]
             return page(request, conn, "overview.html", figures=figures, attention=attention, rise=rise,
                         rise_query=urlencode({"owner": "all", "department": rise["department"], "type": rise["type"]}) if rise else "",
-                        chart=charts.step_line(items, summary=stats.sentence("bars", {"title": title, "items": items}) if items else ""),
+                        chart=charts.columns(items, summary=stats.sentence("columns", {"title": title, "items": items}) if items else "", axis="Week starting"),
+                        more_rises=len(rises) - 1,
                         chart_title=title, state_name=STATE_NAME)
 
     # ---- Departments, Team, Pipeline ----

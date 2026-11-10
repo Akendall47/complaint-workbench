@@ -49,10 +49,11 @@ def test_fast_enough(db_timed):
     assert db_timed[1] < 15
 
 
-def test_rerun_is_safe(db):
-    before = digest(db)
-    generate(db, n=1600, seed=7, cfg=CFG)
-    assert digest(db) == before
+def test_rerun_is_safe():
+    c = fresh(1600, 7)  # a private copy: tests never write to the session db
+    before = digest(c)
+    generate(c, n=1600, seed=7, cfg=CFG)
+    assert digest(c) == before
 
 
 def test_state_counts(db):

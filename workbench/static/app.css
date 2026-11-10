@@ -138,6 +138,7 @@ button.primary:disabled{background:#c9c9d3;color:#4a4a55;cursor:not-allowed}
 .rise{margin:0 0 16px;padding:10px 16px;border-radius:12px;background:var(--tint);color:var(--ink)}
 .chart{margin:10px 0 0}
 .chart-svg{display:block;width:100%;max-width:640px;height:auto}
+.chart-svg.wide{max-width:none}
 .chart-svg .lbl{font-size:14px;fill:var(--ink)}
 .chart-svg .lbl.hi{font-weight:700}
 .chart-svg .halo{paint-order:stroke;stroke:white;stroke-width:4px;font-weight:600}

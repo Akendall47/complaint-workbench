@@ -1,7 +1,7 @@
 # Help-panel text per view and "Where these numbers come from" text per card. Plain British English.
 views:
   overview:
-    purpose: See how the complaints team is doing this morning.
+    purpose: See how the complaints team is doing today.
     steps:
       - Open one of the cases under Needs attention today. They are the ones closest to their deadline.
       - If a line says there is an unusual rise, select it to see those cases in the Queue.

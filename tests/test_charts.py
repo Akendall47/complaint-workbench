@@ -6,10 +6,10 @@ from markupsafe import Markup
 from workbench import charts
 
 GRID = [[(d + h) % 4 for h in range(11)] for d in range(7)]
-EMPTY = [lambda: charts.bars([]), lambda: charts.step_line([]), lambda: charts.heatmap([]),
-         lambda: charts.sparkline([]), lambda: charts.band_flow([], [], [])]
+EMPTY = [lambda: charts.bars([]), lambda: charts.columns([]), lambda: charts.heatmap([]),
+         lambda: charts.band_flow([], [], [])]
 FULL = [lambda **k: charts.bars([("<b>", 3), ("Two", 5)], highlight="Two", **k),
-        lambda **k: charts.step_line([("<b>", 3), ("Two", 5), ("Three", 4)], **k),
+        lambda **k: charts.columns([("<b>", 3), ("Two", 5), ("Three", 4)], **k),
         lambda **k: charts.heatmap(GRID, **k),
         lambda **k: charts.band_flow(["<b>", "L2"], ["R1"], [("<b>", "R1", 7, "/queue?a=1"), ("L2", "R1", 1, "/queue?a=2")], **k)]
 
@@ -49,11 +49,6 @@ def test_band_flow_marks_are_not_colour_only():
 def test_bars_values_are_labelled_and_in_table():
     out = charts.bars([("One", 3), ("Two", 5)], title="t", summary="s")
     assert ">3<" in out and ">5<" in out and out.count("<td>5</td>") == 1
-
-
-def test_sparkline_has_label():
-    out = charts.sparkline([1, 2, 3], title="Weekly")
-    assert 'role="img"' in out and "1, 2, 3" in out and "<polyline" in out
 
 
 @pytest.mark.parametrize("make", [FULL[0], FULL[1], FULL[3]])

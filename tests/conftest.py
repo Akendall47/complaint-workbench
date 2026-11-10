@@ -79,3 +79,11 @@ def client(app_db):
     from workbench.app import create_app
     return TestClient(create_app(str(app_db), models_dir=None), base_url="http://127.0.0.1:8000",
                       headers={"Origin": "http://127.0.0.1:8000"})
+
+
+@pytest.fixture(autouse=True)
+def session_db_stays_clean(request):
+    """Tests never write to the shared session db (they copy it first): an open write transaction would block db.backup for ever."""
+    yield
+    if "db" in request.fixturenames:
+        assert not request.getfixturevalue("db").in_transaction, "this test left a write transaction open on the session db"

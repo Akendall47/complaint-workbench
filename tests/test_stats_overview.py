@@ -31,6 +31,13 @@ def twelve(conn):
     return conn
 
 
+def test_trend_window_is_eight_weeks_of_seven_days(conn):
+    from datetime import timedelta
+    _add(conn, 1, str(TODAY - timedelta(days=55)), "in")  # last day of the oldest week: counted
+    _add(conn, 1, str(TODAY - timedelta(days=56)), "out")  # one day older: not counted
+    assert sum(w["new"] for w in stats.trend(conn, TODAY, weeks=8)) == 1
+
+
 def test_headline(twelve):
     h = stats.headline(twelve, TODAY, set())
     assert (h["open"], h["past_deadline"], h["due_soon"]) == (10, 2, 4)
@@ -48,11 +55,11 @@ def test_deadline_buckets(twelve):
 
 def test_needs_attention_by_role(twelve):
     ids = lambda rows: [r["id"] for r in rows]  # noqa: E731
-    assert ids(stats.needs_attention(twelve, Actor("H1", "handler"), TODAY)) == ["l", "b", "c", "a", "e"]
-    assert ids(stats.needs_attention(twelve, Actor("H1", "handler"), TODAY, limit=2)) == ["l", "b"]
-    assert ids(stats.needs_attention(twelve, Actor("T1", "team_lead"), TODAY, limit=3)) == ["l", "b", "c"]
+    assert ids(stats.needs_attention(twelve, Actor("H1", "handler"))) == ["l", "b", "c", "a", "e"]
+    assert ids(stats.needs_attention(twelve, Actor("H1", "handler"), limit=2)) == ["l", "b"]
+    assert ids(stats.needs_attention(twelve, Actor("T1", "team_lead"), limit=3)) == ["l", "b", "c"]
     twelve.execute("INSERT INTO staff VALUES ('S1','Sam','specialist','Bereavement')")
-    assert ids(stats.needs_attention(twelve, Actor("S1", "specialist"), TODAY)) == ["j"]  # handed over, their department
+    assert ids(stats.needs_attention(twelve, Actor("S1", "specialist"))) == ["j"]  # handed over, their department
 
 
 def test_trend(twelve):

@@ -36,23 +36,21 @@ def bars(items, highlight=None, title="", summary="") -> Markup:
                 [(k, v, "yes" if k == highlight else "") for k, v in items])
 
 
-def step_line(series, title="", summary="") -> Markup:
-    """A step line over (label, value) points in order, each point labelled with its value."""
+def columns(series, title="", summary="", axis="") -> Markup:
+    """Vertical columns over (label, value) points in order, the value above each column. The axis caption sits under the labels."""
     if not series:
         return EMPTY
-    n, top, H = len(series), max(v for _, v in series) or 1, 170
-    xs = [30 + (W - 60) * (i / (n - 1) if n > 1 else .5) for i in range(n)]
-    ys = [30 + (H - 70) * (1 - v / top) for _, v in series]
-    path = f"M{xs[0]:.1f},{ys[0]:.1f}" + "".join(f" H{xs[i]:.1f} V{ys[i]:.1f}" for i in range(1, n))
-    every = max(1, -(-n // 10))
-    body = [f'<line class="axis" x1="10" y1="{H - 40}" x2="{W - 10}" y2="{H - 40}" aria-hidden="true"/>',
-            f'<path class="step" d="{path}" aria-hidden="true"/>']
+    n, top, base = len(series), max(v for _, v in series) or 1, 190
+    slot = (W - 20) / n
+    body = [f'<line class="axis" x1="10" y1="{base}" x2="{W - 10}" y2="{base}" aria-hidden="true"/>']
     for i, (k, v) in enumerate(series):
-        body.append(f'<circle class="dot" cx="{xs[i]:.1f}" cy="{ys[i]:.1f}" r="4" aria-hidden="true"/>'
-                    f'<text class="lbl halo" x="{xs[i]:.1f}" y="{ys[i] - 10:.1f}" text-anchor="middle">{_e(v)}</text>')
-        if i % every == 0:
-            body.append(f'<text class="lbl" x="{xs[i]:.1f}" y="{H - 14}" text-anchor="middle">{_e(k)}</text>')
-    return _fig("".join(body), H, title, summary, ["Point", "Value"], series)
+        h, x = max(2.0, 150 * v / top), 10 + i * slot + slot * .2
+        body.append(f'<rect class="bar" x="{x:.1f}" y="{base - h:.1f}" width="{slot * .6:.1f}" height="{h:.1f}" aria-hidden="true"/>'
+                    f'<text class="lbl" x="{x + slot * .3:.1f}" y="{base - h - 6:.1f}" text-anchor="middle">{_e(v)}</text>'
+                    f'<text class="lbl" x="{x + slot * .3:.1f}" y="{base + 20}" text-anchor="middle">{_e(k)}</text>')
+    if axis:
+        body.append(f'<text class="lbl" x="{W / 2}" y="{base + 42}" text-anchor="middle">{_e(axis)}</text>')
+    return Markup(_fig("".join(body), base + 52, title, summary, [axis or "Item", "Value"], series).replace("chart-svg", "chart-svg wide", 1))
 
 
 def heatmap(grid, title="", summary="") -> Markup:
@@ -68,16 +66,6 @@ def heatmap(grid, title="", summary="") -> Markup:
             body.append(f'<rect class="cell l{min(4, round(4 * v / top))}" x="{60 + c * 50}" y="{r * 30 + 28}" width="48" height="28" aria-hidden="true"/>'
                         f'<text class="lbl" x="{60 + c * 50 + 24}" y="{r * 30 + 48}" text-anchor="middle">{_e(v)}</text>')
     return _fig("".join(body), 7 * 30 + 36, title, summary, ["Day"] + [f"{h}:00" for h in HOURS], [[WEEKDAYS[r]] + row for r, row in enumerate(grid)])
-
-
-def sparkline(values, title="") -> Markup:
-    """A small line with no table: the values are in the label. Used beside a figure that already shows them."""
-    if not values:
-        return EMPTY
-    n, top = len(values), max(values) or 1
-    pts = " ".join(f"{2 + 116 * (i / (n - 1) if n > 1 else .5):.1f},{22 - 20 * v / top:.1f}" for i, v in enumerate(values))
-    label = _e(f"{title}: {', '.join(map(str, values))}" if title else ", ".join(map(str, values)))
-    return Markup(f'<svg class="spark" viewBox="0 0 120 24" role="img" aria-label="{label}"><polyline class="step" points="{pts}"/></svg>')
 
 
 def band_flow(left, right, bands, marks=(), title="", summary="") -> Markup:

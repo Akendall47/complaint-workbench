@@ -38,7 +38,7 @@ def deadline_buckets(conn, today, holidays, limit=5) -> list[tuple[str, int]]:
     return [("Past deadline", h["past_deadline"]), ("Due soon", h["due_soon"]), ("Later", h["open"] - h["past_deadline"] - h["due_soon"])]
 
 
-def needs_attention(conn, actor, today, limit=5) -> list[dict]:
+def needs_attention(conn, actor, limit=5) -> list[dict]:
     """The cases that need this person: a handler's own live cases, a specialist's handovers, everything open for a team lead.
     Soonest deadline first, urgent before not urgent."""
     if actor.role == "handler":
@@ -178,7 +178,7 @@ def rises(conn, today, cfg) -> list[dict]:
 
 def sentence(kind, data) -> str:
     """The one plain sentence that says what a chart shows."""
-    if kind == "bars":
+    if kind in ("bars", "columns"):  # one sentence form, named for the chart it describes
         items = data["items"]
         top = max(items, key=lambda i: i[1])
         return f"{data['title']}: {', '.join(f'{k} {v}' for k, v in items)}. Highest is {top[0]} with {top[1]}."
