@@ -4,6 +4,19 @@ import sqlite3
 from datetime import datetime, timezone
 
 ZEROS = "0" * 64
+_real = lambda: datetime.now(timezone.utc)  # noqa: E731
+_clock = _real
+
+
+def set_clock(fn=None) -> None:
+    """Tests and the demo pin 'now' here. None restores the real clock."""
+    global _clock
+    _clock = fn or _real
+
+
+def now() -> str:
+    """The one clock for audit entries and case events."""
+    return _clock().isoformat(timespec="seconds")
 
 
 def _hash(prev, at, actor_id, role, case_id, action, detail_json):
@@ -14,7 +27,7 @@ def append(conn: sqlite3.Connection, *, actor_id: str, role: str, action: str,
            case_id: str | None = None, detail: dict | None = None) -> int:
     row = conn.execute("SELECT hash FROM audit ORDER BY id DESC LIMIT 1").fetchone()
     prev = row["hash"] if row else ZEROS
-    at = datetime.now(timezone.utc).isoformat()
+    at = now()
     detail_json = json.dumps(detail, sort_keys=True)
     h = _hash(prev, at, actor_id, role, case_id, action, detail_json)
     cur = conn.execute(
