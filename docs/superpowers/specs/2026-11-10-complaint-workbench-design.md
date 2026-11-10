@@ -249,3 +249,26 @@ The owner reviewed the mockup on 2026-11-10 and asked that every view be easy fo
 - **"How this page works" on every view.** A button opens a small panel with a one-sentence purpose and three or four numbered steps. It is not a guided tour and it never blocks the page.
 - **Plain-sentence chart summaries.** Each chart carries one sentence, computed from the data, saying what it shows now. The Overview is grouped under plain headings.
 - **Role switcher.** "View as (demo)" lets a reviewer see the tool as a handler, a specialist or a team lead, because the brief asks how complaints staff and specialists would each use it. Changing role does not move the user to another page. It changes what the Case view offers: a handler approves and sends, or rejects the draft; a specialist accepts, or returns with a reason; a team lead also handles cases returned twice. In a real deployment the role comes from the bank's sign-in system and cannot be switched.
+
+## 23. Placement: why each section is where it is **(owner)**
+
+The owner asked that every section justify its position, and that deadlines be visible at all times.
+
+**Rule.** Order by the cost of missing the item, then by how often it is needed. The most critical item goes top left. Anything time-critical is visible without scrolling on a 1440 by 900 screen. Analysis and reference content goes below. The deck states this rule and the table below.
+
+| Where | What | Reason |
+|---|---|---|
+| Top bar, every view | Deadline strip: past deadline, due within 5 business days, urgent | A missed deadline is the costliest error (DISP 1.6). It must never be a page away. Each count opens the Queue filtered to those cases. |
+| Overview, top | Headline figures, deadline tracker, needs attention today | Things to act on today. |
+| Overview, middle | Complaint map, by stage | Where the work is. Read weekly, not hourly. |
+| Overview, lower | Trend, heatmap, department table | Patterns for planning. Never urgent. |
+| Queue | Sorted by deadline, soonest first; days left is the second column | The top row is the next case to work. |
+| Case, fixed header | Reference, status, days left, urgent tag | The deadline stays in view while the handler reads. |
+| Case, left then right | Source notes, then AI claims | Read the evidence before the claim about it. |
+| Case, fixed bottom bar | The one next action | Always in the same place, so it is never hunted for. |
+| Departments | Past deadline is the first number column | Same rule. |
+| Pipeline | Diagram first, counts below | The shape is the message. Numbers support it. |
+| Audit log | Newest first | A reviewer usually wants the latest action. |
+| Left navigation | Queue and Case above Policy, Audit and Settings | Ordered by frequency of use. |
+
+The left-to-right, top-first reading assumption is common design guidance and has not been checked at a primary source for this project. It is stated in the deck as an assumption, and a pilot would test it by watching handlers work.
