@@ -229,3 +229,14 @@ File layout, database schema, exact prompts, the number of synthetic cases above
 ## 20. Known gaps in tooling
 
 No LaTeX engine and no `ccusage` are installed on the build machine. Both need installing before items 3 and 4 of the deliverables can be completed.
+
+## 21. Research items not carried into the design **(my call)**
+
+The vault rebuild found four places where the research and this document differ. Each is settled here.
+
+- **Poisoned policy index.** The research lists a control for tampered policy documents. In the prototype the policy library is read-only and loaded from files in the repository, so there is no route to change it at run time. A production system would need signed policy documents and an approval step for changes. Stated as a limitation in the deck.
+- **Model drift.** Not monitored in the prototype. The recordings store the model name, prompt version and seed, so any change is visible. Ongoing monitoring is named as a production requirement.
+- **Model size.** The research recommends a larger Qwen model. The design uses `qwen3:4b-instruct` because it is installed and fits the 8 GB of video memory on the build machine. The builder moves to a larger model only if the drafts are too weak, and the report says which model produced the recordings.
+- **Root-cause analysis.** The research suggests firms must analyse the root causes of complaints (unverified). The prototype does not do this analysis. The complaint map shows where complaint types concentrate, which is the starting point for it. Named as a next step.
+
+The navigation now has eight sections, not seven: Overview, Departments, Queue, Pipeline, Case, Policy library, Audit log, Settings.

@@ -27,7 +27,7 @@ Research agent report, 2026-11-10. This note ties each interface choice to a sou
 
 ## Choices where the evidence is mixed or against us
 
-**Left navigation has a cost.** The same NN/g article says it has a "lower content-to-chrome ratio than horizontal navigation". We accept the cost because the product has seven sections and the Case view can collapse the navigation.
+**Left navigation has a cost.** The same NN/g article says it has a "lower content-to-chrome ratio than horizontal navigation". We accept the cost because the product has eight sections and the Case view can collapse the navigation.
 
 **The heatmap encodes magnitude in colour.** NN/g says "color should not be used to communicate information about quantitative values or magnitude". The owner's reference design uses a heatmap. Decision: keep one heatmap for the weekday-by-hour arrival pattern, where the shape matters and not exact values, print the count in each cell or on hover and focus, and use bars wherever a value must be read accurately.
 
