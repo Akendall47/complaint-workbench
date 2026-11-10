@@ -52,9 +52,9 @@ urgent:
   classifier_threshold: 0.7
 rise: {ratio: 2.0, minimum_cases: 10, baseline_weeks: 4}
 masking:
-  # Shared separator class [ .-]: space, dot, hyphen. No slash, so 10/11/2026 survives.
+  # Shared separator class [ .-]: space, dot, hyphen (card also takes / and _). Dates, times and money are held before the patterns run.
   email: '(?<![\w.+-])[\w.+-]+@[\w-]+(?:\.[\w-]+)+'
-  card: '(?<!\d)(?<!\d[ .-])(?!\d{2}[ .-]\d{2}[ .-]\d{2}[ .-]\d{8}(?!\d))(?!\d{1,2}[ .-]\d{1,2}[ .-]\d{4}(?!\d))\d(?:[ .-]?\d){12,}(?!\d)'
+  card: '(?<!\d)(?!\d{2}[ .-]\d{2}[ .-]\d{2}[ .-]\d{8}(?!\d))\d(?:[ ./_-]?\d){12,}(?!\d)'
   sort_code_account: '(?<!\d)\d{2}[ .-]\d{2}[ .-]\d{2} \d{8}(?!\d)'
   sort_code: '(?<!\d)\d{2}[ .-]\d{2}[ .-]\d{2}(?!\d)'
   account: '(?<!\d)\d{8}(?!\d)'

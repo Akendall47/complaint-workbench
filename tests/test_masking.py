@@ -96,6 +96,39 @@ def test_private_use_chars_stripped(p):
     assert out == "see AB-2026-00417"
 
 
+def test_card_after_date(p):
+    out = mask("10-11-2026 4929 1234 5678 9012", {}, p)
+    assert out == "10-11-2026 [CARD]"
+
+
+def test_card_with_slash_and_underscore(p):
+    assert mask("4929/1234/5678/9012", {}, p) == "[CARD]"
+    assert mask("4929_1234_5678_9012", {}, p) == "[CARD]"
+
+
+def test_dates_times_money_unchanged(p):
+    for t in ["10-11-2026 12-11-2026", "10.11.2026 14.30", "10/11/2026", "£1,250.00", "14:30",
+              "2026-11-10", "10/11/26", "paid £250 at 09:05 on 2026-11-10"]:
+        assert mask(t, {}, p) == t, t
+
+
+def test_two_digit_year_with_hyphen_is_sort_code(p):
+    assert mask("20-45-77", {}, p) == "[SORT CODE]"
+
+
+def test_known_dob_still_masked(p):
+    assert mask("born 03/04/1988", {"dob": "03/04/1988"}, p) == "born [DOB]"
+
+
+def test_money_does_not_shelter_card(p):
+    assert "4929" not in mask("£4929123456789012", {}, p)
+
+
+def test_many_held_items(p):
+    t = "10/11/2026 " * 7000
+    assert mask(t, {}, p) == t
+
+
 def test_sort_code_then_account(p):
     assert mask("12-34-56 12345678", {}, p) == "[SORT CODE] [ACCOUNT]"
 
@@ -112,10 +145,11 @@ def _embed(prefix, secret, suffix):
     return f"{prefix} {secret} {suffix}"
 
 
-_sep = st.sampled_from([" ", ".", "-"])
+_sep = st.sampled_from([" ", ".", "-", "/", "_"])
 _pad = st.text(alphabet="abcdefghij .,\n!?;:()", max_size=20)
 _card = st.integers(13, 19).flatmap(lambda n: st.text("0123456789", min_size=n, max_size=n))
-_sort = st.builds("{:02d}{}{:02d}{}{:02d}".format, st.integers(0, 99), _sep, st.integers(0, 99), _sep, st.integers(0, 99))
+_sc_sep = st.sampled_from([" ", ".", "-"])
+_sort = st.builds("{:02d}{}{:02d}{}{:02d}".format, st.integers(0, 99), _sc_sep, st.integers(0, 99), _sc_sep, st.integers(0, 99))
 _run = st.integers(20, 30).flatmap(lambda n: st.text("0123456789", min_size=n, max_size=n))
 
 
@@ -125,9 +159,19 @@ def _grouped(draw):
     assume(13 <= sum(map(len, groups)) <= 30)
     seps = draw(st.lists(_sep, min_size=len(groups) - 1, max_size=len(groups) - 1))
     out = groups[0] + "".join(a + b for a, b in zip(seps, groups[1:]))
-    # A run that starts like a date is a known miss (see docs/test-results.md).
-    assume(not re.match(r"\d{1,2}[ .-]\d{1,2}[ .-]\d{4}", out))
+    # A run containing a date, ISO date or time shape is a known miss (docs/test-results.md).
+    assume(not re.search(r"(?<!\d)(\d{1,2}[/.-]\d{1,2}[/.-]\d{4}|\d{4}-\d{2}-\d{2}|\d{1,2}/\d{1,2}/\d{2}|\d{1,2}:\d{2})(?!\d)", out))
     return out
+
+
+_date = st.sampled_from(["10-11-2026", "10.11.2026", "10/11/2026", "2026-11-10", "10/11/26"])
+
+
+@settings(deadline=None, suppress_health_check=[HealthCheck.function_scoped_fixture])
+@given(_date, _card)
+def test_card_after_date_masked(p, d, card):
+    out = mask(f"{d} {card}", {}, p)
+    assert out.startswith(d) and not any(c.isdigit() for c in out[len(d):])
 
 
 @settings(deadline=None, suppress_health_check=[HealthCheck.function_scoped_fixture])

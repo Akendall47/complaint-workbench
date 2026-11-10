@@ -1,7 +1,7 @@
 import hashlib
 import json
 import re
-import time
+import sys
 from collections import Counter
 from datetime import date, datetime, timedelta
 from pathlib import Path
@@ -15,7 +15,6 @@ from workbench.generate import generate
 
 CFG = load_config()
 TODAY = date.fromisoformat(CFG["today"])
-ELAPSED = []
 TABLES = ["staff", "policies", "policies_fts", "cases", "notes", "events"]
 
 
@@ -27,21 +26,18 @@ def digest(conn) -> str:
     return h.hexdigest()
 
 
-def fresh(n, seed):
+def fresh(n, seed, adv=False):
     c = connect(":memory:")
     init_db(c)
+    if adv:
+        import tempfile
+        p = Path(tempfile.mkdtemp()) / "ids.json"
+        generate(c, n=n, seed=seed, cfg=CFG, adv_path=p)
+        c.commit()
+        return c, json.loads(p.read_text())
     generate(c, n=n, seed=seed, cfg=CFG)
     c.commit()
     return c
-
-
-@pytest.fixture(scope="session")
-def db():
-    t = time.perf_counter()
-    c = fresh(1600, 7)
-    ELAPSED.append(time.perf_counter() - t)
-    yield c
-    c.close()
 
 
 def test_deterministic_and_seed_sensitive(db):
@@ -49,8 +45,8 @@ def test_deterministic_and_seed_sensitive(db):
     assert digest(fresh(200, 1)) != digest(fresh(200, 2))
 
 
-def test_fast_enough(db):
-    assert ELAPSED[0] < 15
+def test_fast_enough(db_timed):
+    assert db_timed[1] < 15
 
 
 def test_rerun_is_safe(db):
@@ -188,7 +184,7 @@ def test_events_consistent(db):
         assert (c["accepted_at"] is not None) == (c["state"] == "accepted")
         hos = [e["at"] for e in es if e["kind"] == "handed_over"]
         assert c["handed_over_at"] == (hos[-1] if hos else None)
-        assert all(e["at"] <= "2026-11-10T13:00:00" and e["actor_id"] for e in es)
+        assert all(e["at"] <= "2026-11-10T12:30:00" and e["actor_id"] for e in es)
 
 
 def test_deadline_matches_rule(db):
@@ -230,3 +226,130 @@ def test_policies(db):
     assert db.execute("SELECT COUNT(*) FROM policies_fts WHERE policies_fts MATCH 'handover'").fetchone()[0] > 0
     raw = yaml.safe_load((Path(__file__).parent.parent / "workbench" / "policies.yaml").read_text(encoding="utf-8"))
     assert len({p["id"] for p in raw}) == len(raw)
+
+
+def test_ownership_without_specialist(db):
+    t1 = db.execute("SELECT COUNT(*) FROM cases WHERE owner_id='T1' AND state != 'accepted'").fetchone()[0]
+    assert t1 < 40
+    assert db.execute("SELECT COUNT(*) FROM cases WHERE owner_id='T1' AND return_count < 2").fetchone()[0] == 0
+    bad = db.execute("""SELECT COUNT(*) FROM cases WHERE state IN ('handed_over','accepted') AND return_count < 2
+        AND department_true IN ('Bereavement','Mis-selling review','General service') AND owner_id NOT LIKE 'H%'""").fetchone()[0]
+    assert bad == 0
+    load = Counter({r[0]: r[1] for r in db.execute(
+        "SELECT owner_id, COUNT(*) FROM cases WHERE state != 'accepted' AND owner_id LIKE 'H%' GROUP BY 1")})
+    assert load.most_common(1)[0][0] == "H3"
+    assert db.execute("SELECT COUNT(*) FROM cases WHERE owner_id='H1' AND state IN ('new','in_review','returned')").fetchone()[0] >= 25
+
+
+def test_type_noise(db):
+    from workbench.generate import TYPE_C
+    n = 0
+    for r in db.execute("""SELECT c.type_true t, n.body b FROM cases c JOIN notes n ON n.case_id=c.id AND n.seq=1
+                           WHERE LENGTH(n.body) < 5000"""):
+        n += any(s in r["b"] for k, v in TYPE_C.items() if k != r["t"] for s in v)
+    assert 0.07 <= n / 1600 <= 0.13
+
+
+def test_field_labels_varied_and_no_department_names(db):
+    from workbench.generate import FIELD
+    assert all(len(v[0]) >= 3 for v in FIELD.values())
+    body = " ".join(r[0] for r in db.execute("SELECT body FROM notes WHERE LENGTH(body) < 5000")).lower()
+    for w in ("bereavement", "mis-sold", "mis-selling", "fraud claims", "financial difficulty", "data protection", "general service"):
+        assert w not in body, w
+
+
+def test_truth_matches_text(db):
+    terms = CFG["urgent"]["vulnerability_terms"] + CFG["urgent"]["hardship_terms"]
+    n = 0
+    for r in db.execute("""SELECT c.handover_true_json h, group_concat(n.body, ' ') b FROM cases c JOIN notes n ON n.case_id=c.id
+                           WHERE c.department_true='Financial difficulty' GROUP BY c.id"""):
+        flagged = any(t in r["b"].lower() for t in terms)
+        assert (not json.loads(r["h"])["vulnerability_noted"].startswith("none")) == flagged
+        n += flagged
+    assert n > 0
+    _check_relationship(db, json.loads((Path(__file__).parent / "adversarial_ids.json").read_text())["french"])
+    for seed in (1, 2, 3):
+        c, ids = fresh(400, seed, adv=True)
+        _check_relationship(c, ids["french"])
+
+
+def _check_relationship(conn, french_id):
+    # The French case replaces note 1, so it carries no English relationship wording.
+    n = 0
+    for r in conn.execute("""SELECT c.id, c.handover_true_json h, n.body b FROM cases c JOIN notes n ON n.case_id=c.id AND n.seq=1
+                             WHERE c.department_true='Bereavement' AND c.id != ?""", (french_id,)):
+        assert json.loads(r["h"])["relationship_to_deceased"] in r["b"]
+        n += 1
+    assert n > 0
+
+
+def test_cli_adversarial_file_rule(tmp_path, monkeypatch):
+    from workbench import generate as g
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "tests").mkdir()
+    cfg = Path(__file__).parent.parent / "config" / "pipeline.yaml"
+    monkeypatch.setattr(sys, "argv", ["g", "--n", "300", "--db", str(tmp_path / "a.db"), "--config", str(cfg)])
+    g.main()
+    assert not (tmp_path / "tests" / "adversarial_ids.json").exists()
+
+
+PINNED = "7542a7121ae5916ba5ab766baf2ae8cc39094244a7e4232fcfff8c2cd1ba8a68"
+
+
+def test_pinned_digest_n300():
+    c = fresh(300, 7)
+    h = hashlib.sha256()
+    for r in c.execute("SELECT id FROM cases ORDER BY id"):
+        h.update(r[0].encode())
+    for r in c.execute("SELECT body FROM notes ORDER BY id"):
+        h.update(r[0].encode())
+    assert h.hexdigest() == PINNED
+
+
+def test_unowned_authors_and_note_times(db):
+    assert db.execute("""SELECT COUNT(*) FROM notes n JOIN cases c ON c.id=n.case_id
+                         WHERE c.owner_id IS NULL AND n.seq > 1 AND n.author = 'T1'""").fetchone()[0] == 0
+    assert db.execute("""SELECT COUNT(*) FROM notes n JOIN cases c ON c.id=n.case_id
+                         WHERE n.written_at < c.received_at OR n.written_at > '2026-11-10T12:30:00'""").fetchone()[0] == 0
+
+
+def test_staff_by_ownership(db):
+    """Without a specialist, the case's handler acts and writes; T1 appears only once return_count >= 2."""
+    no_spec = ("Bereavement", "Mis-selling review", "General service")
+    people = {}
+    for r in db.execute("SELECT id, owner_id, return_count rc FROM cases WHERE department_true IN (?,?,?)", no_spec):
+        people[r["id"]] = (r["owner_id"], r["rc"], set())
+    for r in db.execute("SELECT case_id, actor_id FROM events"):
+        if r["case_id"] in people:
+            people[r["case_id"]][2].add(r["actor_id"])
+    for r in db.execute("SELECT case_id, author FROM notes WHERE seq > 1"):
+        if r["case_id"] in people:
+            people[r["case_id"]][2].add(r["author"])
+    assert people
+    for owner, rc, who in people.values():
+        who = who - {"system"}
+        handlers = {w for w in who if w.startswith("H")}
+        if rc >= 2:
+            assert who <= handlers | {"T1"} and len(handlers) == 1
+        else:
+            assert len(who) == 1 and "T1" not in who and (owner is None or who == {owner})
+
+
+def test_cli_defaults_write_ids_file(tmp_path, monkeypatch):
+    from workbench import generate as g
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "tests").mkdir()
+    cfg = Path(__file__).parent.parent / "config" / "pipeline.yaml"
+    monkeypatch.setattr(sys, "argv", ["g", "--db", str(tmp_path / "a.db"), "--config", str(cfg)])
+    g.main()
+    ids = json.loads((tmp_path / "tests" / "adversarial_ids.json").read_text())
+    assert ids == json.loads((Path(__file__).parent / "adversarial_ids.json").read_text())
+
+
+def test_cli_explicit_adv_ids_at_n300(tmp_path, monkeypatch):
+    from workbench import generate as g
+    out = tmp_path / "ids.json"
+    cfg = Path(__file__).parent.parent / "config" / "pipeline.yaml"
+    monkeypatch.setattr(sys, "argv", ["g", "--n", "300", "--db", str(tmp_path / "b.db"), "--config", str(cfg), "--adv-ids", str(out)])
+    g.main()
+    assert set(json.loads(out.read_text())) == {"hidden_instruction", "unusual_format", "long", "french"}

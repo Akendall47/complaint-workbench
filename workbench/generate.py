@@ -554,7 +554,6 @@ def generate(conn: sqlite3.Connection, *, n: int = 1600, seed: int = 7, cfg: dic
         c.setdefault("mode", None)
         c.setdefault("adv_n", 0)
         handler = rng.choices(HANDLERS, weights=HANDLER_W)[0]
-        spec = SPECIALIST.get(c["dept"], "T1")
         rc = 0
         if st == "in_review":
             rc = 1 if rng.random() < .18 else 0
@@ -564,6 +563,8 @@ def generate(conn: sqlite3.Connection, *, n: int = 1600, seed: int = 7, cfg: dic
             rc = 1 if rng.random() < .9 else 2
         elif st == "accepted":
             rc = 1 if rng.random() < .08 else 0
+        # No specialist for this department: the handler acts, and T1 only after a second return.
+        spec = SPECIALIST.get(c["dept"]) or ("T1" if rc >= 2 else handler)
         owner = None if i in unowned else ("T1" if rc >= 2 else SPECIALIST.get(c["dept"], handler) if st in ("handed_over", "accepted") else handler)
         # events
         t, ho_at, acc_at = c["rt"], None, None
