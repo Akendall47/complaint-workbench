@@ -91,6 +91,16 @@ Visual design **(owner)**: minimal and elegant in the manner of Apple's own apps
 
 Routing runs once when a case arrives. The predicted department and the words that drove it are shown at the top of the Case view. The handler can change the department, and the change is logged. A case below the confidence threshold shows "needs routing" in the Queue, and the handler chooses the department before anything else. The generator's true department is used only to measure the classifier.
 
+### Additions requested by the owner on 2026-11-10 **(owner, shaped by my calls)**
+
+**Complaint type.** Each case carries a second label beside its department: what the complaint is about (for example website or app, service, fees, fraud or security, investment advice, account administration). The same kind of small text classifier that routes to a department predicts it, with the words that drove the prediction shown. Type appears as filter chips in the Queue and Departments views, and as a department-by-type grid on the Overview with the count printed in every cell. Selecting a cell filters the Queue.
+
+**Urgent flag and fast lane.** A case is flagged urgent by stated rules first (deadline close, signs of a vulnerable customer, financial hardship, ongoing fraud, a case that has been returned before), with the classifier's score as a second signal. The flag always shows its reasons. Urgent cases sort to the top of the Queue and follow the fast path in the pipeline. A handler can remove or add the flag, and the change is logged. No language model is used for this. **(my call)**
+
+**Pipeline view.** A new view draws the complaint process as a flow diagram: stages as nodes, paths as bands whose width is the number of cases, with the count on each. It shows the normal path, the fast path for urgent cases, and the loop for cases a specialist returned. Selecting a stage or path filters the Queue. A case returned once goes back to its handler. A case returned a second time takes a different path, to the team lead. **(my call on the second-return rule)**
+
+**Editing the pipeline.** The pipeline is defined in one configuration file (stages, paths, and the rules that choose a path), and the diagram is drawn from that file. Changing the process means changing the file, which leaves a reviewable history. A drag-and-drop editor in the browser is not built: it is a large piece of work, and changing a regulated process needs its own approval and audit controls. It is described in the deck as a next step. **(my call, awaiting the owner's agreement)**
+
 ## 7. Where each technique is used
 
 | Job | Technique | Why |
