@@ -4,7 +4,7 @@ import sqlite3
 
 def _fts_query(q: str, joiner: str) -> str:
     # Each whitespace-separated token becomes one quoted phrase, so FTS operators and punctuation are inert.
-    toks = [t.replace('"', " ") for t in q.split() if re.search(r"\w", t)]
+    toks = [t.replace('"', " ") for t in q.replace("\x00", " ").split()[:50] if re.search(r"\w", t)]
     return f" {joiner} ".join(f'"{t}"' for t in toks)
 
 

@@ -52,3 +52,19 @@ def test_manual_override(cfg):
 
 def test_scammed_counts_as_fraud(cfg):
     assert urgent_reasons(case(), "I was scammed yesterday and payments are still leaving", TODAY, cfg) == ["Ongoing fraud"]
+
+
+def test_five_business_days_is_urgent_six_is_not(cfg):
+    assert urgent_reasons(case(deadline="2026-11-17"), "", TODAY, cfg) == ["Deadline within 5 business days"]
+    assert urgent_reasons(case(deadline="2026-11-18"), "", TODAY, cfg) == []
+
+
+def test_handed_over_still_counts(cfg):
+    assert urgent_reasons(case(state="handed_over", deadline="2026-11-12"), "", TODAY, cfg) == ["Deadline within 5 business days"]
+
+
+def test_scammed_sentence_needs_the_scam_term(cfg):
+    text = "I was scammed yesterday and payments are still leaving"
+    cfg2 = {**cfg, "urgent": {**cfg["urgent"], "fraud_terms": [t for t in cfg["urgent"]["fraud_terms"] if t != "scam"]}}
+    assert urgent_reasons(case(), text, TODAY, cfg2) == []
+    assert urgent_reasons(case(), text, TODAY, cfg) == ["Ongoing fraud"]

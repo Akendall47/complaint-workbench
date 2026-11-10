@@ -61,3 +61,9 @@ def test_french_unrouted(small, cfg, models):
 def test_bad_source(small, cfg, models):
     with pytest.raises(IntakeError):
         receive(small, text=TEXT, source="carrier pigeon", cfg=cfg, models=models)
+
+
+def test_too_long(small, cfg, models):
+    with pytest.raises(IntakeError, match="Complaint text is too long. The limit is 5,000 characters."):
+        receive(small, text="word " * 1001, source="phone", cfg=cfg, models=models)
+    receive(small, text=("word " * 999).strip(), source="phone", cfg=cfg, models=models)

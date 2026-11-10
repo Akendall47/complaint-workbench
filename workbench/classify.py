@@ -5,7 +5,6 @@ import re
 import sqlite3
 from collections import Counter
 from datetime import date
-from functools import lru_cache
 from pathlib import Path
 from typing import NamedTuple
 
@@ -13,7 +12,7 @@ import joblib
 import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import GroupShuffleSplit, train_test_split
 from sklearn.pipeline import Pipeline
 
 from workbench.config import load_config
@@ -57,10 +56,29 @@ def looks_english(text: str) -> bool:
     return sum(w in _COMMON for w in words) / len(words) >= 0.3
 
 
-@lru_cache(maxsize=None)
-# Safe: loads only the models this repo builds into data/models/ (committed build output), never user-supplied files.
-def load_models(models_dir: str = str(MODELS_DIR)) -> dict:
-    return {k: joblib.load(Path(models_dir) / f"{k}.joblib") for k in ("department", "type")}
+def _save(models: dict, d: Path) -> None:
+    d.mkdir(parents=True, exist_ok=True)
+    for k, m in models.items():
+        joblib.dump(m, d / f"{k}.joblib")
+
+
+_LOADED: dict = {}
+
+
+def ensure_models(conn: sqlite3.Connection, cfg: dict, models_dir=MODELS_DIR) -> dict:
+    """Load the models, training and saving them first if the files are missing. Loaded once per directory."""
+    d = Path(models_dir)
+    if str(d) not in _LOADED:
+        if not all((d / f"{k}.joblib").exists() for k in ("department", "type")):
+            built = build(conn, cfg)
+            _save({k: built[k]["model"] for k in ("department", "type")}, d)
+        # Safe: reads only model files this code wrote (data/models/ is a build output, rebuilt when missing).
+        _LOADED[str(d)] = {k: joblib.load(d / f"{k}.joblib") for k in ("department", "type")}
+    return _LOADED[str(d)]
+
+
+def _norm_text(t: str) -> str:
+    return " ".join(re.sub(r"[\d\W_]+", " ", t.lower()).split())
 
 
 def _note1(conn: sqlite3.Connection) -> list[sqlite3.Row]:
@@ -90,12 +108,18 @@ def _evaluate(model, texts, truth, threshold) -> dict:
 def build(conn: sqlite3.Connection, cfg: dict) -> dict:
     """Train both models on 80% of cases (split seed 7), score them on the other 20%."""
     rows = _note1(conn)
-    idx_tr, idx_te = train_test_split(range(len(rows)), test_size=0.2, random_state=7)
+    # Group by normalised text so the same wording is never on both sides of the split.
+    groups = [_norm_text(r["body"]) for r in rows]
+    idx_tr, idx_te = next(GroupShuffleSplit(n_splits=1, test_size=0.2, random_state=7).split(rows, groups=groups))
+    old_tr, old_te = train_test_split(range(len(rows)), test_size=0.2, random_state=7)
+    seen = {groups[i] for i in old_tr}
     out = {}
     for key, col in (("department", "department_true"), ("type", "type_true")):
         get = lambda ix: ([rows[i]["body"] for i in ix], [rows[i][col] for i in ix])  # noqa: E731
         model = train(*get(idx_tr))
         out[key] = {"model": model, **_evaluate(model, *get(idx_te), cfg["routing_threshold"])}
+    out["split"] = ([rows[i]["id"] for i in idx_tr], [rows[i]["id"] for i in idx_te])
+    out["old_split_overlap"] = sum(groups[i] in seen for i in old_te)
     return out
 
 
@@ -152,11 +176,11 @@ def write_report(built: dict, cfg: dict, path: Path) -> None:
     body = "\n\n".join([
         "## Classifiers",
         "Both models read note 1 only, the customer's own words, because routing happens before staff notes exist. "
-        "Labels are the generator's `department_true` and `type_true`. Split: 80/20, seed 7. "
+        "Labels are the generator's `department_true` and `type_true`. Split: 80/20 by group (the normalised note 1 text, so no wording is on both sides), seed 7. Under the earlier plain random split with the same seed, {OVERLAP} of the 320 test rows shared their normalised text with a training row; every one of the 1,600 note 1 texts is distinct, so the grouped split only changes which 320 cases are held out. "
         "Figures come from `uv run python -m workbench.classify`; the generated labels carry deliberate noise, so these are not real-world figures.",
         _section("Department routing", built["department"], thr),
         _section("Complaint type", built["type"], thr),
-    ]) + "\n"
+    ]).replace("{OVERLAP}", str(built["old_split_overlap"])) + "\n"
     text = path.read_text(encoding="utf-8") if path.exists() else "# Test results\n"
     text = re.sub(r"\n?## Classifiers\n.*?(?=\n## |\Z)", "", text, flags=re.S).rstrip("\n")
     path.write_text(text + "\n\n" + body, encoding="utf-8")
@@ -172,9 +196,7 @@ def main() -> None:
     cfg = load_config(a.config)
     conn = connect(a.db)
     built = build(conn, cfg)
-    Path(a.models_dir).mkdir(parents=True, exist_ok=True)
-    for k in ("department", "type"):
-        joblib.dump(built[k]["model"], Path(a.models_dir) / f"{k}.joblib")
+    _save({k: built[k]["model"] for k in ("department", "type")}, Path(a.models_dir))
     write_report(built, cfg, Path(a.report))
     counts = apply_to_cases(conn, cfg, {k: built[k]["model"] for k in ("department", "type")})
     conn.close()

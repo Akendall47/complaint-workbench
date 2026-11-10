@@ -6,66 +6,74 @@ Bare first names that are not in the known values are not caught, so "Ann phoned
 
 Dates, times and pound amounts are deliberately left unmasked, so a card or account number written in a date shape, such as 12-34-5678, or a card that has a date or time inside its digit run, is not masked. A sort code written with a slash, or one that looks like a dd/mm/yy date, is not masked. A date of birth is masked only when it is in the known values for the case.
 
+## Policy search
+
+Plain BM25 over the whole of note 1 puts the right clause in the top five for 13 of 20 labelled cases (10 of 20 for the key sentence alone). Tried and rejected: limiting the search to the case's department section plus "Complaint handling" gave 11 of 20 for the whole note and 13 of 20 for the key sentence, so the case path uses the unrestricted search. The `sections` argument stays as an optional filter. Queries use their first 50 tokens only.
+
+## Known limits
+
+Urgent terms ignore negation: "I am not struggling to pay" still counts as hardship. Over-flagging is the safe side for a triage tool.
+
 ## Classifiers
 
-Both models read note 1 only, the customer's own words, because routing happens before staff notes exist. Labels are the generator's `department_true` and `type_true`. Split: 80/20, seed 7. Figures come from `uv run python -m workbench.classify`; the generated labels carry deliberate noise, so these are not real-world figures.
+Both models read note 1 only, the customer's own words, because routing happens before staff notes exist. Labels are the generator's `department_true` and `type_true`. Split: 80/20 by group (the normalised note 1 text, so no wording is on both sides), seed 7. Under the earlier plain random split with the same seed, 0 of the 320 test rows shared their normalised text with a training row; every one of the 1,600 note 1 texts is distinct, so the grouped split only changes which 320 cases are held out. Figures come from `uv run python -m workbench.classify`; the generated labels carry deliberate noise, so these are not real-world figures.
 
 ### Department routing
 
-Accuracy on the held-out 20% (320 cases): **0.894**.
+Accuracy on the held-out 20% (320 cases): **0.844**.
 
-Cases below the routing threshold (0.45): 11.3%. Accuracy counting only predictions at or above it: 0.926.
+Cases below the routing threshold (0.45): 11.3%. Accuracy counting only predictions at or above it: 0.905.
 
 | Class | Test cases | Precision | Recall |
 |---|---|---|---|
-| Bereavement | 34 | 1.00 | 0.94 |
-| Data protection | 14 | 0.86 | 0.43 |
-| Financial difficulty | 63 | 0.95 | 0.87 |
-| Fraud claims | 57 | 0.90 | 0.93 |
-| General service | 124 | 0.83 | 0.96 |
-| Mis-selling review | 28 | 1.00 | 0.75 |
+| Bereavement | 29 | 1.00 | 0.93 |
+| Data protection | 27 | 0.90 | 0.33 |
+| Financial difficulty | 54 | 0.93 | 0.76 |
+| Fraud claims | 58 | 0.88 | 0.84 |
+| General service | 128 | 0.76 | 0.97 |
+| Mis-selling review | 24 | 1.00 | 0.83 |
 
 Confusion table (rows are the true class, columns the predicted class):
 
 | True \ predicted | Bereavement | Data protection | Financial difficulty | Fraud claims | General service | Mis-selling review |
 |---|---|---|---|---|---|---|
-| Bereavement | 32 | 0 | 0 | 0 | 2 | 0 |
-| Data protection | 0 | 6 | 0 | 2 | 6 | 0 |
-| Financial difficulty | 0 | 0 | 55 | 2 | 6 | 0 |
-| Fraud claims | 0 | 0 | 0 | 53 | 4 | 0 |
-| General service | 0 | 1 | 2 | 2 | 119 | 0 |
-| Mis-selling review | 0 | 0 | 1 | 0 | 6 | 21 |
+| Bereavement | 27 | 0 | 0 | 0 | 2 | 0 |
+| Data protection | 0 | 9 | 0 | 4 | 14 | 0 |
+| Financial difficulty | 0 | 0 | 41 | 2 | 11 | 0 |
+| Fraud claims | 0 | 0 | 0 | 49 | 9 | 0 |
+| General service | 0 | 1 | 2 | 1 | 124 | 0 |
+| Mis-selling review | 0 | 0 | 1 | 0 | 3 | 20 |
 
-Most confused pairs: Mis-selling review read as General service (6); Data protection read as General service (6); Financial difficulty read as General service (6).
+Most confused pairs: Data protection read as General service (14); Financial difficulty read as General service (11); Fraud claims read as General service (9).
 
 ### Complaint type
 
-Accuracy on the held-out 20% (320 cases): **0.997**.
+Accuracy on the held-out 20% (320 cases): **0.994**.
 
-Cases below the routing threshold (0.45): 1.2%. Accuracy counting only predictions at or above it: 1.000.
+Cases below the routing threshold (0.45): 2.2%. Accuracy counting only predictions at or above it: 1.000.
 
 | Class | Test cases | Precision | Recall |
 |---|---|---|---|
-| Account administration | 74 | 1.00 | 1.00 |
-| Fees and charges | 54 | 1.00 | 1.00 |
-| Fraud or security | 31 | 1.00 | 1.00 |
-| Investment advice | 20 | 1.00 | 1.00 |
-| Other | 1 | 0.00 | 0.00 |
-| Payment scam | 30 | 1.00 | 1.00 |
-| Service | 61 | 0.98 | 1.00 |
-| Website or app | 49 | 1.00 | 1.00 |
+| Account administration | 75 | 0.99 | 1.00 |
+| Fees and charges | 46 | 0.98 | 1.00 |
+| Fraud or security | 27 | 1.00 | 1.00 |
+| Investment advice | 18 | 1.00 | 1.00 |
+| Other | 6 | 1.00 | 0.67 |
+| Payment scam | 29 | 1.00 | 1.00 |
+| Service | 77 | 1.00 | 1.00 |
+| Website or app | 42 | 1.00 | 1.00 |
 
 Confusion table (rows are the true class, columns the predicted class):
 
 | True \ predicted | Account administration | Fees and charges | Fraud or security | Investment advice | Other | Payment scam | Service | Website or app |
 |---|---|---|---|---|---|---|---|---|
-| Account administration | 74 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
-| Fees and charges | 0 | 54 | 0 | 0 | 0 | 0 | 0 | 0 |
-| Fraud or security | 0 | 0 | 31 | 0 | 0 | 0 | 0 | 0 |
-| Investment advice | 0 | 0 | 0 | 20 | 0 | 0 | 0 | 0 |
-| Other | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 |
-| Payment scam | 0 | 0 | 0 | 0 | 0 | 30 | 0 | 0 |
-| Service | 0 | 0 | 0 | 0 | 0 | 0 | 61 | 0 |
-| Website or app | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 49 |
+| Account administration | 75 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| Fees and charges | 0 | 46 | 0 | 0 | 0 | 0 | 0 | 0 |
+| Fraud or security | 0 | 0 | 27 | 0 | 0 | 0 | 0 | 0 |
+| Investment advice | 0 | 0 | 0 | 18 | 0 | 0 | 0 | 0 |
+| Other | 1 | 1 | 0 | 0 | 4 | 0 | 0 | 0 |
+| Payment scam | 0 | 0 | 0 | 0 | 0 | 29 | 0 | 0 |
+| Service | 0 | 0 | 0 | 0 | 0 | 0 | 77 | 0 |
+| Website or app | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 42 |
 
-Most confused pairs: Other read as Service (1).
+Most confused pairs: Other read as Fees and charges (1); Other read as Account administration (1).
