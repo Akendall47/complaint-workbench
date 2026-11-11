@@ -59,15 +59,17 @@
   .s2 .in { bottom: 96px; }
   .s2 .top { display: grid; grid-template-columns: 1fr 1fr; gap: 80px; margin-top: 56px; }
   .tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-  .tile { border-radius: 18px; padding: 26px 28px 24px; background: var(--mist); min-height: 196px; display: flex; flex-direction: column; justify-content: space-between; }
+  .tile { border-radius: 18px; padding: 22px 26px 20px; background: var(--mist); min-height: 170px; display: flex; flex-direction: column; justify-content: space-between; }
   .tile .big { font-size: 76px; letter-spacing: -2.5px; }
   .tile p { margin: 0; font-size: 20px; line-height: 1.35; color: var(--muted); }
   .tile.navy { background: var(--navy); color: white; } .tile.navy p { color: #c9d8e6; }
   .tile.teal { background: var(--teal); color: white; } .tile.teal p { color: #d6ece6; }
-  .s2 .roles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px; margin-top: auto; padding-top: 28px; border-top: 1px solid var(--line); }
+  .s2 .roles { display: grid; grid-template-columns: .8fr 1fr 1fr 1fr; gap: 40px; margin-top: auto; padding-top: 24px; border-top: 1px solid var(--line); }
   .role .n { font-size: 18px; color: var(--teal); font-weight: 500; letter-spacing: 2px; }
-  .role h3 { font-weight: 400; font-size: 34px; margin: 8px 0 12px; letter-spacing: -.5px; }
-  .role p { margin: 0; font-size: 21px; line-height: 1.45; color: var(--muted); }
+  .role h3 { font-weight: 400; font-size: 30px; margin: 6px 0 8px; letter-spacing: -.5px; }
+  .role.intro h3 { color: var(--teal); margin-top: 0; }
+  .role p.who { color: var(--ink); font-weight: 500; margin-bottom: 8px; }
+  .role p { margin: 0; font-size: 19px; line-height: 1.4; color: var(--muted); }
   .role p.to { color: var(--ink); margin-top: 6px; }
   .role p.to::before { content: "→ "; color: var(--teal); }
 
@@ -128,7 +130,7 @@
   /* big figures: room for the glyphs so they never touch the caption below */
   .s1 .stats b, .s3 .callout b, .s4 .fig b, .s5 .nums b { line-height: 1.18; margin-bottom: 6px; }
   .foot a.url { color: inherit; font-weight: 500; text-decoration: none; border-bottom: 1px solid currentColor; }
-  .why { margin-top: 30px; display: grid; gap: 12px; max-width: 700px; }
+  .why { margin-top: 26px; display: grid; gap: 10px; max-width: 820px; }
   .why h3 { font-weight: 500; font-size: 24px; color: var(--navy); margin: 0 0 2px; }
   .why p { margin: 0; font-size: 20px; line-height: 1.45; color: var(--ink); padding-left: 16px; border-left: 3px solid var(--teal); }
   .why b { font-weight: 500; }
@@ -174,9 +176,9 @@
         <p class="lede">The workbench routes each complaint, drafts a summary that quotes the customer's own words, and builds the handover. People keep every decision.</p>
         <div class="why">
           <h3>Why this approach</h3>
-          <p><b>Regulated work.</b> The AI only drafts, and every claim must quote the customer, so a person can check it in seconds.</p>
-          <p><b>Private by default.</b> A small local model: complaint data never leaves the bank.</p>
-          <p><b>Explainable routing.</b> Classic models a reviewer can audit; unsure cases go to a person.</p>
+          <p><b>Regulated work.</b> The AI only drafts; every claim quotes the customer.</p>
+          <p><b>Private by default.</b> A small local model; data never leaves the bank.</p>
+          <p><b>Explainable routing.</b> Auditable classic models; unsure cases go to a person.</p>
         </div>
       </div>
       <div class="tiles">
@@ -187,9 +189,10 @@
       </div>
     </div>
     <div class="roles">
-      <div class="role"><span class="n">01</span><h3>Handler</h3><p>Reads every note, retypes the handover.</p><p class="to">Checks an AI summary claim by claim against its quotes.</p></div>
-      <div class="role"><span class="n">02</span><h3>Specialist</h3><p>Finds gaps, sends cases back.</p><p class="to">Sees missing fields before accepting; a return needs a reason.</p></div>
-      <div class="role"><span class="n">03</span><h3>Team lead</h3><p>Chases deadlines case by case.</p><p class="to">Sees the flow, the rises and the load, with no speed league table.</p></div>
+      <div class="role intro"><h3>Three roles, three views</h3><p>Each person sees the work they own. In the demo, "View as" in the top bar switches between them.</p></div>
+      <div class="role"><span class="n">01</span><h3>Handler</h3><p class="who">First line: owns a complaint from arrival to handover.</p><p>Today: reads every note, retypes the handover.</p><p class="to">Checks the AI summary claim by claim, then hands over.</p></div>
+      <div class="role"><span class="n">02</span><h3>Specialist</h3><p class="who">Expert team, such as Fraud claims, that resolves the case.</p><p>Today: finds gaps, sends cases back.</p><p class="to">Sees missing fields first; a return needs a reason.</p></div>
+      <div class="role"><span class="n">03</span><h3>Team lead</h3><p class="who">Runs the team: deadlines, workload, who does what.</p><p>Today: chases deadlines case by case.</p><p class="to">Sees the flow, the rises and the load; no speed ranking.</p></div>
     </div>
   </div>
   <div class="foot"><span>Value: time per case and fewer handovers sent back. Not yet measured on real work; "today" is our description.</span><span>02 / 05</span></div>
