@@ -1,5 +1,6 @@
 """Render the five-slide deck to docs/deck.pdf and one PNG per slide, then check that no text overlaps other text or a picture,
 and that nothing runs off its slide. Run from the repo root: uv run python docs/deck/render.py"""
+import base64
 from pathlib import Path
 
 from playwright.sync_api import sync_playwright
@@ -38,10 +39,16 @@ with sync_playwright() as p:
     page = browser.new_page(viewport={"width": 1920, "height": 1080})
     page.goto((HERE / "deck.html").resolve().as_uri())
     page.wait_for_load_state("networkidle")
-    page.pdf(path=str(HERE.parent / "deck.pdf"), width="1920px", height="1080px", print_background=True)
+    shots = []
     for i, slide in enumerate(page.query_selector_all(".slide"), 1):
         slide.screenshot(path=str(HERE / f"slide-{i}.png"))
+        shots.append(base64.b64encode(slide.screenshot(type="jpeg", quality=90)).decode())
     problems = [(n, out) for n, out in page.evaluate(CHECK) if out]
+    # The PDF is one sharp picture per slide: the glows and the vault graph made a vector PDF slow to open in viewers.
+    sheet = browser.new_page(viewport={"width": 1920, "height": 1080})
+    sheet.set_content("<style>@page{size:1920px 1080px;margin:0}body{margin:0}img{display:block;width:1920px;height:1080px;break-after:page}</style>"
+                      + "".join(f'<img src="data:image/jpeg;base64,{s}">' for s in shots))
+    sheet.pdf(path=str(HERE.parent / "deck.pdf"), width="1920px", height="1080px", print_background=True)
     browser.close()
 print("wrote docs/deck.pdf and docs/deck/slide-1.png to slide-5.png")
 for n, out in problems:

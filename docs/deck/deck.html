@@ -250,5 +250,10 @@
   <div class="foot"><span>Try it: <a class="url" href="https://akendall47.github.io/complaint-workbench-demo/">akendall47.github.io/complaint-workbench-demo</a> · Full app: uv sync, then uv run workbench</span><span>05 / 05</span></div>
 </section>
 
+<script>
+  // On a screen narrower than a slide, every 1920 x 1080 slide shrinks to the window width; at full width nothing changes.
+  function fit() { var s = Math.min(1, window.innerWidth / 1920); document.querySelectorAll('.slide').forEach(function (e) { e.style.zoom = s; }); }
+  window.addEventListener('resize', fit); fit();
+</script>
 </body>
 </html>

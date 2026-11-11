@@ -203,6 +203,15 @@ def main():
         (OUT / st["folder"] / st["file"]).write_text(rewrite(st["html"], st["url"], st["folder"], sites, st.get("role_goto", "")), encoding="utf-8")
     (OUT / "index.html").write_text('<!DOCTYPE html><meta charset="utf-8"><title>Complaint Workbench</title>'
                                     '<meta http-equiv="refresh" content="0; url=handler/queue.html"><a href="handler/queue.html">Open the workbench</a>', encoding="utf-8")
+    deck = OUT / "deck"  # the five-page deck as a web page, plus the PDF
+    (deck / "screenshots").mkdir(parents=True)
+    page = (ROOT / "docs" / "deck" / "deck.html").read_text(encoding="utf-8")
+    for shot in set(re.findall(r'\.\./screenshots/([\w-]+\.png)', page)):
+        shutil.copy(ROOT / "docs" / "screenshots" / shot, deck / "screenshots" / shot)
+    for asset in ("ankura-logo.svg", "ankura-logo-reverse.svg", "vault-graph-dark.svg"):
+        shutil.copy(ROOT / "docs" / "deck" / asset, deck / asset)
+    (deck / "index.html").write_text(page.replace("../screenshots/", "screenshots/"), encoding="utf-8")
+    shutil.copy(ROOT / "docs" / "deck.pdf", deck / "Complaint-Workbench-deck.pdf")
     (OUT / ".nojekyll").write_text("", encoding="utf-8")  # serve files as they are
     print({k: len(v) for k, v in sites.items()}, f"pages; demo case journey: {len(steps)} steps; written to {OUT}")
 
