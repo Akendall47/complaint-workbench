@@ -30,7 +30,8 @@ HERE = Path(__file__).parent
 NAV = [("Overview", "/"), ("Queue", "/queue"), ("Case", None), ("Departments", "/departments"), ("Team", "/team"),
        ("Pipeline", "/pipeline"), ("Policy library", "/policies"), ("Audit log", "/audit"), ("Settings", "/settings")]
 MINOR = {"/policies", "/audit", "/settings"}  # reference pages: quieter links at the end of the nav
-LOCAL_HOSTS = {"127.0.0.1", "localhost"}
+# The hosts this app answers to: this machine, plus a hosted name (WORKBENCH_HOSTS, or the one Render sets) when deployed.
+LOCAL_HOSTS = {"127.0.0.1", "localhost", *filter(None, [*os.environ.get("WORKBENCH_HOSTS", "").split(","), os.environ.get("RENDER_EXTERNAL_HOSTNAME", "")])}
 KNOWN_PATHS = {p for _, p in NAV if p}
 CASE_ID = re.compile(r"^AB-\d{4}-\d{5}\Z")  # \Z: a trailing newline does not match
 PER_PAGE = 50
@@ -171,14 +172,17 @@ def create_app(db_path="data/workbench.db", config_path="config/pipeline.yaml", 
 def main() -> None:
     import uvicorn
     db_path = os.environ.get("WORKBENCH_DB", "data/workbench.db")
-    port = int(os.environ.get("WORKBENCH_PORT", "8000"))
+    port = int(os.environ.get("PORT") or os.environ.get("WORKBENCH_PORT", "8000"))
+    bind = os.environ.get("WORKBENCH_BIND", "127.0.0.1")
     if not Path(db_path).exists():
         print(NOT_FOUND, file=sys.stderr)
         sys.exit(1)
-    with socket.socket() as s:
-        if s.connect_ex(("127.0.0.1", port)) == 0:
-            print(f"Port {port} is in use. Close the other copy of the workbench, then run again.", file=sys.stderr)
-            sys.exit(1)
+    if bind == "127.0.0.1":  # on this machine: check the port and open the browser
+        with socket.socket() as s:
+            if s.connect_ex(("127.0.0.1", port)) == 0:
+                print(f"Port {port} is in use. Close the other copy of the workbench, then run again.", file=sys.stderr)
+                sys.exit(1)
+        threading.Timer(1.5, webbrowser.open, [f"http://127.0.0.1:{port}/"]).start()
     app = create_app(db_path)
-    threading.Timer(1.5, webbrowser.open, [f"http://127.0.0.1:{port}/"]).start()
-    uvicorn.run(app, host="127.0.0.1", port=port, log_level="warning")
+    # Hosted behind an HTTPS proxy: trust its forwarded scheme, so the same-origin check compares https with https.
+    uvicorn.run(app, host=bind, port=port, log_level="warning", proxy_headers=bind != "127.0.0.1", forwarded_allow_ips="*" if bind != "127.0.0.1" else None)

@@ -1,0 +1,15 @@
+# One-click hosting on Render (render.com): New > Blueprint, pick this repository.
+# The free plan sleeps when idle; the first visit after a sleep takes about a minute. Data resets on every restart.
+services:
+  - type: web
+    name: complaint-workbench
+    runtime: python
+    plan: free
+    buildCommand: pip install .
+    startCommand: workbench
+    healthCheckPath: /static/app.css
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.7
+      - key: WORKBENCH_BIND
+        value: 0.0.0.0

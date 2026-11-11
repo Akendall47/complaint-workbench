@@ -21,7 +21,7 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-packages = ["workbench"]
+packages = ["workbench", "workbench.views"]
 
 [tool.setuptools.package-data]
-workbench = ["*.sql", "*.yaml", "templates/**", "static/**"]
+workbench = ["*.sql", "*.yaml", "*.txt", "templates/**", "static/**"]
