@@ -9,98 +9,133 @@
     "db_mb": 5.0,
     "views_ms": {
      "/": {
-      "median": 29.07,
-      "p95": 33.82
+      "median": 27.36,
+      "p95": 33.27
      },
      "/queue": {
-      "median": 28.93,
-      "p95": 34.44
+      "median": 20.6,
+      "p95": 25.4
      },
      "/departments": {
-      "median": 22.43,
-      "p95": 25.73
+      "median": 16.79,
+      "p95": 21.01
      },
      "/pipeline": {
-      "median": 32.67,
-      "p95": 38.13
+      "median": 32.55,
+      "p95": 37.75
      },
      "/policies?q=refund": {
-      "median": 19.88,
-      "p95": 22.82
+      "median": 14.97,
+      "p95": 19.77
      },
      "a case page": {
-      "median": 24.55,
-      "p95": 29.03
+      "median": 21.39,
+      "p95": 30.0
      }
     },
     "misses": []
+   },
+   {
+    "cases": 16000,
+    "build_seconds": 4.7,
+    "db_mb": 48.0,
+    "views_ms": {
+     "/": {
+      "median": 152.98,
+      "p95": 182.55
+     },
+     "/queue": {
+      "median": 68.8,
+      "p95": 78.86
+     },
+     "/departments": {
+      "median": 72.98,
+      "p95": 83.5
+     },
+     "/pipeline": {
+      "median": 175.67,
+      "p95": 194.04
+     },
+     "/policies?q=refund": {
+      "median": 23.97,
+      "p95": 27.68
+     },
+     "a case page": {
+      "median": 29.25,
+      "p95": 34.5
+     }
+    },
+    "misses": [
+     "/",
+     "/pipeline"
+    ]
    }
   ],
-  "first_size_missing_100ms": null,
+  "first_size_missing_100ms": 16000,
   "budget_ms": 100
  },
  "nine_views": {
   "slowest": "/audit",
-  "slowest_median_ms": 64.7,
+  "slowest_median_ms": 63.79,
   "views_ms": {
    "/": {
-    "median": 27.78,
-    "p95": 32.14
+    "median": 27.98,
+    "p95": 32.01
    },
    "/queue": {
-    "median": 28.85,
-    "p95": 33.74
+    "median": 28.9,
+    "p95": 32.56
    },
    "/cases/AB-2026-00768": {
-    "median": 27.46,
-    "p95": 29.26
+    "median": 25.01,
+    "p95": 38.8
    },
    "/departments": {
-    "median": 22.05,
-    "p95": 25.17
+    "median": 22.76,
+    "p95": 26.81
    },
    "/team": {
-    "median": 22.22,
-    "p95": 30.08
+    "median": 24.15,
+    "p95": 45.99
    },
    "/pipeline": {
-    "median": 32.72,
-    "p95": 40.0
+    "median": 32.86,
+    "p95": 44.23
    },
    "/policies": {
-    "median": 20.77,
-    "p95": 29.58
+    "median": 18.19,
+    "p95": 22.35
    },
    "/audit": {
-    "median": 64.7,
-    "p95": 70.38
+    "median": 63.79,
+    "p95": 96.0
    },
    "/settings": {
-    "median": 18.33,
-    "p95": 31.23
+    "median": 20.04,
+    "p95": 55.07
    }
   }
  },
  "stage_ms": {
   "classify department": {
-   "median": 1.43,
-   "p95": 2.07
+   "median": 1.54,
+   "p95": 2.21
   },
   "classify type": {
-   "median": 1.53,
-   "p95": 2.23
+   "median": 1.49,
+   "p95": 2.19
   },
   "mask": {
-   "median": 0.34,
-   "p95": 0.57
+   "median": 0.4,
+   "p95": 0.61
   },
   "policy search": {
-   "median": 2.2,
-   "p95": 3.26
+   "median": 2.57,
+   "p95": 3.53
   },
   "citation check": {
-   "median": 0.1,
-   "p95": 0.18
+   "median": 0.13,
+   "p95": 0.17
   }
  },
  "accuracy": {
@@ -175,7 +210,7 @@
   "injection": {
    "cases_with_hidden_instruction": 2,
    "recorded_drafts": 1,
-   "changed_or_leaked": 1
+   "changed_or_leaked": 0
   },
   "headers": {
    "content-security-policy": true,
@@ -276,5 +311,17 @@
    "test": "test_15_audit_rows_cannot_be_changed_or_deleted",
    "result": "pass"
   }
- ]
+ ],
+ "suites": {
+  "unit": {
+   "summary": "380 passed, 1 warning in 98.26s (0:01:38)",
+   "seconds": 101,
+   "exit": 0
+  },
+  "e2e": {
+   "summary": "43 passed in 187.08s (0:03:07)",
+   "seconds": 189,
+   "exit": 0
+  }
+ }
 }

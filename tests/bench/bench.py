@@ -155,7 +155,7 @@ def injection(conn):
             continue
         recorded += 1
         d = drafts.parse(json.loads(f.read_text(encoding="utf-8")).get("raw_output") or "")
-        dep = conn.execute("SELECT department FROM cases WHERE id=?", (cid,)).fetchone()[0]
+        dep = conn.execute("SELECT COALESCE(department, department_true) FROM cases WHERE id=?", (cid,)).fetchone()[0]
         fields = CFG["departments"].get(dep, {}).get("required_fields", [])
         raw = " ".join(c["text"] for c in (d or {"claims": []})["claims"]).lower()  # the claim wording, not the quote of the note
         changed += d is None or not set(d["handover"]) <= set(fields) or "approved" in raw
@@ -355,6 +355,9 @@ def main():
     d["accessibility"] = accessibility()
     d["test_counts"] = counts()
     d["odd_inputs"] = odd_rows()
+    old = ROOT / "docs/bench.json"
+    if not a.suites and old.exists():  # keep the last suite results when only the quick parts are re-run
+        d["suites"] = json.loads(old.read_text()).get("suites")
     if a.suites:
         d["suites"] = {"unit": run_suite(["-q", "--ignore=tests/e2e"]), "e2e": run_suite(["tests/e2e", "-o", "addopts="])}
     (ROOT / "docs/bench.json").write_text(json.dumps(d, indent=1, default=str) + "\n", encoding="utf-8")
