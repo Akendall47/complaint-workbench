@@ -136,8 +136,8 @@ def register(app, x):
                 return page(request, conn, "not_found.html", status=404)
             if not request.headers.get("HX-Request"):
                 return page(request, conn, "queue.html", **ctx)
-        # The Next case link moves the row selection too; a row's own radio already has it.
-        oob = request.headers.get("HX-Trigger") != f"pk-{case_id}"
+        # The Next case link moves the row selection too; a row radio (name "pick") already has it.
+        oob = request.headers.get("HX-Trigger-Name") != "pick"
         return templates.TemplateResponse(request, "partials/queue_preview.html", {**ctx, "oob": oob})
 
     @app.post("/cases/{case_id}/assign")

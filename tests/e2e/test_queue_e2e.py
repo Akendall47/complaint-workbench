@@ -1,8 +1,6 @@
 """Browser pass on the Queue. Run on its own: uv run pytest tests/e2e -o addopts="" (needs: uv run playwright install chromium)."""
 import pytest
 
-from tests.e2e.conftest import SHOTS
-
 
 @pytest.mark.parametrize("width", [1440, 1100, 1024])
 def test_queue_in_browser(base, browser, width):
@@ -22,8 +20,9 @@ def test_queue_in_browser(base, browser, width):
     assert page.evaluate("document.activeElement.className") == "skip"
     outline = page.evaluate("getComputedStyle(document.activeElement).outlineStyle + ' ' + getComputedStyle(document.activeElement).outlineWidth")
     assert not outline.startswith("none") and not outline.endswith(" 0px"), outline
+    # The row radios are one group: Tab stops on the checked one, the arrow keys move along the rows.
     page.evaluate("""window.ctl = [...document.querySelectorAll('a[href], button, summary, select, input:not([type=hidden])')]
-        .filter(e => e.checkVisibility())""")
+        .filter(e => e.checkVisibility() && !(e.name === 'pick' && !e.checked))""")
     wanted = page.evaluate("window.ctl.length")
     seen = set()
     for _ in range(wanted + 5):
@@ -31,9 +30,4 @@ def test_queue_in_browser(base, browser, width):
         page.keyboard.press("Tab")
     seen.discard(-1)
     assert len(seen) == wanted, (len(seen), wanted)
-
-    if width == 1440:
-        SHOTS.mkdir(parents=True, exist_ok=True)
-        page.goto(base + "/queue")
-        page.screenshot(path=str(SHOTS / "queue.png"))
     page.close()

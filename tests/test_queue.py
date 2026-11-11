@@ -108,20 +108,20 @@ def test_first_row_is_previewed_and_next_case_is_the_second_row(client):
     html = client.get("/queue?owner=all").text
     (a, _), (b, _) = rows(html)[:2]
     pane = html.split('id="preview"')[1]
-    assert re.search(rf'id="pk-{a}"[^>]* checked', table(html))
+    assert re.search(rf'aria-label="Preview {a}"[^>]* checked', table(html))
     assert f'href="/cases/{a}"' in pane and ">Open case<" in pane
     assert f'href="/queue/preview/{b}?owner=all"' in pane and ">Next case<" in pane
 
 
 def test_preview_fragment_and_full_page_fallback(client):
     ids = [i for i, _ in rows(client.get("/queue?owner=all").text)]
-    r = client.get(f"/queue/preview/{ids[1]}?owner=all", headers={"HX-Request": "true", "HX-Trigger": f"pk-{ids[1]}"})
+    r = client.get(f"/queue/preview/{ids[1]}?owner=all", headers={"HX-Request": "true", "HX-Trigger-Name": "pick"})
     assert r.status_code == 200 and r.text.lstrip().startswith("<section") and "hx-swap-oob" not in r.text
     assert f"/queue/preview/{ids[2]}?owner=all" in r.text
     r = client.get(f"/queue/preview/{ids[1]}?owner=all", headers={"HX-Request": "true"})  # Next case: the row selection moves too
-    assert re.search(rf'id="pk-{ids[1]}"[^>]* checked hx-swap-oob="true"', r.text)
+    assert f"hx-swap-oob=\"outerHTML:tr[data-case='{ids[1]}'] .q-hit\"" in r.text and re.search(rf'aria-label="Preview {ids[1]}"[^>]* checked', r.text)
     full = client.get(f"/queue/preview/{ids[1]}?owner=all").text
-    assert "<html" in full and re.search(rf'id="pk-{ids[1]}"[^>]* checked', full) and not re.search(rf'id="pk-{ids[0]}"[^>]* checked', full)
+    assert "<html" in full and re.search(rf'aria-label="Preview {ids[1]}"[^>]* checked', full) and not re.search(rf'aria-label="Preview {ids[0]}"[^>]* checked', full)
     assert client.get("/queue/preview/AB-2026-99999").status_code == 404
     assert client.get("/queue/preview/nope", headers={"HX-Request": "true"}).status_code == 404
 

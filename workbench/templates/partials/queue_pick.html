@@ -1,2 +1,3 @@
-{# The row selector: one radio per row. A click anywhere on the row (its label covers the row) or the arrow keys load that case's preview. #}
-{% macro pick(id, qs, on, oob=False) %}<input type="radio" name="pick" class="q-pick sr-only" id="pk-{{ id }}" aria-label="Preview {{ id }}" hx-get="/queue/preview/{{ id }}?{{ qs }}" hx-target="#preview" hx-swap="outerHTML"{% if on %} checked{% endif %}{% if oob %} hx-swap-oob="true"{% endif %}>{% endmacro %}
+{# The row selector: a radio inside a label that covers the row, so a click anywhere on the row or the arrow keys load that case's preview.
+   No id on the radio: htmx would settle a swapped input with the same id and trip the style CSP. #}
+{% macro pick(id, qs, on, oob=False) %}<label class="q-hit"{% if oob %} hx-swap-oob="outerHTML:tr[data-case='{{ id }}'] .q-hit"{% endif %}><input type="radio" name="pick" class="q-pick sr-only" aria-label="Preview {{ id }}" hx-get="/queue/preview/{{ id }}?{{ qs }}" hx-target="#preview" hx-swap="outerHTML"{% if on %} checked{% endif %}></label>{% endmacro %}

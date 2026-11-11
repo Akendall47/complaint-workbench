@@ -2,7 +2,7 @@
 {% from "partials/queue_pick.html" import pick %}
 {% for r in rows %}{% set c = r.c %}
 <tr class="case-row" data-case="{{ c.id }}" data-days="{{ r.days }}">
-  <td>{{ pick(c.id, qs, c.id == sel) }}<label for="pk-{{ c.id }}" class="q-hit" aria-hidden="true"></label><a class="plain-id" href="/cases/{{ c.id }}">{{ c.id }}</a></td>
+  <td>{{ pick(c.id, qs, c.id == sel) }}<a class="plain-id" href="/cases/{{ c.id }}">{{ c.id }}</a></td>
   <td>{{ due_chip(r.days) }}{% if c.product_kind == "payment" %} <span class="clock" title="{{ clock_title }}">{{ clock }}</span>{% endif %}</td>
   <td class="q-wrap">{{ c.type or "–" }}</td>
   <td class="q-wrap">{% if c.department %}{{ c.department }}{% else %}<span class="routing">Needs routing</span>{% endif %}</td>
