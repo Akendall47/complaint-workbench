@@ -1,6 +1,6 @@
 ---
 tags: [decision]
-status: verified
+status: superseded by [[one-window-pages]] (top bar, 11 Nov)
 ---
 
 # Dashboard first, left navigation
