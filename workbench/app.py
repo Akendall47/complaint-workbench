@@ -1,6 +1,7 @@
 """Web app: shell, role switcher, deadline strip and the Queue. Routes never change a case themselves;
 they call workbench.cases and show its NotAllowed and StaleCase messages as plain text."""
 import contextlib
+import json
 import os
 import re
 import socket
@@ -67,6 +68,19 @@ def strip(conn, cfg, edge: str) -> dict:
             "urgent": one(f"SELECT COUNT(*) FROM cases WHERE {open_}urgent = 1"),
             "rises": len(rises), "rise_query": urlencode({"owner": "all", "department": rises[0][0], "type": rises[0][1]}) if rises else "",
             "limit": limit, "updated": audit.now()[11:16]}
+
+
+def _plain(r) -> str:
+    """The Detail column in plain words: the reason if there is one, how a complaint came in, else nothing."""
+    try:
+        d = json.loads(r["detail_json"] or "{}")
+    except ValueError:
+        return ""
+    if not isinstance(d, dict):
+        return ""
+    if d.get("reason"):
+        return str(d["reason"])
+    return f'By {d["source"]}' if r["action"] == "received" and d.get("source") else ""
 
 
 def create_app(db_path="data/workbench.db", config_path="config/pipeline.yaml", models_dir=MODELS_DIR) -> FastAPI:
@@ -295,7 +309,7 @@ def create_app(db_path="data/workbench.db", config_path="config/pipeline.yaml", 
         broken = audit.verify_chain(conn)
         everything = conn.execute("SELECT COUNT(*) FROM audit").fetchone()[0]
         keep = {k: v for k, v in (("case", case), ("actor", actor)) if v}
-        return {"rows": [{**dict(r), "what": audit.describe(r["detail_json"]), "when": r["at"][:16].replace("T", " "),
+        return {"rows": [{**dict(r), "what": _plain(r), "when": r["at"][:16].replace("T", " "),
                           "by": "System" if r["actor_id"] == "system" else f'{r["who"] or r["actor_id"]}, {r["role"].replace("_", " ").capitalize()}'} for r in got], "people": people, "case": case, "actor": actor,
                 "page_no": pg, "pages": pages, "chain": "Chain verified: " + f"{everything:,} entries" if broken is None else f"Chain broken at entry {broken}",
                 "chain_ok": broken is None, "link": lambda p: "/audit?" + urlencode({**keep, "page": p})}

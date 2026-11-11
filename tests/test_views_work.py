@@ -140,3 +140,12 @@ def test_audit_page_names_people_without_seconds(client):
     import re
     assert not re.search(r"\d\d:\d\d:\d\d", html)
     assert html.index("Filters") < html.index("<table")
+
+
+def test_audit_detail_is_plain_words(client):
+    import re
+    client.cookies.set("role", "team_lead"); client.cookies.set("staff_id", "T1")  # noqa: E702
+    html = client.get("/audit").text
+    body = html[html.index("<tbody>"):html.index("</tbody>")]
+    assert "_" not in re.sub(r'href="[^"]*"|<[^>]*>', "", body) and "from:" not in body and "source:" not in body
+    assert "By " in body

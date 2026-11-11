@@ -572,7 +572,10 @@ def generate(conn: sqlite3.Connection, *, n: int = 1600, seed: int = 7, cfg: dic
         for k, s in enumerate(_history(st, rc)):
             if k:
                 lo, hi = DELAY_H["in_review" if s == "in_review" else s]
-                t = min(t + timedelta(hours=rng.uniform(lo, hi)), now)
+                nt = t + timedelta(hours=rng.uniform(lo, hi))
+                if nt > now:  # do not pile recent moves onto "now": land halfway, so times stay in order
+                    nt = max(t + (now - t) / 2, t + timedelta(seconds=1))
+                t = nt
             at = t.isoformat(timespec="seconds")
             frm = None if k == 0 else prev
             actor = "system" if k == 0 else (spec if s in ("returned", "accepted") else handler)
@@ -650,8 +653,9 @@ def generate(conn: sqlite3.Connection, *, n: int = 1600, seed: int = 7, cfg: dic
     conn.execute("DELETE FROM sqlite_sequence WHERE name='audit'")
     conn.execute("CREATE TRIGGER audit_no_delete BEFORE DELETE ON audit BEGIN SELECT RAISE(ABORT, 'audit log is append-only'); END")
     role_of = {s[0]: s[2] for s in STAFF} | {"system": "system"}
+    src = {r[0]: r[2] for r in case_rows}
     for cid, at, kind, frm, to, actor in sorted(ev_rows, key=lambda r: r[1]):
-        audit.append(conn, actor_id=actor, role=role_of[actor], action=kind, case_id=cid, detail={"from": frm, "to": to}, at=at)
+        audit.append(conn, actor_id=actor, role=role_of[actor], action=kind, case_id=cid, detail={"source": src[cid]} if kind == "received" else {"from": frm, "to": to}, at=at)
     if adv_path and adv:
         ids = [cases[i]["id"] for i in adv]
         Path(adv_path).write_text(json.dumps({"hidden_instruction": ids[0:2], "unusual_format": ids[2:4],

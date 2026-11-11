@@ -361,3 +361,21 @@ def test_audit_entry_for_every_generated_move(db):
     assert db.execute("SELECT COUNT(*) FROM audit").fetchone()[0] == db.execute("SELECT COUNT(*) FROM events").fetchone()[0] > 0
     assert audit.verify_chain(db) is None
     assert db.execute("SELECT actor_id, role FROM audit WHERE action='received' LIMIT 1").fetchone()[:] == ("system", "system")
+
+
+def test_generated_audit_times_actors_and_words(db):
+    rows = db.execute("SELECT * FROM audit ORDER BY id").fetchall()
+    assert len({r["at"] for r in rows}) > 100  # real history, not one moment
+    by_case: dict = {}
+    for r in rows:
+        by_case.setdefault(r["case_id"], []).append(r)
+    for rs in by_case.values():
+        ats = [r["at"] for r in rs]
+        assert ats == sorted(set(ats)), rs[0]["case_id"]  # strictly increasing within a case
+    spec = {"Fraud claims": "S1", "Financial difficulty": "S2", "Data protection": "S3"}
+    dept = dict(db.execute("SELECT id, department FROM cases").fetchall())
+    for r in rows:
+        if r["action"] in ("returned", "accepted") and dept[r["case_id"]] in spec and r["actor_id"] != "T1":
+            assert r["actor_id"] == spec[dept[r["case_id"]]]
+        if r["action"] == "opened":
+            assert r["role"] == "handler" or r["actor_id"] == "T1"
