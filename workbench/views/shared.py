@@ -28,3 +28,11 @@ def strip(conn, cfg, edge: str) -> dict:
             "urgent": one(f"SELECT COUNT(*) FROM cases WHERE {open_}urgent = 1"),
             "rises": len(rises), "rise_query": urlencode({"owner": "all", "department": rises[0][0], "type": rises[0][1]}) if rises else "",
             "limit": limit, "updated": audit.now()[11:16]}
+
+
+def to_int(v, default=0) -> int:
+    """A query or form value as a whole number, or the default when it is missing or not a number."""
+    try:
+        return int(v)
+    except (TypeError, ValueError):
+        return default

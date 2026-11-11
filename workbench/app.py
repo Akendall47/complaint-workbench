@@ -27,7 +27,7 @@ from .search import highlight, search_policies
 from .config import load_config
 from .db import connect
 from .deadlines import business_days_left, due_soon_edge
-from .views.shared import DEMO, HOME, ROLE_NAME, STATE_NAME, current_actor, strip  # noqa: F401  (tests import them from here)
+from .views.shared import DEMO, HOME, ROLE_NAME, STATE_NAME, current_actor, strip, to_int  # noqa: F401  (tests import them from here)
 
 HERE = Path(__file__).parent
 NAV = [("Overview", "/"), ("Queue", "/queue"), ("Case", None), ("Departments", "/departments"), ("Team", "/team"),
@@ -140,9 +140,19 @@ def create_app(db_path="data/workbench.db", config_path="config/pipeline.yaml", 
                                                           "strip": strip(conn, cfg, edge_of(request)), "cfg": cfg,
                                                           "alerts_on": request.cookies.get("alerts") != "off", **ctx}, status_code=status)
 
-    from .views import overview  # one module per page area; each adds its own routes
+    from .views import case, overview, queue, reference, work  # one module per page area; each adds its own routes
     x = SimpleNamespace(cfg=cfg, today=today, hol=hol, db=db, page=page, edge_of=edge_of, templates=templates)
     overview.register(app, x)
+    queue.register(app, x)
+
+    work.register(app, x)
+
+    reference.register(app, x)
+
+    case.register(app, x)
+
+
+    # ==== QUEUE (moves to views/queue.py) ====
 
     def queue_ctx(conn, actor, q: dict, edge: str) -> dict:
         one = lambda k: (q.get(k) or [""])[0] if isinstance(q.get(k), list) else (q.get(k) or "")  # noqa: E731
@@ -195,6 +205,8 @@ def create_app(db_path="data/workbench.db", config_path="config/pipeline.yaml", 
         with db() as conn:
             return page(request, conn, "queue.html", **queue_ctx(conn, current_actor(request), parse_qs(request.url.query), edge_of(request)))
 
+    # ==== SHELL (stays here) ====
+
     @app.post("/prefs/alerts")
     def alerts(request: Request, show: str = Form("")):
         """Show or hide the deadline pills at the top of each page: a viewer preference kept in a cookie, like the demo role."""
@@ -206,6 +218,8 @@ def create_app(db_path="data/workbench.db", config_path="config/pipeline.yaml", 
             resp = RedirectResponse((same and safe_path(ref.path + ("?" + ref.query if ref.query else ""))) or "/", status_code=303)
         resp.set_cookie("alerts", "on" if show == "1" else "off", httponly=True, samesite="lax")
         return resp
+
+    # ==== WORK (moves to views/work.py) ====
 
     # ---- Departments, Team, Pipeline ----
     @app.get("/departments", response_class=HTMLResponse)
@@ -256,6 +270,8 @@ def create_app(db_path="data/workbench.db", config_path="config/pipeline.yaml", 
             more = [(dept_title, charts.bars(by_dept, title=dept_title, summary=stats.sentence("bars", {"title": dept_title, "items": by_dept}) if by_dept else "")),
                     ("When complaints arrive", charts.heatmap(stats.heatmap(conn), title="Complaints received by weekday and hour", summary="Darker cells are busier hours."))]
             return page(request, conn, "pipeline.html", stages=stages, stage_name=STATE_NAME, moves=moves, back=back, handovers=ho, more=more)
+
+    # ==== REFERENCE (moves to views/reference.py) ====
 
     # ---- Policy library, Audit log, Settings ----
     @app.get("/policies", response_class=HTMLResponse)
@@ -316,6 +332,8 @@ def create_app(db_path="data/workbench.db", config_path="config/pipeline.yaml", 
             return settings_page(request, status=400, error=str(e), text=text, source=source)
         return settings_page(request, added=cid)
 
+    # ==== QUEUE assign (moves to views/queue.py) ====
+
     def back_to(nxt: str) -> str:
         return safe_path(nxt) or "/queue"
 
@@ -337,13 +355,9 @@ def create_app(db_path="data/workbench.db", config_path="config/pipeline.yaml", 
                             message=str(e), **queue_ctx(conn, actor, q, edge_of(request)))
 
 
-    # ---- Case view ----
-    def to_int(v, default=0):
-        try:
-            return int(v)
-        except (TypeError, ValueError):
-            return default
+    # ==== CASE (moves to views/case.py) ====
 
+    # ---- Case view ----
     def gone(request):
         """The case does not exist. A swap target gets a small fragment, a page the not-found page."""
         if request.headers.get("HX-Request"):
@@ -451,6 +465,8 @@ def create_app(db_path="data/workbench.db", config_path="config/pipeline.yaml", 
         fields = {n: str(form[f"f_{n}"]) for n in names if f"f_{n}" in form}
         return act(request, case_id, str(form.get("version", "")), str(form.get("step", "2")), str(form.get("all", "0")),
                    lambda c, a, v: cases.set_handover(c, case_id, a, v, fields))
+
+    # ==== SHELL (stays here) ====
 
     @app.post("/role")
     def role(request: Request, role: str = Form("")):
