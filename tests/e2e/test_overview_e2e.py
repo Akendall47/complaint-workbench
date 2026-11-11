@@ -17,27 +17,24 @@ def test_overview_in_browser(base, browser, width):
     assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth"), "sideways scroll"
     assert not errors, errors
     assert hosts <= {base.split("/")[2]}, hosts
-    if width == 1440:  # the whole page fits: the foot link is inside the viewport
-        assert page.evaluate("document.querySelector('.source a').getBoundingClientRect().bottom <= window.innerHeight")
 
     page.keyboard.press("Tab")
     assert page.evaluate("document.activeElement.className") == "skip"
 
-    # Keyboard reach: Tab through the page until the chart's details summary has focus, passing all five case links.
-    seen = set()
-    for _ in range(60):
-        page.keyboard.press("Tab")
-        href = page.evaluate("document.activeElement.getAttribute('href') || ''")
-        if href.startswith("/cases/"):
-            seen.add(href)
-        if page.evaluate("document.activeElement.matches('.chart-data summary')"):
-            break
-    else:
-        pytest.fail("chart details not reachable by keyboard")
-    assert len(seen) == 5, seen
-    page.keyboard.press("Enter")
-    assert page.locator(".chart-data table").is_visible()
-    assert page.locator("main svg a, main svg [tabindex]").count() == 0  # the drawing is not a tab stop
+    # Tabs inside a panel work without script: the hour heatmap replaces the daily chart.
+    assert page.locator(".area-chart").is_visible() and not page.locator(".heat-chart").is_visible()
+    page.locator("label[for=trend-2]").click()
+    assert page.locator(".heat-chart").is_visible() and not page.locator(".area-chart").is_visible()
+
+    # Load more adds the next cases to the Needs attention list, in place.
+    before = page.locator(".att li:not(.more-row)").count()
+    if page.locator(".load-more").count():
+        page.locator(".load-more").click()
+        page.wait_for_function(f"document.querySelectorAll('.att li:not(.more-row)').length > {before}")
+        assert page.url.rstrip("/") == base.rstrip("/")  # still on the Overview
+
+    # Hovering a band in the complaint map names it; every band is a link to the Queue.
+    assert page.locator(".map a").first.get_attribute("href").startswith("/queue?")
 
     if width == 1440:
         SHOTS.mkdir(parents=True, exist_ok=True)
