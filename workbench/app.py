@@ -19,7 +19,7 @@ from fastapi.responses import HTMLResponse, PlainTextResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from . import audit, drafts
+from . import audit, drafts, stats
 from .classify import MODELS_DIR, ensure_models
 from .config import load_config
 from .db import connect
@@ -117,6 +117,9 @@ def create_app(db_path="data/workbench.db", config_path="config/pipeline.yaml", 
     def page(request, conn, name, status=200, **ctx):
         actor = current_actor(request)
         last = ctx.get("case_now") or request.cookies.get("last_case", "")
+        if not CASE_ID.match(last):  # nothing opened yet: Case opens the case that needs this person first
+            first = stats.needs_attention(conn, actor, limit=1)
+            last = first[0]["id"] if first else ""
         nav = [{"label": label, "href": href or (f"/cases/{last}" if CASE_ID.match(last) else None),
                 "sub": last if href is None and CASE_ID.match(last) else "",
                 "current": request.url.path.startswith("/cases/") if href is None else request.url.path == href,

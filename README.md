@@ -5,7 +5,7 @@ Built for the Ankura AI by Design task, for a fictional bank (Alder Bank). All d
 
 UK firms received 1.85 million complaints in the first half of 2026, each on an 8-week clock (FCA). Handlers spend much of that time reading long notes and retyping them into handovers. The workbench routes each complaint, drafts a summary in which **every claim quotes the customer's own words**, checks those quotes word for word, and builds the handover. The handler confirms each claim; the specialist accepts or returns with a reason; every action is in a tamper-evident log.
 
-**Try it in the browser: [akendall47.github.io/complaint-workbench-demo](https://akendall47.github.io/complaint-workbench-demo/)**, a read-only copy of every page for each role. For the full product (confirm claims, hand over, accept or return), run it locally (below).
+**Try it in the browser: [akendall47.github.io/complaint-workbench-demo](https://akendall47.github.io/complaint-workbench-demo/)**, every page for each role. On case AB-2026-00768 every button that moves the case on works (recorded from the real app); for everything else, run it locally (below).
 
 ![Overview](docs/screenshots/overview.png)
 
