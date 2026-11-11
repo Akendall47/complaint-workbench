@@ -411,3 +411,35 @@ def test_404_fragment_takes_focus_and_bar_text_is_not_a_live_region(client, app_
     r = client.post("/cases/AB-2026-99999/approve", data={"version": 0}, headers=HX)
     assert 'id="case" tabindex="-1"' in r.text
     assert 'id="bar-text" role=' not in client.get(f"/cases/{pick(app_db)}").text
+
+
+# ---- one-window: recent-case tabs, Previous and Next ----
+def step_cases(html):
+    return html.split('class="step-cases"')[1].split("</div>")[0]
+
+
+def test_recent_tabs_newest_first_capped_and_cookie_checked(client, app_db):
+    from workbench.views.case import recent_ids
+    ids = [r[0] for r in sql(app_db, "SELECT id FROM cases ORDER BY id LIMIT 7")]
+    assert recent_ids(f"nope.AB-2026-1<x>.{ids[1]}.{ids[0]}.{ids[1]}", ids[0]) == [ids[0], ids[1]]  # bad ids and repeats dropped
+    for cid in ids[:6]:
+        client.get(f"/cases/{cid}")
+    assert client.cookies.get("recent") == ".".join(reversed(ids[1:6]))  # newest first, five kept
+    html = client.get(f"/cases/{ids[3]}").text
+    tabs = html.split('class="recent"')[1].split("</ul>")[0]
+    assert re.findall(r'href="/cases/([^"]+)"', tabs) == [ids[3], ids[5], ids[4], ids[2], ids[1]]
+    assert f'href="/cases/{ids[3]}" aria-current="true"' in tabs and 'class="dot st-' in tabs
+
+
+def test_previous_and_next_follow_the_queue_order_of_the_persons_list(client, app_db):
+    order = [r[0] for r in sql(app_db, "SELECT id FROM cases WHERE owner_id='H1' AND state != 'accepted' ORDER BY deadline, urgent DESC, id")]
+    html = step_cases(client.get(f"/cases/{order[1]}").text)
+    assert f'href="/cases/{order[0]}" rel="prev"' in html and f'href="/cases/{order[2]}" rel="next"' in html and f"2 of {len(order)}" in html
+    other = sql(app_db, "SELECT id FROM cases WHERE owner_id != 'H1' OR owner_id IS NULL LIMIT 1")[0][0]
+    html = step_cases(client.get(f"/cases/{other}").text)
+    assert f'href="/cases/{order[0]}" rel="next"' in html and 'rel="prev"' not in html  # outside the list: Next goes to its first case
+    as_role(client, "specialist", "S1")
+    dept = sql(app_db, "SELECT department FROM staff WHERE id='S1'")[0][0]
+    mine = [r[0] for r in sql(app_db, "SELECT id FROM cases WHERE state='handed_over' AND department=? ORDER BY deadline, urgent DESC, id", dept)]
+    html = step_cases(client.get(f"/cases/{mine[-1]}").text)
+    assert f"{len(mine)} of {len(mine)}" in html and '<span class="off">Next</span>' in html
