@@ -31,7 +31,7 @@
     <div class="panel-head"><h2 id="wait-h">Waiting handovers</h2><a class="aside" href="{{ queue_link }}">{{ n }} waiting</a></div>
     <div class="panel-body scroll">
       {% if rows %}
-      <table class="case-table compact handovers">
+      <table class="case-table compact waiting">
         <thead><tr><th scope="col">Case</th><th scope="col">Type</th><th scope="col">Channel</th><th scope="col">Deadline</th><th scope="col">Fields</th>{% if act %}<th scope="col"><span class="sr-only">Actions</span></th>{% endif %}</tr></thead>
         <tbody>{% include "partials/work_handover_rows.html" %}</tbody>
       </table>

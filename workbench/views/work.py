@@ -86,8 +86,8 @@ def register(app, x):
                       for r in sorted(stats.team(conn, today, hol, lim), key=lambda r: (r["role"] != "handler", r["name"]))]  # by role and name: no ranking
             avg = {}
             for role in ("handler", "specialist"):
-                grp = [p for p in people if p["role"] == role] or [{"open": 0, "past_deadline": 0, "due_soon": 0, "closed_week": 0, "back": (0, 0)}]
-                avg[role] = {k: sum(p[k] for p in grp) / len(grp) for k in ("open", "past_deadline", "due_soon", "closed_week")}
+                grp = [p for p in people if p["role"] == role] or [{"open": 0, "past_deadline": 0, "due_soon": 0, "closed_30": 0, "back": (0, 0)}]
+                avg[role] = {k: sum(p[k] for p in grp) / len(grp) for k in ("open", "past_deadline", "due_soon", "closed_30")}
                 avg[role]["back"] = tuple(map(sum, zip(*(p["back"] for p in grp)))) if role == "handler" else None
             lead = actor.role == "team_lead"
             rows = people if lead else [p for p in people if p["id"] == actor.id] + [{**avg.get(actor.role, avg["handler"]), "id": "", "name": "Team average", "role": actor.role}]

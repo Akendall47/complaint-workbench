@@ -17,7 +17,7 @@ def test_department_figures_narrow_by_type(twelve, cfg):  # noqa: F811
 
 
 def test_team_figures(twelve):  # noqa: F811
-    assert stats.team_figures(twelve, TODAY, set()) == {"open": 10, "unassigned": 1, "past": 2, "soon": 4, "closed_week": 1}  # h has no owner; f accepted 5 Nov
+    assert stats.team_figures(twelve, TODAY, set()) == {"open": 10, "unassigned": 1, "past": 2, "soon": 4, "closed_30": 2}  # h has no owner; f and g accepted in the 30 days
 
 
 def test_unassigned_cases(twelve):  # noqa: F811
@@ -34,3 +34,9 @@ def test_returned_by_handler_follows_each_handover_to_the_next_move(conn):
                      (case, f"2026-11-0{1 + i // 4}T{10 + i:02d}:00", to, prev.get(case), to, actor))
         prev[case] = to
     assert stats.returned_by_handler(conn) == {"H1": (2, 1), "H2": (1, 0)}
+
+
+def test_team_closed_in_the_last_30_days(twelve):  # noqa: F811
+    twelve.execute("INSERT INTO staff VALUES ('H1','Ann','handler',NULL), ('S1','Sam','specialist','Fraud claims')")
+    got = {r["id"]: (r["closed_week"], r["closed_30"]) for r in stats.team(twelve, TODAY)}
+    assert got == {"H1": (0, 0), "S1": (1, 2)}  # f on 5 Nov is in both windows, g on 15 Oct only in the 30 days

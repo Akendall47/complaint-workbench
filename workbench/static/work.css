@@ -18,14 +18,14 @@
 .kpi-value.word{font-size:18px;letter-spacing:0;line-height:1.6}
 .kpi-label abbr{text-decoration:none;cursor:help}
 
-/* Waiting handovers */
-.handovers .tag{font-size:12px;white-space:nowrap}
+/* Waiting handovers (the old .handovers list rules in app.css do not apply to this table) */
+.waiting .tag{font-size:12px;white-space:nowrap}
 .tag.warm{background:var(--tint);color:var(--accent-dark)}
 .tag.ok{background:var(--st-accepted-tint);color:var(--st-accepted-ink)}
-.handovers .acts{display:flex;gap:6px;align-items:flex-start;flex-wrap:wrap}
-.handovers td button.primary{min-height:30px;padding:3px 12px;border-radius:9px;background:var(--indigo-dark);color:white}
-.handovers .inline summary{padding:4px 0;font-size:13px}
-.handovers .inline form{min-width:220px}
+.waiting .acts{display:flex;gap:6px;align-items:flex-start;flex-wrap:wrap}
+.waiting td button.primary{min-height:30px;padding:3px 12px;border-radius:9px;background:var(--indigo-dark);color:white}
+.waiting .inline summary{padding:4px 0;font-size:13px}
+.waiting .inline form{min-width:220px}
 .more-tr td{text-align:center;border-bottom:0}
 
 /* Workload: open cases as a bar, the tick at that role's average */

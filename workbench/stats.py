@@ -209,14 +209,17 @@ def by_stage(conn) -> list[tuple[str, int]]:
 
 def team(conn, today, holidays=(), limit=5):
     """One row per handler and specialist, most cases past deadline first. The team lead is not a row: they share the work out.
-    due_soon: open cases due from today to the due-soon edge. closed_week: cases they own that were accepted in the 7 days ending today."""
+    due_soon: open cases due from today to the due-soon edge. closed_week and closed_30: cases they own that were accepted in the
+    7 and the 30 days ending today."""
     t, edge = str(today), str(due_soon_edge(today, limit, set(holidays)))
     is_open = "c.state != 'accepted'"
+    closed = "COALESCE(SUM(c.state = 'accepted' AND substr(c.accepted_at,1,10) BETWEEN ? AND ?),0)"
     return conn.execute(f"SELECT s.id, s.name, s.role, COALESCE(SUM({is_open}),0) open, COALESCE(SUM({is_open} AND c.deadline < ?),0) past_deadline,"
                         f" COALESCE(SUM({is_open} AND c.urgent = 1),0) urgent, COALESCE(SUM({is_open} AND c.deadline >= ? AND c.deadline <= ?),0) due_soon,"
-                        " COALESCE(SUM(c.state = 'accepted' AND substr(c.accepted_at,1,10) BETWEEN ? AND ?),0) closed_week"
+                        f" {closed} closed_week, {closed} closed_30"
                         " FROM staff s LEFT JOIN cases c ON c.owner_id = s.id WHERE s.role IN ('handler','specialist')"
-                        " GROUP BY s.id ORDER BY past_deadline DESC, open DESC, s.id", (t, t, edge, str(today - timedelta(days=6)), t)).fetchall()
+                        " GROUP BY s.id ORDER BY past_deadline DESC, open DESC, s.id",
+                        (t, t, edge, str(today - timedelta(days=6)), t, str(today - timedelta(days=29)), t)).fetchall()
 
 
 def unassigned(conn) -> int:
@@ -230,13 +233,13 @@ def unassigned_cases(conn, limit=20, offset=0) -> list[dict]:
 
 
 def team_figures(conn, today, holidays, limit=5) -> dict:
-    """Open, unassigned, past deadline, due soon (today to the due-soon edge) and cases accepted in the 7 days ending today."""
-    t, edge, week = str(today), str(due_soon_edge(today, limit, holidays)), str(today - timedelta(days=6))
+    """Open, unassigned, past deadline, due soon (today to the due-soon edge) and cases accepted in the 30 days ending today."""
+    t, edge, month = str(today), str(due_soon_edge(today, limit, holidays)), str(today - timedelta(days=29))
     row = conn.execute(f"SELECT COALESCE(SUM({OPEN}),0), COALESCE(SUM({OPEN} AND owner_id IS NULL),0), COALESCE(SUM({OPEN} AND deadline < ?),0),"
                        f" COALESCE(SUM({OPEN} AND deadline >= ? AND deadline <= ?),0),"
                        " COALESCE(SUM(state = 'accepted' AND substr(accepted_at,1,10) BETWEEN ? AND ?),0) FROM cases",
-                       (t, t, edge, week, t)).fetchone()
-    return dict(zip(("open", "unassigned", "past", "soon", "closed_week"), row))
+                       (t, t, edge, month, t)).fetchone()
+    return dict(zip(("open", "unassigned", "past", "soon", "closed_30"), row))
 
 
 def returned_by_handler(conn) -> dict[str, tuple[int, int]]:

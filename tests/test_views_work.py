@@ -188,8 +188,7 @@ def test_audit_page_names_people_without_seconds(client):
     html = client.get("/audit").text
     assert "<td>System</td>" in html and "T1 team_lead" not in html
     import re
-    assert not re.search(r"\d\d:\d\d:\d\d", html)
-    assert html.index("Filters") < html.index("<table")
+    assert not re.search(r"\d\d:\d\d:\d\d", html)  # filter placement is checked in test_views_reference.py
 
 
 def test_audit_detail_is_plain_words(client):
