@@ -58,7 +58,7 @@ def register(app, x):
             rises = stats.rises(conn, today, cfg)
             checks = stats.draft_checks(conn)
             src = cfg.get("source_names", {})
-            return page(request, conn, "overview.html", kpis=kpis, updated=st["updated"], q=q, rise=rises[0] if rises else None, n_rises=len(rises), rise_query=st["rise_query"],
+            return page(request, conn, "overview.html", kpis=kpis, strip=st, updated=st["updated"], q=q, rise=rises[0] if rises else None, n_rises=len(rises), rise_query=st["rise_query"],
                         ahead=fluid.cols(ahead, f"Open cases due on each of the next {lim} business days: " + ", ".join(f"{k} {v}" for k, v in ahead), hot=("Today",)),
                         ahead_total=sum(n for _, n in ahead),
                         daily=fluid.area(days, f"New complaints per day, last 30 days. Peak {peak[1]} on {peak[0]}."),

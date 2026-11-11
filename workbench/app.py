@@ -137,7 +137,7 @@ def create_app(db_path="data/workbench.db", config_path="config/pipeline.yaml", 
                 "current": request.url.path.startswith("/cases/") if href is None else request.url.path == href,
                 "home": href == HOME[actor.role], "minor": href in MINOR} for label, href in NAV]
         return templates.TemplateResponse(request, name, {"actor": actor, "role_name": ROLE_NAME, "roles": DEMO, "nav": nav,
-                                                          "strip": strip(conn, cfg, edge_of(request)), "cfg": cfg,
+                                                          "strip": ctx.pop("strip", None) or strip(conn, cfg, edge_of(request)), "cfg": cfg,
                                                           "alerts_on": request.cookies.get("alerts") != "off", **ctx}, status_code=status)
 
     from .views import case, overview, queue, reference, work  # one module per page area; each adds its own routes

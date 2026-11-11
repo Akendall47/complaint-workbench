@@ -1,4 +1,5 @@
 import re
+from functools import lru_cache
 from datetime import date
 from typing import Mapping
 
@@ -12,9 +13,15 @@ def _norm(s: str) -> str:
     return s.casefold().replace("’", "'")
 
 
-def _mentions(text: str, terms: list[str]) -> bool:
+@lru_cache(maxsize=16)
+def _pattern(terms: tuple[str, ...]) -> re.Pattern:
     # Whole words or phrases; a short suffix is allowed because the config lists a stem ("impersonat").
-    return any(re.search(r"(?<!\w)" + re.escape(_norm(t)) + r"m?(?:e?s|e?d|ing|ions?|ors?|ers?)?(?!\w)", text) for t in terms)
+    # One pattern per group, so a long note is scanned once per group, not once per term.
+    return re.compile(r"(?<!\w)(?:" + "|".join(re.escape(_norm(t)) for t in terms) + r")m?(?:e?s|e?d|ing|ions?|ors?|ers?)?(?!\w)")
+
+
+def _mentions(text: str, terms: list[str]) -> bool:
+    return bool(terms) and _pattern(tuple(terms)).search(text) is not None
 
 
 def urgent_reasons(case: Mapping, notes_text: str, today: date, cfg: dict) -> list[str]:
