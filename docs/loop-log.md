@@ -19,10 +19,19 @@ The prototype was built task by task. A builder agent wrote each task with tests
 | 9 Overview, Departments | not recorded | not recorded | 1 | No Critical. The test suite hung: one test left a transaction open on the shared database | not recorded |
 | 10 Pipeline, Team | not recorded | not recorded | 1 | 11 items. The "returned before" urgency reason flagged urgent on 43% of open cases | not recorded |
 | 11 Remaining views | not recorded | Sonnet | 0 (minors went to Task 12) | 0 Critical, 0 Important, 13 Minor | builder 183k |
-| 12 Polish, bench, README | | | | | |
-| 13 Deck, diagrams, vault | | | | | |
+| 12 Polish, bench, README | Opus | folded into the final review | 2 (resumed after turn limits) | The 160,000-case run never finished; the bench reports 16,000 as the largest size measured | builder 170k |
+| 13 Deck, diagrams, vault, one-window redesign | controller, four parallel builders (Opus, Sonnet), Codex | Sonnet reviewer for the vault check | see below | The owner rejected the stripped-down screens; see "The redesign" | see below |
 
-Tasks 12 and 13: to be added
+## The redesign (11 November)
+
+The owner looked at the running app and said the screens were "horrible" and "too simple": an agent had read "the text is too busy" as "too many charts" and removed them. The owner then asked for every page to fit one window, for tables to stop running down the page, and for a cynical recruiter's eye on clutter. What happened next:
+
+- **The controller built the pattern itself.** Two delegated attempts at the look had been rejected, so the controller wrote the top bar, the stretching charts (`workbench/fluid.py`) and the Overview in a tight edit, screenshot, fix loop, then wrote one spec for the other pages (`fix-one-window.md`).
+- **Four builders worked in parallel** on Queue, Case, the work pages and the reference pages. To keep them apart, each page area got its own route module and its own stylesheet, and `app.py` got marked sections before they started.
+- **A researcher checked the data sources at source.** Only figures it could open are on the Settings page. DISP rule text could not be opened, so no DISP quote appears.
+- **A read-only reviewer checked the screens against the research vault.** Its gaps became features: urgent reasons in lists, missing handover fields before accepting, the clock type, and the AI summary checks panel.
+- **Codex drew the case flow diagram** but its sandbox could not write to git. The controller reviewed its three files, ran its nine tests, and committed them with a note saying so.
+- **A speed check caught a regression.** The new Overview took 90 ms against a 27 ms before. Reusing counts it already had and one compiled pattern per urgency group brought it to 70 ms.
 
 ## What the loop caught
 
@@ -34,7 +43,7 @@ Tasks 12 and 13: to be added
 
 ## What it cost
 
-- Tokens: the ledger has two figures. The Task 4 review used 87k tokens (Sonnet) and the Task 11 builder used 183k. There is no total and no per-agent figure for the other tasks, so this page gives none.
+- Tokens: the ledger has figures only for some agents. Task 4 review 87k (Sonnet), Task 11 builder 183k, Task 12 builder 170k, Task 13a builder 76k, stats builder 244k, vault reviewer 145k, source researcher 61k, Codex 59k over three runs. There is no total, so this page gives none.
 - Time: not recorded per task.
 - Rounds: Task 2 needed the most, three. Some rounds were shared between tasks, so a total would double count and none is given. No task was stopped and sent to the owner.
 - Side costs the ledger names: one parallel-writer incident overwrote a Task 2 edit and was redone; six hung test processes had to be killed by hand.
