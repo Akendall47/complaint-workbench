@@ -74,11 +74,12 @@
   .s3 { display: grid; grid-template-columns: 840px 1fr; }
   .s3 .left { position: relative; background: var(--night); color: white; }
   .s3 .left .in { inset: 72px 72px 64px 96px; }
-  .s3 .left h1 { margin-top: 56px; font-size: 72px; }
+  .s3 .left h1 { margin-top: 40px; font-size: 72px; }
   .s3 .right { position: relative; }
   .s3 .right .logo { position: absolute; right: 96px; top: 72px; }
-  .s3 .shot { position: absolute; left: 70px; right: -140px; top: 170px; border-radius: 16px; box-shadow: 0 30px 80px rgba(15,34,51,.28); border: 1px solid var(--line); }
-  .s3 .callout { position: absolute; left: 70px; bottom: 96px; display: flex; gap: 18px; }
+  .s3 .pane { position: absolute; left: 70px; right: -140px; top: 160px; display: flex; flex-direction: column; gap: 30px; }
+  .s3 .shot { width: 100%; border-radius: 16px; box-shadow: 0 30px 80px rgba(15,34,51,.28); border: 1px solid var(--line); }
+  .s3 .callout { display: flex; gap: 18px; }
   .s3 .callout div { background: white; border-radius: 16px; padding: 18px 24px; box-shadow: 0 12px 34px rgba(15,34,51,.14); }
   .s3 .callout b { display: block; font-weight: 300; font-size: 48px; letter-spacing: -1.5px; color: var(--navy); line-height: 1; }
   .s3 .callout span { font-size: 17px; color: var(--muted); }
@@ -121,6 +122,8 @@
   .s5 .feats { display: flex; flex-wrap: wrap; gap: 10px; margin-top: auto; }
   .s5 .in { bottom: 90px; }
   .s5 .feats span { font-size: 17px; letter-spacing: .5px; padding: 8px 16px; border-radius: 999px; border: 1px solid rgba(255,255,255,.22); color: #dce6ee; }
+  /* big figures: room for the glyphs so they never touch the caption below */
+  .s1 .stats b, .s3 .callout b, .s4 .fig b, .s5 .nums b { line-height: 1.18; margin-bottom: 6px; }
   @media print { body { background: none; } .slide { margin: 0; } }
 </style>
 </head>
@@ -129,16 +132,16 @@
 <!-- 01 Method and research -->
 <section class="slide dark glow s1">
   <div class="in">
-    <div class="meta"><span><span class="num">01</span> &nbsp; Method and research</span><img class="logo" src="ankura-logo-reverse.svg" alt="Ankura"></div>
+    <div class="meta"><span></span><img class="logo" src="ankura-logo-reverse.svg" alt="Ankura"></div>
     <div class="row">
       <div>
         <h1>Research first.<br><em>Every decision</em><br>has a note.</h1>
-        <p class="lede">Before any code: complaint rules, AI risks and controls, UX evidence and how bank complaint teams work today. Each fact checked at its source; anything unverified kept off the screens.</p>
+        <p class="lede">Before any code, the research went into an Obsidian vault: complaint rules, AI risks, UX evidence, each fact checked at its source. Because every note links to the evidence behind it, the AI agents could follow a decision straight to its source instead of re-reading everything.</p>
         <div class="stats">
           <div><b>113</b><span>linked notes</span></div>
           <div><b>916</b><span>links between them</span></div>
           <div><b>39</b><span><i class="t"></i>decisions</span></div>
-          <div><b>9</b><span><i class="r"></i>research papers</span></div>
+          <div><b>9</b><span><i class="r"></i>research notes</span></div>
         </div>
       </div>
       <div class="graph"><img src="vault-graph-dark.svg" alt="The research vault as a graph: 113 notes joined by 916 links."></div>
@@ -153,7 +156,7 @@
 <!-- 02 Business value and how roles change -->
 <section class="slide wash s2">
   <div class="in">
-    <div class="meta"><span><span class="num">02</span> &nbsp; AI strategy · Workforce transformation</span><img class="logo" src="ankura-logo.svg" alt="Ankura"></div>
+    <div class="meta"><span></span><img class="logo" src="ankura-logo.svg" alt="Ankura"></div>
     <div class="top">
       <div>
         <h1>Judgement,<br><em>not retyping.</em></h1>
@@ -179,8 +182,7 @@
 <section class="slide s3">
   <div class="left glow">
     <div class="in">
-      <div class="meta"><span><span class="num">03</span> &nbsp; Governance engineering</span></div>
-      <h1>The model drafts.<br><em>A person decides.</em></h1>
+            <h1>The model drafts.<br><em>A person decides.</em></h1>
       <div class="controls">
         <div><span><small>Invented claims</small>Every claim must quote the notes word for word</span><b>42 of 864 blocked</b></div>
         <div><span><small>Personal data</small>Masked before the model; unmasking is logged</span><b>21 of 22 caught</b></div>
@@ -192,8 +194,10 @@
   </div>
   <div class="right wash">
     <img class="logo" src="ankura-logo.svg" alt="Ankura">
-    <img class="shot" src="../screenshots/case.png" alt="The Case page: notes on the left, the AI summary on the right, each claim with its quote and Confirm, Edit and Remove.">
-    <div class="callout"><div><b>Claim by claim</b><span>no bulk approve</span></div><div><b>0</b><span>network calls in use</span></div></div>
+    <div class="pane">
+      <img class="shot" src="../screenshots/case.png" alt="The Case page: notes on the left, the AI summary on the right, each claim with its quote and Confirm, Edit and Remove.">
+      <div class="callout"><div><b>Claim by claim</b><span>no bulk approve</span></div><div><b>0</b><span>network calls in use</span></div></div>
+    </div>
   </div>
   <div class="foot"><span>Alder Bank Complaint Workbench · AI by Design task submission</span><span>03 / 05</span></div>
 </section>
@@ -201,7 +205,7 @@
 <!-- 04 Assumptions, limits, trade-offs; the AI used and how it did -->
 <section class="slide wash s4">
   <div class="in">
-    <div class="meta"><span><span class="num">04</span> &nbsp; Assumptions, limits, AI used</span><img class="logo" src="ankura-logo.svg" alt="Ankura"></div>
+    <div class="meta"><span></span><img class="logo" src="ankura-logo.svg" alt="Ankura"></div>
     <div class="cols">
       <div class="col"><span class="n">01</span><h3>Assumptions</h3><p>All data is synthetic, shaped by public FCA, ombudsman and UK Finance figures. Channel mix and time of day are our estimates; Settings lists every source.</p><div class="fig"><b>1,600</b><span>synthetic cases, from a fixed seed</span></div></div>
       <div class="col"><span class="n">02</span><h3>Limits</h3><p>A quote check proves the words exist, not that the summary is fair. Policy search finds the right clause 13 times in 20. The role switch is a demo, not a login.</p><div class="fig"><b>13 of 20</b><span>right policy clause in the top five</span></div></div>
@@ -221,7 +225,7 @@
 <!-- 05 Technical features and workflows -->
 <section class="slide dark glow s5">
   <div class="in">
-    <div class="meta"><span><span class="num">05</span> &nbsp; Technical features and workflows</span><img class="logo" src="ankura-logo-reverse.svg" alt="Ankura"></div>
+    <div class="meta"><span></span><img class="logo" src="ankura-logo-reverse.svg" alt="Ankura"></div>
     <div class="row">
       <div>
         <h1>Built and tested<br><em>like a product.</em></h1>
