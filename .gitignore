@@ -22,3 +22,4 @@ data/recordings-dev/
 docs/deck/inspo/
 build/
 *.egg-info/
+site/
