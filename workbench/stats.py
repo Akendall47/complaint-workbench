@@ -110,25 +110,18 @@ def department_table(conn, cfg, today, holidays, limit=5, weeks=8) -> list[dict]
 
 
 def department_figures(conn, cfg, today, holidays, department="", limit=5, source="", type_="") -> dict:
-    """Open, past deadline and due soon for one department (every open case when department is ""), the share of its open cases
-    at a specialist or sent back (handed_over, returned) that were returned at least once, and the field most often missing.
+    """Open, past deadline and due soon for one department (every open case when department is ""), the share of its handovers
+    a specialist sent back at least once (as headline's returned_share), and the field most often missing.
     source and type_ narrow every figure, as on the Departments page."""
     t, edge = str(today), str(due_soon_edge(today, limit, holidays))
     extra, args = _slice(source, type_)
     if department:
         extra, args = " AND department = ?" + extra, [department, *args]
-    n, past, soon, ho, back = conn.execute(
-        "SELECT COUNT(*), COALESCE(SUM(deadline < ?),0), COALESCE(SUM(deadline >= ? AND deadline <= ?),0),"
-        " COALESCE(SUM(state IN ('handed_over','returned')),0), COALESCE(SUM(state IN ('handed_over','returned') AND return_count > 0),0)"
-        f" FROM cases WHERE {OPEN}{extra}", (t, t, edge, *args)).fetchone()
+    n, past, soon = conn.execute("SELECT COUNT(*), COALESCE(SUM(deadline < ?),0), COALESCE(SUM(deadline >= ? AND deadline <= ?),0)"
+                                 f" FROM cases WHERE {OPEN}{extra}", (t, t, edge, *args)).fetchone()
+    ho, back = conn.execute(f"SELECT COUNT(*), COALESCE(SUM(return_count > 0),0) FROM cases WHERE handed_over_at IS NOT NULL{extra}", args).fetchone()
     missing = missing_by_field(conn, cfg, department or None, source, type_)
     return {"open": n, "past": past, "soon": soon, "incomplete_share": back / ho if ho else None, "top_missing": missing[0][0] if missing else None}
-
-
-def handover_returns(conn) -> tuple[int, int]:
-    """(handovers returned for more work, handovers made)."""
-    back, ho = conn.execute("SELECT COALESCE(SUM(return_count > 0),0), COUNT(*) FROM cases WHERE handed_over_at IS NOT NULL").fetchone()
-    return back, ho
 
 
 def _attention(actor) -> tuple[str, list]:
@@ -156,7 +149,7 @@ def due_by_day(conn, today, holidays, days=6) -> list[tuple[str, int]]:
     dates = [first] + [add_business_days(first, i, holidays) for i in range(1, days)]
     out = {str(d): 0 for d in dates}
     for deadline, n in conn.execute(f"SELECT deadline, COUNT(*) FROM cases WHERE {OPEN} AND deadline BETWEEN ? AND ? GROUP BY 1",
-                                    (str(today), str(dates[-1]))):
+                                    (str(today), str(max(dates[-1], due_soon_edge(today, days - 1, holidays))))):
         out[max((d for d in out if d <= deadline), default=str(first))] += n
     return list(out.items())
 

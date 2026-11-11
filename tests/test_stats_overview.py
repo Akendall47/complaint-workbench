@@ -187,10 +187,10 @@ def test_department_table(twelve, cfg):
 
 def test_department_figures(twelve, cfg):
     f = stats.department_figures(twelve, cfg, TODAY, set())
-    assert (f["open"], f["past"], f["soon"]) == (10, 2, 4) and f["incomplete_share"] == 1 / 3  # d, e, j at a specialist or back; e returned
+    assert (f["open"], f["past"], f["soon"]) == (10, 2, 4) and f["incomplete_share"] == 2 / 5  # handed over: d, e, f, g, j; sent back: e, g
     assert isinstance(f["top_missing"], str)
     b = stats.department_figures(twelve, cfg, TODAY, set(), "Bereavement")
-    assert (b["open"], b["past"], b["soon"], b["incomplete_share"]) == (2, 0, 2, 0.0)
+    assert (b["open"], b["past"], b["soon"], b["incomplete_share"]) == (2, 0, 2, 0.5)  # g sent back, j not
     none = stats.department_figures(twelve, cfg, TODAY, set(), "Data protection")
     assert none == {"open": 0, "past": 0, "soon": 0, "incomplete_share": None, "top_missing": None}
 

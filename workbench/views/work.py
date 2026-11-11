@@ -59,7 +59,7 @@ def register(app, x):
             q = None if source else (lambda **kw: "/queue?" + urlencode({"owner": "all", **{k: v for k, v in (("department", dept), ("type", type_)) if v}, **kw}))  # noqa: E731
             figures = [("Open", f"{f['open']:,}", q and q(), False), ("Past deadline", f"{f['past']:,}", q and q(due="past"), f["past"] > 0),
                        (f"Due in {lim} business days", f"{f['soon']:,}", q and q(due="soon"), False),
-                       ("Sent back", "–" if f["incomplete_share"] is None else f"{f['incomplete_share']:.0%}", None, False),
+                       ("Handovers returned", "–" if f["incomplete_share"] is None else f"{f['incomplete_share']:.0%}", None, False),
                        ("Most missing field", f["top_missing"] or "None", None, False)]
             return page(request, conn, "departments.html", dept=dept, own=own, chips=chips, figures=figures, source=source, type_=type_,
                         clear=lambda k: link(**{k: ""}),

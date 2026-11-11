@@ -1,41 +1,48 @@
+"""The fluid charts: empty input is a paragraph, text is escaped, bars scale to the largest value, and nothing uses inline style."""
 import re
 
 import pytest
 from markupsafe import Markup
 
-from workbench import charts
+from workbench import fluid
 
 GRID = [[(d + h) % 4 for h in range(11)] for d in range(7)]
-EMPTY = [lambda: charts.bars([]), lambda: charts.columns([]), lambda: charts.heatmap([])]
-FULL = [lambda **k: charts.bars([("<b>", 3), ("Two", 5)], highlight="Two", **k),
-        lambda **k: charts.columns([("<b>", 3), ("Two", 5), ("Three", 4)], **k),
-        lambda **k: charts.heatmap(GRID, **k)]
+MAKERS = {
+    "track": lambda items: fluid.track(items),
+    "cols": lambda items: fluid.cols(items, "label"),
+    "area": lambda items: fluid.area(items, "label"),
+}
 
 
-@pytest.mark.parametrize("make", EMPTY)
-def test_empty_input_is_a_paragraph_not_an_svg(make):
-    assert make() == Markup('<p class="empty">No data</p>')
+@pytest.mark.parametrize("name", MAKERS)
+def test_empty_input_is_a_paragraph_not_a_drawing(name):
+    assert MAKERS[name]([]) == Markup('<p class="empty">No data</p>')
 
 
-@pytest.mark.parametrize("make", FULL)
-def test_every_chart_has_text_alternative_and_is_safe(make):
-    out = make(title="A title", summary="One plain sentence.")
-    assert isinstance(out, Markup)
-    assert 'role="img"' in out and 'aria-label="A title. One plain sentence."' in out
-    assert "<script" not in out and "style=" not in out and "<b>" not in out
-    assert "<details" in out and "<table" in out  # the numbers, reachable as a table
+def test_empty_heatmap_and_map_are_paragraphs():
+    assert fluid.heat([[0] * 11] * 7, range(8, 19), "x") == Markup('<p class="empty">No data</p>')
+    assert fluid.band_map([]) == Markup('<p class="empty">No data</p>')
 
 
-@pytest.mark.parametrize("make", FULL[:3])
-def test_drawing_is_not_a_tab_stop(make):
-    assert not re.search(r'href=|tabindex=', make(title="t", summary="s"))
+@pytest.mark.parametrize("name", MAKERS)
+def test_labels_are_escaped_and_no_inline_style(name):
+    html = str(MAKERS[name]([("<script>", 3), ("Two", 5)]))
+    assert "<script>" not in html and "&lt;script&gt;" in html
+    assert "style=" not in html
 
 
-def test_bars_values_are_labelled_and_in_table():
-    out = charts.bars([("One", 3), ("Two", 5)], title="t", summary="s")
-    assert ">3<" in out and ">5<" in out and out.count("<td>5</td>") == 1
+def test_track_bars_scale_to_the_largest_value():
+    widths = re.findall(r'class="tk-fill[^"]*" width="([\d.]+)%"', str(fluid.track([("a", 5), ("b", 10)])))
+    assert widths == ["50", "100"]
 
 
-@pytest.mark.parametrize("make", [FULL[0], FULL[1]])
-def test_labels_are_escaped(make):
-    assert "&lt;b&gt;" in make(title="t", summary="s")
+def test_heatmap_has_a_cell_per_hour_and_the_counts_in_a_table():
+    html = str(fluid.heat(GRID, range(8, 19), "When complaints arrive"))
+    assert html.count('class="hc l') == 7 * 11 + 5  # cells plus the five legend swatches
+    assert 'role="img" aria-label="When complaints arrive"' in html and '<table class="sr-only">' in html
+
+
+def test_band_map_links_every_band_and_gives_each_node_a_label():
+    html = str(fluid.band_map([("Fraud claims", "Payment scam", 7), ("Bereavement", "Service", 2)], href=lambda d, t: f"/queue?type={t}"))
+    assert html.count('<path class="mband"') == 2 and html.count('<a href="/queue?type=') == 2
+    assert "Fraud claims" in html and "Payment scam" in html

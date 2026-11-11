@@ -1,4 +1,5 @@
-"""Web app: shell, role switcher, deadline strip and the Queue. Routes never change a case themselves;
+"""Web app: the shell (security headers, page frame, role switch, deadline pills) and app start. Page routes live in views/;
+they never change a case themselves:
 they call workbench.cases and show its NotAllowed and StaleCase messages as plain text."""
 import contextlib
 import os
@@ -10,7 +11,7 @@ import webbrowser
 from types import SimpleNamespace
 from datetime import date, datetime
 from pathlib import Path
-from urllib.parse import parse_qs, urlencode, urlparse
+from urllib.parse import urlparse
 
 import yaml
 from fastapi import FastAPI, Form, Request
@@ -18,12 +19,11 @@ from fastapi.responses import HTMLResponse, PlainTextResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from . import audit, case_view, cases, charts, drafts, stats
-from .cases import NotAllowed, StaleCase
+from . import audit, drafts
 from .classify import MODELS_DIR, ensure_models
 from .config import load_config
 from .db import connect
-from .deadlines import business_days_left, due_soon_edge
+from .deadlines import due_soon_edge
 from .views.shared import DEMO, HOME, ROLE_NAME, STATE_NAME, current_actor, strip, to_int  # noqa: F401  (tests import them from here)
 
 HERE = Path(__file__).parent
@@ -136,7 +136,6 @@ def create_app(db_path="data/workbench.db", config_path="config/pipeline.yaml", 
     case.register(app, x)
 
 
-    # ==== SHELL (stays here) ====
 
     @app.post("/prefs/alerts")
     def alerts(request: Request, show: str = Form("")):
@@ -151,7 +150,6 @@ def create_app(db_path="data/workbench.db", config_path="config/pipeline.yaml", 
         return resp
 
 
-    # ==== SHELL (stays here) ====
 
     @app.post("/role")
     def role(request: Request, role: str = Form("")):

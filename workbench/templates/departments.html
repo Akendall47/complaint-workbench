@@ -21,7 +21,7 @@
   <section class="panel s12 kpi-panel" aria-label="Figures for {{ dept or 'all departments' }}">
     <ul class="kpis five">
       {% for label, value, href, warm in figures %}
-      <li class="kpi"><span class="kpi-label">{% if label == "Sent back" %}<abbr title="Share of cases at a specialist or sent back that were returned at least once">Sent back</abbr>{% else %}{{ label }}{% endif %}</span>
+      <li class="kpi"><span class="kpi-label">{% if label == "Handovers returned" %}<abbr title="Share of handovers a specialist sent back at least once">Handovers returned</abbr>{% else %}{{ label }}{% endif %}</span>
         <span class="kpi-value{{ ' bad' if warm }}{{ ' word' if loop.last }}">{% if href %}<a href="{{ href }}">{{ value }}</a>{% else %}{{ value }}{% endif %}</span></li>
       {% endfor %}
     </ul>
