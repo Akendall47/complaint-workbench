@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<title>Complaint Workbench: five pages</title>
+<!-- Five slides, 1920 x 1080 each. Render to PDF with: uv run python docs/deck/render.py -->
+<style>
+  @page { size: 1920px 1080px; margin: 0; }
+  :root { --ink:#1f2026; --muted:#5a5b66; --line:#e4e4ec; --indigo:#4338ca; --indigo-tint:#eeedfc; --warm:#c2410c; --warm-tint:#fdebe4; --good:#17663a; --good-tint:#e2f4e8; --paper:#f6f6f9; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: "Segoe UI", system-ui, -apple-system, sans-serif; color: var(--ink); background: #ccc; }
+  .slide { width: 1920px; height: 1080px; padding: 72px 88px 56px; background: white; display: grid; grid-template-rows: auto 1fr auto; gap: 36px; page-break-after: always; overflow: hidden; margin: 0 auto 24px; }
+  .kicker { font-size: 24px; font-weight: 600; color: var(--indigo); letter-spacing: .5px; }
+  h1 { font-size: 60px; line-height: 1.1; letter-spacing: -1.2px; margin: 10px 0 0; font-weight: 700; max-width: 1600px; }
+  .two { display: grid; grid-template-columns: 640px 1fr; gap: 56px; min-height: 0; }
+  .two.even { grid-template-columns: 1fr 1fr; }
+  .shot { width: 100%; border-radius: 18px; box-shadow: 0 12px 40px rgba(20,20,60,.18); border: 1px solid var(--line); align-self: start; }
+  .diagram { width: 100%; align-self: start; }
+  ul.points { list-style: none; padding: 0; margin: 0; display: grid; gap: 30px; align-content: start; }
+  .points li { font-size: 28px; line-height: 1.35; }
+  .points b { display: block; font-size: 44px; line-height: 1.1; color: var(--indigo); letter-spacing: -.8px; }
+  .points b.warm { color: var(--warm); }
+  table { border-collapse: collapse; width: 100%; font-size: 25px; line-height: 1.3; }
+  th { text-align: left; font-size: 22px; color: var(--muted); font-weight: 600; padding: 0 16px 12px 0; border-bottom: 2px solid var(--line); }
+  td { padding: 14px 16px 14px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+  td.num { font-weight: 700; color: var(--indigo); white-space: nowrap; }
+  td.num.warm { color: var(--warm); }
+  .foot { font-size: 22px; color: var(--muted); display: flex; justify-content: space-between; gap: 40px; }
+  .roles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; }
+  .role { background: var(--paper); border-radius: 18px; padding: 26px 28px; }
+  .role h2 { font-size: 30px; margin: 0 0 12px; color: var(--indigo); }
+  .role p { font-size: 25px; line-height: 1.35; margin: 0 0 10px; }
+  .stack { display: grid; gap: 36px; align-content: start; min-height: 0; }
+  .tag { display: inline-block; font-size: 20px; font-weight: 700; border-radius: 8px; padding: 2px 10px; background: var(--indigo-tint); color: var(--indigo); }
+  .tag.warm { background: var(--warm-tint); color: var(--warm); }
+  .tag.good { background: var(--good-tint); color: var(--good); }
+  .cols3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; }
+  .box { border: 2px solid var(--line); border-radius: 18px; padding: 24px 28px; }
+  .box h2 { font-size: 28px; margin: 0 0 14px; }
+  .box p { font-size: 24px; line-height: 1.35; margin: 0 0 10px; }
+  .box p:last-child { margin: 0; }
+  .two.wide { grid-template-columns: 860px 1fr; }
+  .two.fourth { grid-template-columns: 1.15fr .85fr; }
+  .two.fourth .box p { font-size: 23px; }
+  .two table td:first-child { white-space: nowrap; }
+  .flowrows { display: grid; grid-template-columns: 220px repeat(4, 1fr); gap: 18px 44px; align-items: center; }
+  .rowname { font-size: 28px; font-weight: 700; color: var(--muted); }
+  .rowname.now { color: var(--indigo); }
+  .step { position: relative; font-size: 25px; line-height: 1.25; text-align: center; padding: 22px 16px; border: 2px solid var(--line); border-radius: 16px; background: white; }
+  .step.now { border-color: var(--indigo); background: var(--indigo-tint); }
+  .step + .step::before { content: ""; position: absolute; left: -44px; top: 50%; width: 32px; border-top: 3px solid var(--muted); }
+  .step.now + .step.now::before { border-color: var(--indigo); }
+  .cols3.top { align-items: start; }
+  .slide:has(.loop) { grid-template-rows: auto auto 1fr auto; }
+  .loop { display: flex; align-self: end; }
+  .loop span { flex: 1; font-size: 24px; text-align: center; padding: 20px 34px; background: var(--indigo-tint); color: var(--indigo); font-weight: 600; clip-path: polygon(0 0, calc(100% - 26px) 0, 100% 50%, calc(100% - 26px) 100%, 0 100%, 26px 50%); margin-right: -14px; }
+  .loop span:first-child { clip-path: polygon(0 0, calc(100% - 26px) 0, 100% 50%, calc(100% - 26px) 100%, 0 100%); }
+  @media print { body { background: white; } .slide { margin: 0; } }
+</style>
+</head>
+<body>
+
+<!-- 1. Business value -->
+<section class="slide">
+  <header><div class="kicker">ALDER BANK · COMPLAINT WORKBENCH · A PROTOTYPE ON SYNTHETIC DATA</div>
+    <h1>Handlers spend their time on judgement, not on reading and retyping.</h1></header>
+  <div class="two">
+    <ul class="points">
+      <li><b>1.85 million</b>complaints reached UK firms in the first half of 2026, each with an 8-week clock (FCA).</li>
+      <li><b>One window</b>shows every deadline, what is due next and what needs this person, with one click to act.</li>
+      <li><b>90.5%</b>routed to the right team when the model is confident; the 11.3% it is unsure of go to a person.</li>
+      <li><b>8 clicks</b>from the queue to an approved, checked handover on the demo case (filter clicks not counted).</li>
+    </ul>
+    <img class="shot" src="../screenshots/overview.png" alt="The Overview: today's figures, deadlines approaching, new complaints, complaint map, stages, needs attention, workload and AI summary checks.">
+  </div>
+  <div class="foot"><span>Value comes from time saved per case and fewer handovers sent back. Neither is measured on real work yet.</span><span>1 / 5</span></div>
+</section>
+
+<!-- 2. Risks, controls, human oversight -->
+<section class="slide">
+  <header><div class="kicker">RISKS, CONTROLS AND HUMAN OVERSIGHT</div>
+    <h1>The model drafts. A person decides, claim by claim.</h1></header>
+  <div class="two wide">
+    <table>
+      <thead><tr><th>Risk</th><th>Control</th><th>Measured on the test bench</th></tr></thead>
+      <tbody>
+        <tr><td>An invented or wrong claim</td><td>Every claim needs a word-for-word quote from the notes; the handler confirms each one</td><td class="num">42 of 864 claims blocked</td></tr>
+        <tr><td>Personal data reaches the model</td><td>Masked first; unmasking needs a reason and is logged</td><td class="num">21 of 22 test strings caught</td></tr>
+        <tr><td>Sent to the wrong team</td><td>Low-confidence cases wait for a person</td><td class="num">11.3% go to a person</td></tr>
+        <tr><td>Silent changes after the fact</td><td>Every action in a hash-chained audit log</td><td class="num">Tampering detected, not prevented</td></tr>
+      </tbody>
+    </table>
+    <img class="shot" src="../screenshots/case.png" alt="The Case page: the notes on the left, the AI summary on the right, each claim with its quote and a confirm button.">
+  </div>
+  <div class="foot"><span>Also: no bulk approve, urgent reasons shown in words, nothing leaves the machine (no network calls, strict content policy).</span><span>2 / 5</span></div>
+</section>
+
+<!-- 3. Role and workflow change -->
+<section class="slide">
+  <header><div class="kicker">HOW THE WORK CHANGES</div>
+    <h1>Handlers check instead of retype. Specialists get complete handovers.</h1></header>
+  <div class="stack">
+    <div class="flowrows">
+      <span class="rowname">Before</span><span class="step">Reads all the notes</span><span class="step">Searches policy by hand</span><span class="step">Types the handover</span><span class="step">Specialist finds gaps, sends back</span>
+      <span class="rowname now">With the tool</span><span class="step now">Masked draft with quotes</span><span class="step now">Handler checks each claim</span><span class="step now">Pack names missing fields</span><span class="step now">Accept, or return with a reason</span>
+    </div>
+    <div class="roles">
+      <div class="role"><h2>Handler</h2><p>Works a queue in deadline order with a preview and one-click actions.</p><p>New skill: checking AI output, not writing it.</p></div>
+      <div class="role"><h2>Specialist</h2><p>Sees missing fields before accepting.</p><p>Returns need a reason, so the handler learns why.</p></div>
+      <div class="role"><h2>Team lead</h2><p>Sees the whole flow and where cases come back.</p><p>Shares work out. No speed league table.</p></div>
+    </div>
+  </div>
+  <div class="foot"><span>The "before" row is our description of a typical process, not a measurement.</span><span>3 / 5</span></div>
+</section>
+
+<!-- 4. Assumptions, limitations, trade-offs, and what the test bench measured -->
+<section class="slide">
+  <header><div class="kicker">WHAT WE MEASURED, AND WHAT IT DOES NOT PROVE</div>
+    <h1>Every figure comes from one command, with its limit beside it.</h1></header>
+  <div class="two even fourth">
+    <table>
+      <thead><tr><th>Test bench</th><th>Result</th></tr></thead>
+      <tbody>
+        <tr><td>Data handled</td><td class="num">1,600 cases: every page under 100 ms</td></tr>
+        <tr><td>At 10 times the volume</td><td class="num warm">16,000 cases: Overview and Pipeline miss 100 ms</td></tr>
+        <tr><td>Security</td><td class="num">Injection, tamper, cross-site and host checks pass; masking 21 of 22</td></tr>
+        <tr><td>Ease of use</td><td class="num">9 pages x 3 roles fit one laptop screen</td></tr>
+        <tr><td>Routing accuracy</td><td class="num">84.4% overall on held-out data</td></tr>
+        <tr><td>Policy search</td><td class="num warm">13 of 20 right clause in the top five</td></tr>
+        <tr><td>Tests</td><td class="num">TESTCOUNT automated tests, unit and browser</td></tr>
+      </tbody>
+    </table>
+    <div class="stack">
+      <div class="box"><h2>Assumptions</h2><p>All data is synthetic, shaped by public FCA, ombudsman and UK Finance figures; channel mix and time of day are our guesses. Settings lists each source.</p></div>
+      <div class="box"><h2>Limits</h2><p>A quote check proves the words exist, not that the summary is fair. Masking misses bare first names. The role switch is a demo, not a login.</p></div>
+      <div class="box"><h2>Trade-offs</h2><p>A small local model with drafts recorded in advance: reproducible and private, but not live. Classic models for routing: cheap and explainable.</p></div>
+    </div>
+  </div>
+  <div class="foot"><span>Full results: docs/test-results.md. Run: uv run python tests/bench/bench.py --suites</span><span>4 / 5</span></div>
+</section>
+
+<!-- 5. AI tools used and assessment -->
+<section class="slide">
+  <header><div class="kicker">AI TOOLS USED, AND HOW WELL THEY DID</div>
+    <h1>AI did most of the typing. A person set direction; reviews caught what AI missed.</h1></header>
+  <div class="cols3 top">
+    <div class="box"><h2>In the product</h2><p><span class="tag">TF-IDF + logistic regression</span> routing and type</p><p><span class="tag">SQLite FTS5, BM25</span> policy search</p><p><span class="tag">qwen3:4b-instruct</span> drafts, run locally with Ollama and recorded</p><p>One stage in ten uses a language model.</p></div>
+    <div class="box"><h2>In the build</h2><p><span class="tag">Claude Code</span> a controller (Claude Fable 5.2, then Claude Opus 5.5) ran builder and reviewer agents on cheaper tiers where the task allowed</p><p><span class="tag">Codex</span> the case flow diagram and two second-opinion diagnoses</p><p><span class="tag">Local Qwen</span> the recorded drafts</p></div>
+    <div class="box"><h2>Assessment</h2><p><span class="tag good">Worked</span> separate reviewers caught masking leaks, an audit gap, a page that wrote on read and a self-flattering accuracy (0.894 fell to 0.844).</p><p><span class="tag warm">Did not</span> an agent misread "too busy" as "too many charts"; the owner corrected it. Codex could not commit from its sandbox.</p></div>
+  </div>
+  <div class="loop"><span>Plan and spec</span><span>Builder agent: tests, then code</span><span>Read-only reviewer</span><span>Fix rounds</span><span>Owner looks and corrects</span></div>
+  <div class="foot"><span>Build log: docs/loop-log.md. Code and instructions: README.md.</span><span>5 / 5</span></div>
+</section>
+
+</body>
+</html>
