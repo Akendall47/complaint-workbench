@@ -106,7 +106,7 @@ def test_rises_fields(conn, cfg):
     _add(conn, 20, "2026-10-20", "b")
     r = stats.rises(conn, TODAY, cfg)[0]
     assert (r["this_week"], r["usual"], r["ratio"]) == (10, 5, 2.0)
-    assert r["weekly"] == [0, 0, 0, 0, 20, 0, 0, 10]  # oldest first: eight weeks shown, the last four before this one are the baseline
+    assert r["weekly"] == [0, 20, 0, 0, 10]  # oldest first: the four baseline weeks, then this week
 
 
 def test_shipped_data_has_one_rise(db, cfg):
@@ -123,17 +123,50 @@ def test_sentence():
         "Complaints per week: 1 Nov 3, 8 Nov 5. Highest is 8 Nov with 5."
 
 
+def _event(conn, case, at, to, who="H1"):
+    conn.execute("INSERT INTO events(case_id, at, kind, from_state, to_state, actor_id) VALUES (?, ?, 'x', 'a', ?, ?)", (case, at, to, who))
+
+
 def test_daily_fills_empty_days(twelve):
     assert stats.daily(twelve, TODAY, days=7) == [("2026-11-04", 2), ("2026-11-05", 0), ("2026-11-06", 0), ("2026-11-07", 0),
                                                   ("2026-11-08", 0), ("2026-11-09", 1), ("2026-11-10", 2)]
+    assert len(stats.daily(twelve, TODAY)) == 30
 
 
-def test_count_by_open_cases(twelve):
-    assert stats.count_by(twelve, "type") == [("Other", 5), ("Service", 5)]
-    assert stats.count_by(twelve, "type", department="Fraud claims") == [("Service", 3)]
-    assert stats.count_by(twelve, "state", department="General service") == [("in_review", 3), ("new", 2)]
-    with pytest.raises(ValueError):
-        stats.count_by(twelve, "owner_id; DROP TABLE cases")
+def test_snapshot_today_matches_headline(twelve):
+    h, s = stats.headline(twelve, TODAY, set()), stats._snapshot(twelve, TODAY, set())
+    assert (s["open"], s["past_deadline"], s["due_soon"], s["avg_days_open"]) == (h["open"], h["past_deadline"], h["due_soon"], h["avg_days_open"])
+
+
+def test_snapshot_a_week_earlier(twelve):
+    s = stats._snapshot(twelve, date(2026, 11, 3), set())  # b, c, d, e, l open, and f (accepted 5 Nov); g was accepted 15 Oct
+    assert s["open"] == 6 and s["past_deadline"] == 2  # l (2 Nov) and f (20 Oct)
+    assert stats._snapshot(twelve, date(2026, 9, 1), set()) is None  # nothing had arrived yet
+
+
+def test_headline_change(twelve):
+    for case, at, to in (("d", "2026-10-25", "handed_over"), ("e", "2026-10-25", "handed_over"), ("e", "2026-11-08", "returned")):
+        _event(twelve, case, at, to)
+    then, now = stats._snapshot(twelve, date(2026, 11, 3), set()), stats._snapshot(twelve, TODAY, set())
+    ch = stats.headline_change(twelve, TODAY, set())
+    assert ch["open"] == 10 - 6 and ch["past_deadline"] == 2 - 2 and isinstance(ch["open"], int)
+    assert ch["due_soon"] == now["due_soon"] - then["due_soon"] and ch["avg_days_open"] == now["avg_days_open"] - then["avg_days_open"]
+    assert ch["returned_share"] == 0.5  # 1 of 2 handovers came back by today, 0 of 2 by 3 Nov
+
+
+def test_headline_change_is_none_when_it_cannot_be_known(twelve):
+    ch = stats.headline_change(twelve, TODAY, set())
+    assert ch["returned_share"] is None and ch["open"] is not None  # no events, so no honest returned share at either end
+    assert stats.headline_change(twelve, date(2026, 9, 20), set()) == dict.fromkeys(ch)  # 13 Sep: no case had arrived
+
+
+def test_by_source_and_type(twelve):
+    twelve.execute("UPDATE cases SET source = CASE WHEN id IN ('a','b','c') THEN 'phone' WHEN id = 'd' THEN 'letter' ELSE 'email' END")
+    twelve.execute("INSERT INTO cases(id, received_at, state, source, deadline, version) VALUES ('z', '2026-11-10T09:00', 'new', 'letter', '2027-01-01', 0)")
+    assert stats.by_source(twelve) == [("email", 6), ("phone", 3), ("letter", 2)]  # z has no department and still counts
+    assert stats.by_source(twelve, "Fraud claims") == [("email", 1), ("letter", 1), ("phone", 1)]  # ties by key
+    assert stats.by_type(twelve) == [("Other", 5), ("Service", 5)]  # z has no type: left out
+    assert stats.by_type(twelve, "Fraud claims") == [("Service", 3)]
 
 
 def test_complaint_map(twelve):
@@ -141,46 +174,43 @@ def test_complaint_map(twelve):
                                            ("Bereavement", "Other", 2), ("General service", "Service", 2)]
 
 
-def test_department_weekly(twelve):
-    assert stats.department_weekly(twelve, TODAY, weeks=2) == {"Fraud claims": [0, 1], "General service": [2, 2], "Bereavement": [0, 2]}
+def test_department_table(twelve, cfg):
+    rows = stats.department_table(twelve, cfg, TODAY, set(), weeks=2)
+    busy = ["General service", "Fraud claims", "Bereavement"]  # most past deadline, then most open; the rest by name
+    assert [r["department"] for r in rows] == busy + sorted(d for d in cfg["departments"] if d not in busy)
+    assert rows[0] == {"department": "General service", "open": 5, "past": 2, "soon": 1, "weekly": [2, 2]}
+    assert rows[1] == {"department": "Fraud claims", "open": 3, "past": 0, "soon": 1, "weekly": [0, 1]}
+    assert rows[2] == {"department": "Bereavement", "open": 2, "past": 0, "soon": 2, "weekly": [0, 2]}
+    assert all(r["weekly"] == [0, 0] and r["open"] == 0 for r in rows[3:])
+    assert len(stats.department_table(twelve, cfg, TODAY, set())[0]["weekly"]) == 8
 
 
-def test_stage_rows_count_open_and_past(twelve):
-    assert [(r["state"], r["open"], r["past"]) for r in stats.stage_rows(twelve, TODAY)] == \
-        [("new", 3, 0), ("in_review", 4, 2), ("handed_over", 2, 0), ("returned", 1, 0)]
-    assert [r["open"] for r in stats.stage_rows(twelve, TODAY, "Bereavement")] == [0, 1, 1, 0]
+def test_department_figures(twelve, cfg):
+    f = stats.department_figures(twelve, cfg, TODAY, set())
+    assert (f["open"], f["past"], f["soon"]) == (10, 2, 4) and f["incomplete_share"] == 1 / 3  # d, e, j at a specialist or back; e returned
+    assert isinstance(f["top_missing"], str)
+    b = stats.department_figures(twelve, cfg, TODAY, set(), "Bereavement")
+    assert (b["open"], b["past"], b["soon"], b["incomplete_share"]) == (2, 0, 2, 0.0)
+    none = stats.department_figures(twelve, cfg, TODAY, set(), "Data protection")
+    assert none == {"open": 0, "past": 0, "soon": 0, "incomplete_share": None, "top_missing": None}
 
 
-def test_snapshot_today_matches_headline(twelve):
-    h, s = stats.headline(twelve, TODAY, set()), stats.snapshot(twelve, TODAY, set())
-    assert (s["open"], s["past_deadline"], s["due_soon"], s["avg_days_open"]) == (h["open"], h["past_deadline"], h["due_soon"], h["avg_days_open"])
-    assert s["returned_share"] is None  # no events in this fixture, so no honest figure
+def test_needs_attention_offset_and_count(twelve):
+    lead = Actor("T1", "team_lead")
+    first, rest = stats.needs_attention(twelve, lead, limit=3), stats.needs_attention(twelve, lead, limit=3, offset=3)
+    assert [r["id"] for r in first + rest] == [r["id"] for r in stats.needs_attention(twelve, lead, limit=6)]
+    assert stats.attention_count(twelve, lead) == 10 and stats.attention_count(twelve, Actor("H1", "handler")) == 5  # a, b, c, e, l
 
 
-def test_snapshot_a_week_earlier(twelve):
-    from datetime import timedelta
-    s = stats.snapshot(twelve, TODAY - timedelta(days=7), set())  # 3 Nov: b, c, d, e, l open (f accepted 5 Nov, so also open)
-    assert s["open"] == 6 and s["past_deadline"] == 2  # l (2 Nov) and f (20 Oct)
-    assert stats.snapshot(twelve, date(2026, 9, 1), set()) is None  # nothing had arrived yet
+def test_handovers_offset(twelve):
+    twelve.execute("UPDATE cases SET department = 'Bereavement' WHERE id = 'd'")
+    rows, n = stats.handovers(twelve, "Bereavement", limit=1)
+    more, n2 = stats.handovers(twelve, "Bereavement", limit=1, offset=1)
+    assert n == n2 == 2 and [r["id"] for r in rows + more] == ["d", "j"]
 
 
-def test_snapshot_returned_share_from_events(twelve):
-    for case, at, to in (("d", "2026-10-25", "handed_over"), ("e", "2026-10-25", "handed_over"), ("e", "2026-11-08", "returned")):
-        twelve.execute("INSERT INTO events(case_id, at, kind, from_state, to_state, actor_id) VALUES (?, ?, 'x', 'a', ?, 'H1')", (case, at, to))
-    assert stats.snapshot(twelve, TODAY, set())["returned_share"] == 0.5
-    assert stats.snapshot(twelve, date(2026, 11, 3), set())["returned_share"] == 0.0
-
-
-def test_team_activity(twelve):
-    for case, at, to, who in (("f", "2026-10-04", "handed_over", "H1"), ("f", "2026-11-05", "accepted", "S1"),
-                              ("g", "2026-10-04", "handed_over", "H1"), ("g", "2026-10-08", "returned", "S1")):
-        twelve.execute("INSERT INTO events(case_id, at, kind, from_state, to_state, actor_id) VALUES (?, ?, 'x', 'a', ?, ?)", (case, at, to, who))
-    a = stats.team_activity(twelve, TODAY)
-    assert a["closed"] == {"H1": 1, "S1": 1}  # f was accepted on 5 Nov, inside the seven days; g on 15 Oct is not
-    assert a["returned"] == {"H1": (2, 1)}  # two handovers, one came back
-
-
-def test_incomplete_handovers(twelve, cfg):
-    bad, total = stats.incomplete_handovers(twelve, cfg)
-    assert total == 5 and 0 <= bad <= total  # d, e, f, g, j were handed over; none has a filled handover here
-    assert stats.incomplete_handovers(twelve, cfg, "Bereavement")[1] == 2
+def test_team_due_soon_and_closed_week(twelve):
+    twelve.execute("INSERT INTO staff VALUES ('H1','Ann','handler',NULL), ('H2','Bo','handler',NULL), ('S1','Sam','specialist','Fraud claims')")
+    got = {r["id"]: (r["open"], r["past_deadline"], r["due_soon"], r["closed_week"]) for r in stats.team(twelve, TODAY)}
+    assert got == {"H1": (5, 2, 1, 0), "H2": (2, 0, 1, 0), "S1": (2, 0, 2, 1)}  # S1 owns f, accepted 5 Nov; g (15 Oct) is too old
+    assert [r["id"] for r in stats.team(twelve, TODAY)] == ["H1", "H2", "S1"]  # ties on open go by id
