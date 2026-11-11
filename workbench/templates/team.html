@@ -1,27 +1,47 @@
 {% extends "base.html" %}
 {% from "partials/help.html" import help_panel %}
 {% block title %}Team{% endblock %}
-{% block purpose %}{{ content.views.team.purpose }}{% endblock %}
-{% block hint %}{% endblock %}
+{% block body_class %}fit{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/work.css">{% endblock %}
+{% block strip %}{% include "partials/deadline_strip.html" %}{% endblock %}
 {% block help %}{{ help_panel("team") }}{% endblock %}
 {% block content %}
-{% if lead %}
-<p class="rise"><b>Unassigned:</b> <a href="/queue?owner=unassigned">{{ unassigned }} open cases have no owner</a>.</p>
-{% endif %}
-<section class="table-card">
-  <div class="table-wrap">
-    <table class="case-table">
-      <thead><tr><th scope="col">Person</th><th scope="col" class="num-col">Past deadline</th><th scope="col" class="num-col">Open</th><th scope="col" class="num-col">Urgent</th></tr></thead>
-      <tbody>
-      {% for r in rows %}
-      <tr data-person="{{ r.id }}"><th scope="row">{{ r.name }}</th>
-        <td class="num-col{{ ' deadline-past' if r.past_deadline }}">{{ r.past_deadline }}</td><td class="num-col">{{ r.open }}</td><td class="num-col">{{ r.urgent }}</td></tr>
-      {% endfor %}
-      </tbody>
-    </table>
-  </div>
-  {% if not lead %}<p class="muted">Switch to Team lead (bottom left) to see the whole team.</p>{% endif %}
-  <p class="muted">This page is for sharing out work. It does not show speed per case, because a speed target pushes people to approve AI drafts without checking.</p>
-</section>
-<p class="source"><a href="/settings#data-sources">Where these numbers come from</a></p>
+<div class="board team">
+  <section class="panel s12 kpi-panel" aria-label="Team figures">
+    <ul class="kpis five">
+      <li class="kpi"><span class="kpi-label">Open</span><span class="kpi-value"><a href="/queue?owner=all">{{ "{:,}".format(figures.open) }}</a></span></li>
+      <li class="kpi"><span class="kpi-label">Unassigned</span><span class="kpi-value"><a href="/queue?owner=unassigned">{{ "{:,}".format(figures.unassigned) }}</a></span></li>
+      <li class="kpi"><span class="kpi-label">Past deadline</span><span class="kpi-value{{ ' bad' if figures.past }}"><a href="/queue?owner=all&amp;due=past">{{ "{:,}".format(figures.past) }}</a></span></li>
+      <li class="kpi"><span class="kpi-label">Due in {{ lim }} business days</span><span class="kpi-value"><a href="/queue?owner=all&amp;due=soon">{{ "{:,}".format(figures.soon) }}</a></span></li>
+      <li class="kpi"><span class="kpi-label">Closed this week</span><span class="kpi-value">{{ "{:,}".format(figures.closed_week) }}</span></li>
+    </ul>
+  </section>
+
+  <section class="panel s8" aria-labelledby="load-h">
+    <div class="panel-head"><h2 id="load-h">Workload</h2><span class="aside">Shares out work. It does not rank people.</span></div>
+    <div class="panel-body scroll">
+      <table class="case-table compact workload">
+        <thead><tr><th scope="col">Name</th><th scope="col">Open</th><th scope="col" class="num-col">Past deadline</th><th scope="col" class="num-col">Due soon</th>
+          <th scope="col" class="num-col">Closed this week</th><th scope="col" class="num-col">Returned by specialists</th></tr></thead>
+        <tbody>
+        {% for r in rows %}{% set mean = avg[r.role].open %}
+        <tr{% if not r.id %} class="avg-row"{% endif %}><th scope="row">{{ r.name }}<span class="who">{{ role_name[r.role] }}{{ 's' if not r.id }}</span></th>
+          <td><span class="open-cell"><b>{{ r.open|round|int }}</b><svg class="wl-bar" aria-hidden="true" focusable="false"><rect class="tk-bg" width="100%" height="100%" rx="4"/><rect class="tk-fill" width="{{ (100 * r.open / top)|round(1) }}%" height="100%" rx="4"/><line class="wl-tick" x1="{{ (100 * mean / top)|round(1) }}%" x2="{{ (100 * mean / top)|round(1) }}%" y1="0" y2="100%"/></svg></span>
+            <span class="sr-only">{{ role_name[r.role] }} average {{ mean|round|int }}</span></td>
+          <td class="num-col{{ ' deadline-past' if r.past_deadline >= 0.5 }}">{{ r.past_deadline|round|int }}</td><td class="num-col">{{ r.due_soon|round|int }}</td><td class="num-col">{{ r.closed_week|round|int }}</td>
+          <td class="num-col">{% if r.back and r.back[0] %}{% if r.id %}{{ r.back[1] }} of {{ r.back[0] }}, {% endif %}{{ "{:.0%}".format(r.back[1] / r.back[0]) }}{% else %}–{% endif %}</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="panel s4" aria-labelledby="un-h">
+    <div class="panel-head"><h2 id="un-h">Unassigned</h2><a class="aside" href="/queue?owner=unassigned">{{ n_unassigned }} cases, soonest deadline first</a></div>
+    <div class="panel-body scroll">
+      {% if unassigned %}<ol class="att unassigned">{% include "partials/work_unassigned_items.html" %}</ol>
+      {% else %}<p class="empty">Every open case has an owner.</p>{% endif %}
+    </div>
+  </section>
+</div>
 {% endblock %}

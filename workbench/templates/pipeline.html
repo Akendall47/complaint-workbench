@@ -1,30 +1,26 @@
 {% extends "base.html" %}
 {% from "partials/help.html" import help_panel %}
 {% block title %}Pipeline{% endblock %}
-{% block purpose %}{{ content.views.pipeline.purpose }}{% endblock %}
-{% block hint %}{% endblock %}
+{% block body_class %}fit{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/flow.css"><link rel="stylesheet" href="/static/work.css">{% endblock %}
+{% block strip %}{% include "partials/deadline_strip.html" %}{% endblock %}
 {% block help %}{{ help_panel("pipeline") }}{% endblock %}
 {% block content %}
-<section class="card" aria-labelledby="flow-h">
-  <h2 id="flow-h">Open cases by stage</h2>
-  <ol class="stages">
-    {% for s, n in stages %}
-    <li><a class="stage" href="/queue?owner=all&amp;stage={{ s }}"><span>{{ stage_name[s] }}</span><b>{{ n }}</b></a>{% if not loop.last %}<span class="arrow" aria-hidden="true">&rarr;</span>{% endif %}</li>
-    {% endfor %}
-  </ol>
-  <p>{{ back }} of {{ handovers }} handovers were returned for more work.</p>
-  <details class="chart-data"><summary>Show the numbers</summary>
-    <div class="table-wrap"><table class="case-table">
-      <thead><tr><th scope="col">From</th><th scope="col">To</th><th scope="col">Path</th><th scope="col">Cases</th></tr></thead>
-      <tbody>{% for f, t, k, n in moves %}<tr><td>{{ f }}</td><td>{{ t }}</td><td>{{ k }}</td><td class="num-col">{{ n }}</td></tr>{% endfor %}</tbody>
-    </table></div>
-  </details>
-</section>
+<div class="board pipeline">
+  <section class="panel s9" aria-labelledby="flow-h">
+    <div class="panel-head"><h2 id="flow-h">Case flow</h2><span class="aside">all cases, select a stage to open it in the Queue</span></div>
+    <div class="panel-body">{{ chart }}</div>
+  </section>
 
-<details class="card more">
-  <summary>More charts</summary>
-  {% for t, c in more %}<h3>{{ t }}</h3>{{ c }}{% endfor %}
-</details>
-
-<p class="source"><a href="/settings#data-sources">Where these numbers come from</a></p>
+  <div class="stack s3">
+    <section class="panel" aria-labelledby="stage-h">
+      <div class="panel-head"><h2 id="stage-h">By stage</h2></div>
+      <div class="panel-body">{{ by_stage }}</div>
+    </section>
+    <section class="panel" aria-labelledby="rules-h">
+      <div class="panel-head"><h2 id="rules-h">Rules</h2></div>
+      <div class="panel-body scroll"><ul class="rules">{% for r in rules %}<li>{{ r }}</li>{% endfor %}</ul></div>
+    </section>
+  </div>
+</div>
 {% endblock %}

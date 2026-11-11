@@ -1,66 +1,51 @@
 {% extends "base.html" %}
 {% from "partials/help.html" import help_panel %}
-{% from "partials/macros.html" import deadline_chip %}
 {% block title %}Departments{% endblock %}
-{% block purpose %}{{ content.views.departments.purpose }}{% endblock %}
-{% block hint %}{% endblock %}
+{% block title_h %}Departments{% if own %} <span class="h1-sub">{{ dept }}</span>{% endif %}{% endblock %}
+{% block body_class %}fit{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/work.css">{% endblock %}
+{% block strip %}{% include "partials/deadline_strip.html" %}{% endblock %}
 {% block help %}{{ help_panel("departments") }}{% endblock %}
 {% block content %}
-<section class="table-card">
-  <div class="toolbar">
-    <ul class="chips" aria-label="Filters in use">
-      {% if source %}<li class="chip">Source: {{ source }} <a href="{{ clear('source') }}">Clear<span class="sr-only"> source</span></a></li>{% endif %}
-      {% if type_ %}<li class="chip">Type: {{ type_ }} <a href="{{ clear('type') }}">Clear<span class="sr-only"> type</span></a></li>{% endif %}
-    </ul>
-  </div>
-  <div class="table-wrap">
-    <table class="case-table">
-      <thead><tr><th scope="col">Department</th><th scope="col">Past deadline</th><th scope="col">Open</th><th scope="col">Urgent</th></tr></thead>
-      <tbody>
-      {% for r in rows %}
-      <tr><th scope="row">{% if r.department in cfg.departments %}<a href="{{ link(r.department) }}"{% if r.department == chosen %} aria-current="true"{% endif %}>{{ r.department }}</a>{% else %}{{ r.department }}{% endif %}</th>
-        <td class="num-col{{ ' deadline-past' if r.past }}">{{ r.past }}</td><td class="num-col">{{ r.open }}</td><td class="num-col">{{ r.urgent }}</td></tr>
-      {% endfor %}
-      </tbody>
-    </table>
-  </div>
-    <details class="filters">
-      <summary>Filter by source or type</summary>
-      <form method="get" action="/departments" class="filter-form">
-        <input type="hidden" name="department" value="{{ chosen }}">
-        <label>Source <select name="source"><option value="">Any</option>{% for s in cfg.sources %}<option{% if source == s %} selected{% endif %}>{{ s }}</option>{% endfor %}</select></label>
-        <label>Type <select name="type"><option value="">Any</option>{% for t in cfg.types %}<option{% if type_ == t %} selected{% endif %}>{{ t }}</option>{% endfor %}</select></label>
-        <button type="submit">Apply</button>
-      </form>
-    </details>
-</section>
-
-<section class="card" aria-labelledby="wait-h">
-  <h2 id="wait-h">Waiting for {{ chosen }}</h2>
-  {% if waiting %}
-  <ul class="handovers">
-    {% for c in waiting %}
-    <li><a href="/cases/{{ c.id }}" class="plain-id">{{ c.id }}</a>
-      <span>{{ c.type or "Type not set" }}, {{ c.source }}</span>
-      {{ deadline_chip(days(c.deadline)) }}
-      {% if c.can %}
-      <form method="post" action="/cases/{{ c.id }}/accept"><input type="hidden" name="version" value="{{ c.version }}"><button type="submit" class="primary">Accept<span class="sr-only"> {{ c.id }}</span></button></form>
-      <details class="inline"><summary>Return<span class="sr-only"> {{ c.id }}</span></summary>
-        <form method="post" action="/cases/{{ c.id }}/return"><input type="hidden" name="version" value="{{ c.version }}">
-          <label>Reason <input name="reason" maxlength="500" required></label> <button type="submit">Return to the handler</button></form></details>
-      {% endif %}
-    </li>
+<div class="board departments{{ ' own' if own }}">
+  {% if chips or source or type_ %}
+  <ul class="dept-chips" aria-label="Departments">
+    {% for label, n, href, current in chips %}
+    <li><a href="{{ href }}"{% if current %} aria-current="page"{% endif %}>{{ label }} <b>{{ "{:,}".format(n) }}</b></a></li>
     {% endfor %}
+    {% if source %}<li class="filter">Channel: {{ source|capitalize }} <a href="{{ clear('source') }}">Clear<span class="sr-only"> channel</span></a></li>{% endif %}
+    {% if type_ %}<li class="filter">Type: {{ type_ }} <a href="{{ clear('type') }}">Clear<span class="sr-only"> type</span></a></li>{% endif %}
   </ul>
-  {% if n_waiting > waiting|length %}<p><a href="{{ queue_link }}">See all {{ n_waiting }} in the Queue</a></p>{% endif %}
-  {% if not can_act %}<p class="muted">Specialists accept or return handovers.</p>{% endif %}
-  {% else %}<p class="empty">No handovers waiting.</p>{% endif %}
-</section>
+  {% endif %}
 
-<details class="card more">
-  <summary>Fields most often missing</summary>
-  {{ chart }}
-</details>
+  <section class="panel s12 kpi-panel" aria-label="Figures for {{ dept or 'all departments' }}">
+    <ul class="kpis five">
+      {% for label, value, href, warm in figures %}
+      <li class="kpi"><span class="kpi-label">{% if label == "Sent back" %}<abbr title="Share of cases at a specialist or sent back that were returned at least once">Sent back</abbr>{% else %}{{ label }}{% endif %}</span>
+        <span class="kpi-value{{ ' bad' if warm }}{{ ' word' if loop.last }}">{% if href %}<a href="{{ href }}">{{ value }}</a>{% else %}{{ value }}{% endif %}</span></li>
+      {% endfor %}
+    </ul>
+  </section>
 
-<p class="source"><a href="/settings#data-sources">Where these numbers come from</a></p>
+  <section class="panel s7" aria-labelledby="wait-h">
+    <div class="panel-head"><h2 id="wait-h">Waiting handovers</h2><a class="aside" href="{{ queue_link }}">{{ n }} waiting</a></div>
+    <div class="panel-body scroll">
+      {% if rows %}
+      <table class="case-table compact handovers">
+        <thead><tr><th scope="col">Case</th><th scope="col">Type</th><th scope="col">Channel</th><th scope="col">Deadline</th><th scope="col">Fields</th>{% if act %}<th scope="col"><span class="sr-only">Actions</span></th>{% endif %}</tr></thead>
+        <tbody>{% include "partials/work_handover_rows.html" %}</tbody>
+      </table>
+      {% else %}<p class="empty">No handovers waiting.</p>{% endif %}
+    </div>
+  </section>
+
+  <section class="panel tabs s5" aria-labelledby="mix-h">
+    <input type="radio" name="mix" id="mix-1" class="sr-only" checked><input type="radio" name="mix" id="mix-2" class="sr-only"><input type="radio" name="mix" id="mix-3" class="sr-only">
+    <div class="panel-head"><h2 id="mix-h">Open cases</h2>
+      <div class="tab-labels"><label for="mix-1">Channel</label><label for="mix-2">Type</label><label for="mix-3">Missing fields</label></div></div>
+    <div class="panel-body pane p1">{{ channel }}</div>
+    <div class="panel-body pane p2">{{ types }}</div>
+    <div class="panel-body pane p3">{{ missing }}</div>
+  </section>
+</div>
 {% endblock %}

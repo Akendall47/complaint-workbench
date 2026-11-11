@@ -1,0 +1,10 @@
+{% from "partials/macros.html" import due_chip %}
+{% for c in unassigned %}
+<li><a href="/cases/{{ c.id }}" class="plain-id">{{ c.id }}</a>
+  <span class="what">{{ c.type or "Type not set" }} · {{ c.department or "Needs routing" }}</span>
+  <span class="tags">{{ due_chip(c.days) }}{% if can_assign %}
+    <form method="post" action="/cases/{{ c.id }}/assign"><input type="hidden" name="version" value="{{ c.version }}"><input type="hidden" name="next" value="/team"><button type="submit">Assign to me<span class="sr-only"> {{ c.id }}</span></button></form>{% endif %}</span></li>
+{% endfor %}
+{% if next < n_unassigned %}
+<li class="more-row"><a class="load-more" href="/queue?owner=unassigned" hx-get="/team/unassigned?offset={{ next }}" hx-target="closest li" hx-swap="outerHTML">Load more ({{ n_unassigned - next }} left)</a></li>
+{% endif %}

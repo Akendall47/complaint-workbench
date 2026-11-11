@@ -1,4 +1,4 @@
-"""Server-rendered case flow; geometry is independent of the CSS colour palette."""
+"""Server-rendered case flow; geometry is independent of the CSS colour palette. It scales to fit its panel."""
 
 from markupsafe import Markup, escape
 
@@ -89,7 +89,7 @@ def case_flow(stages, paths, title="", summary="") -> Markup:
     for stage in stages:
         x, y = positions[stage["key"]]
         lower = stage.get("row") == "below"
-        node = (f'<rect class="flow-node" x="{x - 11:g}" y="{310 if lower else 150}" '
+        node = (f'<rect class="flow-node st-{_e(stage["key"])}" x="{x - 11:g}" y="{310 if lower else 150}" '
                 f'width="22" height="{60 if lower else 110}" rx="6"/>')
         for text, baseline, cls, font in (
             (str(stage["label"]), 392 if lower else 28, "flow-stage", 16),
@@ -127,8 +127,9 @@ def case_flow(stages, paths, title="", summary="") -> Markup:
              f'C {mid:g} {c1+half:g} {mid:g} {c0+half:g} {x0:g} {y0+half:g} Z')
         source, target = by_key[p["from"]]["label"], by_key[p["to"]]["label"]
         description = f'{source} to {target}, {_KINDS[kind].lower()}: {count} cases'
-        band = (f'<path class="band {kind}" d="{d}" data-thickness="{thickness:g}" '
-                f'tabindex="0"><title>{_e(description)}</title></path>')
+        focus = '' if p.get("href") else ' tabindex="0"'  # a linked band takes focus through its link: one tab stop
+        band = (f'<path class="band {kind}" d="{d}" data-thickness="{thickness:g}"'
+                f'{focus}><title>{_e(description)}</title></path>')
         bands.append(_link(band, p.get("href")))
         text = str(count) + (" " + kind.replace("_", " ") if kind != "normal" else "")
         # Cubic midpoint, with a small baseline adjustment to centre the text.
@@ -153,12 +154,9 @@ def case_flow(stages, paths, title="", summary="") -> Markup:
     headings = ''.join(f'<th scope="col">{v}</th>' for v in ("From", "To", "Path", "Cases"))
     table = ''.join('<tr>' + ''.join(f'<td>{_e(v)}</td>' for v in row) + '</tr>' for row in rows)
     return Markup(
-        f'<figure class="chart"><svg class="chart-svg flow" viewBox="0 0 1000 {height:g}" '
-        f'role="img" aria-label="{_e(aria)}">'
+        f'<figure class="flow-fig"><svg class="chart-svg flow" viewBox="0 0 1000 {height:g}" '
+        f'role="group" aria-label="{_e(aria)}">'  # group, not img: the stage links and bands inside take focus
         + ''.join(bands + nodes + labels)
         + f'</svg><ul class="flow-legend">{legend}</ul>'
-        '<details class="chart-data"><summary>Show the numbers</summary>'
-        '<div class="table-wrap"><table class="case-table">'
-        f'<thead><tr>{headings}</tr></thead><tbody>{table}</tbody>'
-        '</table></div></details></figure>'
+        f'<table class="sr-only"><thead><tr>{headings}</tr></thead><tbody>{table}</tbody></table></figure>'
     )

@@ -1,0 +1,15 @@
+{% from "partials/macros.html" import due_chip %}
+{% for c in rows %}
+<tr><th scope="row"><a href="/cases/{{ c.id }}" class="plain-id">{{ c.id }}</a></th>
+  <td>{{ c.type or "Not set" }}</td><td>{{ c.source|capitalize }}</td><td>{{ due_chip(c.days) }}</td>
+  <td>{% if c.missing is none %}<span class="tag">No department</span>{% elif c.missing %}<span class="tag warm" title="Missing: {{ c.missing|join(', ') }}">{{ c.missing|length }} field{{ '' if c.missing|length == 1 else 's' }} missing</span>{% else %}<span class="tag ok">Complete</span>{% endif %}</td>
+  {% if act %}<td>{% if c.can %}<div class="acts">
+    <form method="post" action="/cases/{{ c.id }}/accept"><input type="hidden" name="version" value="{{ c.version }}"><button type="submit" class="primary">Accept<span class="sr-only"> {{ c.id }}</span></button></form>
+    <details class="inline"><summary>Return<span class="sr-only"> {{ c.id }}</span></summary>
+      <form method="post" action="/cases/{{ c.id }}/return"><input type="hidden" name="version" value="{{ c.version }}">
+        <label>Reason <input name="reason" maxlength="500" required></label> <button type="submit">Return to the handler</button></form></details>
+  </div>{% endif %}</td>{% endif %}</tr>
+{% endfor %}
+{% if next < n %}
+<tr class="more-tr"><td colspan="{{ 6 if act else 5 }}"><a class="load-more" href="{{ queue_link }}" hx-get="{{ more }}" hx-target="closest tr" hx-swap="outerHTML">Load more ({{ n - next }} left)</a></td></tr>
+{% endif %}

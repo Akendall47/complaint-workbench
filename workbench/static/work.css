@@ -1,0 +1,47 @@
+/* Departments, Team and Pipeline. The board, panels, figures, tracks and list rows come from layout.css. */
+.fit .board.departments{grid-template-rows:auto auto minmax(0,1fr)}
+.fit .board.departments.own,.fit .board.team{grid-template-rows:auto minmax(0,1fr)}
+.fit .board.pipeline{grid-template-rows:minmax(0,1fr)}
+.h1-sub{font-weight:500;color:var(--muted)}
+
+/* Department chips: one per department with its open count, the current one filled */
+.dept-chips{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px;list-style:none;padding:0;margin:0}
+.dept-chips a{display:inline-block;padding:4px 12px;border-radius:16px;background:white;box-shadow:var(--shadow);color:var(--ink);text-decoration:none;font-size:13px}
+.dept-chips a b{margin-left:4px;font-weight:600;color:var(--muted);font-variant-numeric:tabular-nums}
+.dept-chips a[aria-current=page]{background:var(--indigo-dark);color:white}
+.dept-chips a[aria-current=page] b{color:white}
+.dept-chips a:hover{text-decoration:underline}
+.dept-chips .filter{padding:4px 12px;border-radius:16px;background:var(--indigo-tint);font-size:13px}
+
+/* Figures: five across */
+.kpis.five{grid-template-columns:repeat(5,minmax(0,1fr))}
+.kpi-value.word{font-size:18px;letter-spacing:0;line-height:1.6}
+.kpi-label abbr{text-decoration:none;cursor:help}
+
+/* Waiting handovers */
+.handovers .tag{font-size:12px;white-space:nowrap}
+.tag.warm{background:var(--tint);color:var(--accent-dark)}
+.tag.ok{background:var(--st-accepted-tint);color:var(--st-accepted-ink)}
+.handovers .acts{display:flex;gap:6px;align-items:flex-start;flex-wrap:wrap}
+.handovers td button.primary{min-height:30px;padding:3px 12px;border-radius:9px;background:var(--indigo-dark);color:white}
+.handovers .inline summary{padding:4px 0;font-size:13px}
+.handovers .inline form{min-width:220px}
+.more-tr td{text-align:center;border-bottom:0}
+
+/* Workload: open cases as a bar, the tick at that role's average */
+.workload th[scope=row]{line-height:1.25}
+.workload .who{display:block;font-size:11px;font-weight:400;color:var(--muted)}
+.open-cell{display:grid;grid-template-columns:2.4em minmax(60px,1fr);gap:8px;align-items:center}
+.open-cell b{text-align:right;font-variant-numeric:tabular-nums}
+.wl-bar{display:block;width:100%;height:10px;overflow:visible}
+.wl-tick{stroke:var(--ink);stroke-width:2}
+.avg-row th,.avg-row td{background:#f6f6fa;font-style:italic}
+.unassigned form{margin:0}
+.unassigned button{min-height:26px;padding:2px 10px;font-size:12px;border-radius:8px;background:var(--indigo-tint);color:var(--indigo-dark);font-weight:600}
+
+/* Pipeline rules */
+.rules{list-style:none;padding:0;margin:0;display:grid;gap:8px;font-size:13px}
+.rules li{padding-left:10px;border-left:3px solid var(--line)}
+
+@media (max-width:1099px){.board>.s9,.board>.kpi-panel{grid-column:1/-1}}
+@media (max-width:700px){.kpis.five{grid-template-columns:repeat(2,minmax(0,1fr))}}

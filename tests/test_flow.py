@@ -57,7 +57,7 @@ def test_real_data_and_accessibility():
     assert isinstance(output, Markup)
     root = ET.fromstring(str(output))
     svg = root.find("svg")
-    assert svg.get("role") == "img"
+    assert svg.get("role") == "group"  # the stage links and bands inside take focus
     assert svg.get("aria-label") == "Pipeline. Case movements"
     assert len(with_class(svg, "path", "band")) == 7
     assert len(with_class(svg, "rect", "flow-node")) == 5
@@ -69,8 +69,10 @@ def test_real_data_and_accessibility():
     rows = root.findall(".//tbody/tr")
     assert len(rows) == 7
     assert [r[2].text for r in rows] == ["Normal path", "Urgent fast path", "Normal path", "Urgent fast path", "Normal path", "Returned for more work", "Returned for more work"]
-    assert root.find("details/summary").text == "Show the numbers"
-    assert root.find("details").get("open") is None
+    assert root.find("table").get("class") == "sr-only"  # numbers for screen readers; nothing grows the panel
+    assert root.find("details") is None
+    assert [e.get("class") for e in with_class(svg, "rect", "flow-node")] == ["flow-node st-" + s["key"] for s in STAGES]
+    assert not any(b.get("tabindex") for a in root.iter("a") for b in a.iter("path"))  # a linked band has one tab stop, its link
     assert all(p.find("title") is not None for p in with_class(svg, "path", "band"))
     assert "Returned a second time" not in str(output)
     assert 'style=' not in output and '<script' not in output

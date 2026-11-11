@@ -219,58 +219,6 @@ def create_app(db_path="data/workbench.db", config_path="config/pipeline.yaml", 
         resp.set_cookie("alerts", "on" if show == "1" else "off", httponly=True, samesite="lax")
         return resp
 
-    # ==== WORK (moves to views/work.py) ====
-
-    # ---- Departments, Team, Pipeline ----
-    @app.get("/departments", response_class=HTMLResponse)
-    def departments(request: Request):
-        actor, q = current_actor(request), request.query_params
-        source = q.get("source") if q.get("source") in cfg["sources"] else ""
-        type_ = q.get("type") if q.get("type") in cfg["types"] else ""
-        with db() as conn:
-            row = conn.execute("SELECT department FROM staff WHERE id = ? AND role = 'specialist'", (actor.id,)).fetchone() if actor.role == "specialist" else None
-            mine = row[0] if row else None  # a specialist's ?department= is ignored: they see their own department only
-            rows = stats.department_rows(conn, cfg, today, source, type_)
-            if mine:  # a specialist sees their own department only
-                rows = [r for r in rows if r["department"] == mine]
-            chosen = mine or (q.get("department") if q.get("department") in cfg["departments"] else rows[0]["department"])
-            waiting, n_waiting = stats.handovers(conn, chosen, source, type_, limit=8)
-            for c in waiting:
-                c["can"] = cases.can_decide(conn, c["id"], actor)[0]  # the rules layer decides who gets the buttons
-            missing = stats.missing_by_field(conn, cfg, chosen, source, type_)[:6]
-            title = f"Fields most often missing, {chosen}"
-            keep = {k: v for k, v in (("source", source), ("type", type_)) if v}
-            return page(request, conn, "departments.html", rows=rows, chosen=chosen, waiting=waiting, n_waiting=n_waiting, can_act=any(c["can"] for c in waiting),
-                        days=lambda d: business_days_left(date.fromisoformat(d), today, hol), source=source, type_=type_,
-                        link=lambda d: "/departments?" + urlencode({"department": d, **keep}),
-                        clear=lambda k: "/departments?" + urlencode({"department": chosen, **{a: b for a, b in keep.items() if a != k}}),
-                        queue_link="/queue?" + urlencode({"owner": "all", "state": "handed_over", "department": chosen}),
-                        chart=charts.bars(missing, title=title, summary=stats.sentence("bars", {"title": title, "items": missing}) if missing else ""))
-
-    @app.get("/team", response_class=HTMLResponse)
-    def team(request: Request):
-        actor = current_actor(request)
-        with db() as conn:
-            everyone = stats.team(conn, today)
-            lead = actor.role == "team_lead"
-            rows = everyone if lead else [r for r in everyone if r["id"] == actor.id]
-            return page(request, conn, "team.html", rows=rows, lead=lead, unassigned=stats.unassigned(conn))
-
-    @app.get("/pipeline", response_class=HTMLResponse)
-    def pipeline(request: Request):
-        kind = {"normal": "Normal path", "urgent": "Urgent fast path", "returned": "Returned for more work", "second_return": "Returned a second time"}
-        nm = lambda n: STATE_NAME.get(n, n.capitalize())  # noqa: E731
-        with db() as conn:
-            states = dict(stats.by_stage(conn))
-            stages = [(s, states.get(s, 0)) for s in cfg["stages"] if s != "accepted"]  # accepted is closed, so not an open count
-            moves = [(nm(p["from"]), nm(p["to"]), kind.get(p["kind"], p["kind"]), p["count"]) for p in stats.pipeline_paths(conn, cfg)]
-            back, ho = stats.handover_returns(conn)
-            dept_title = "Open complaints by department"
-            by_dept = [(r["department"], r["open"]) for r in stats.by_department(conn)]
-            more = [(dept_title, charts.bars(by_dept, title=dept_title, summary=stats.sentence("bars", {"title": dept_title, "items": by_dept}) if by_dept else "")),
-                    ("When complaints arrive", charts.heatmap(stats.heatmap(conn), title="Complaints received by weekday and hour", summary="Darker cells are busier hours."))]
-            return page(request, conn, "pipeline.html", stages=stages, stage_name=STATE_NAME, moves=moves, back=back, handovers=ho, more=more)
-
     # ==== REFERENCE (moves to views/reference.py) ====
 
     # ---- Policy library, Audit log, Settings ----

@@ -109,16 +109,19 @@ def department_table(conn, cfg, today, holidays, limit=5, weeks=8) -> list[dict]
     return sorted(rows, key=lambda r: (-r["past"], -r["open"], r["department"]))
 
 
-def department_figures(conn, cfg, today, holidays, department="", limit=5) -> dict:
+def department_figures(conn, cfg, today, holidays, department="", limit=5, source="", type_="") -> dict:
     """Open, past deadline and due soon for one department (every open case when department is ""), the share of its open cases
-    at a specialist or sent back (handed_over, returned) that were returned at least once, and the field most often missing."""
+    at a specialist or sent back (handed_over, returned) that were returned at least once, and the field most often missing.
+    source and type_ narrow every figure, as on the Departments page."""
     t, edge = str(today), str(due_soon_edge(today, limit, holidays))
-    extra, args = (" AND department = ?", [department]) if department else ("", [])
+    extra, args = _slice(source, type_)
+    if department:
+        extra, args = " AND department = ?" + extra, [department, *args]
     n, past, soon, ho, back = conn.execute(
         "SELECT COUNT(*), COALESCE(SUM(deadline < ?),0), COALESCE(SUM(deadline >= ? AND deadline <= ?),0),"
         " COALESCE(SUM(state IN ('handed_over','returned')),0), COALESCE(SUM(state IN ('handed_over','returned') AND return_count > 0),0)"
         f" FROM cases WHERE {OPEN}{extra}", (t, t, edge, *args)).fetchone()
-    missing = missing_by_field(conn, cfg, department or None)
+    missing = missing_by_field(conn, cfg, department or None, source, type_)
     return {"open": n, "past": past, "soon": soon, "incomplete_share": back / ho if ho else None, "top_missing": missing[0][0] if missing else None}
 
 
@@ -220,6 +223,31 @@ def unassigned(conn) -> int:
     return conn.execute(f"SELECT COUNT(*) FROM cases WHERE {OPEN} AND owner_id IS NULL").fetchone()[0]
 
 
+def unassigned_cases(conn, limit=20, offset=0) -> list[dict]:
+    """Open cases nobody owns, oldest deadline first, at most limit from offset (the Team page's Unassigned list)."""
+    return [dict(r) for r in conn.execute(f"SELECT id, type, department, deadline, version FROM cases WHERE {OPEN} AND owner_id IS NULL"
+                                          " ORDER BY deadline, id LIMIT ? OFFSET ?", (limit, offset))]
+
+
+def team_figures(conn, today, holidays, limit=5) -> dict:
+    """Open, unassigned, past deadline, due soon (today to the due-soon edge) and cases accepted in the 7 days ending today."""
+    t, edge, week = str(today), str(due_soon_edge(today, limit, holidays)), str(today - timedelta(days=6))
+    row = conn.execute(f"SELECT COALESCE(SUM({OPEN}),0), COALESCE(SUM({OPEN} AND owner_id IS NULL),0), COALESCE(SUM({OPEN} AND deadline < ?),0),"
+                       f" COALESCE(SUM({OPEN} AND deadline >= ? AND deadline <= ?),0),"
+                       " COALESCE(SUM(state = 'accepted' AND substr(accepted_at,1,10) BETWEEN ? AND ?),0) FROM cases",
+                       (t, t, edge, week, t)).fetchone()
+    return dict(zip(("open", "unassigned", "past", "soon", "closed_week"), row))
+
+
+def returned_by_handler(conn) -> dict[str, tuple[int, int]]:
+    """Per person: (handovers they made, how many of those the specialist returned). A handover counts as returned when the
+    case's next stage move is to returned. One query over the events table."""
+    q = ("SELECT actor_id, COUNT(*), COALESCE(SUM(nxt = 'returned'),0) FROM (SELECT actor_id, to_state, LEAD(to_state) OVER"
+         " (PARTITION BY case_id ORDER BY at, id) nxt FROM events WHERE to_state IS NOT NULL AND from_state IS NOT to_state)"
+         " WHERE to_state = 'handed_over' GROUP BY actor_id")
+    return {a: (n, back) for a, n, back in conn.execute(q)}
+
+
 def _slice(source, type_):
     """SQL and arguments that narrow cases by source and type. Empty values do not narrow."""
     sql = "".join(f" AND {col} = ?" for col, v in (("source", source), ("type", type_)) if v)
@@ -243,12 +271,15 @@ def department_rows(conn, cfg, today, source="", type_="") -> list[dict]:
 
 
 def handovers(conn, department, source="", type_="", limit=10, offset=0) -> tuple[list[dict], int]:
-    """Cases waiting for a department (soonest deadline first, at most limit from offset) and how many wait in all."""
+    """Cases waiting for a department (every department when it is ""), soonest deadline first, at most limit from offset,
+    and how many wait in all."""
     extra, args = _slice(source, type_)
-    where = f"state = 'handed_over' AND department = ?{extra}"
-    n = conn.execute(f"SELECT COUNT(*) FROM cases WHERE {where}", (department, *args)).fetchone()[0]
-    rows = conn.execute(f"SELECT id, type, source, deadline, version FROM cases WHERE {where} ORDER BY deadline, id LIMIT ? OFFSET ?",
-                        (department, *args, limit, offset))
+    if department:
+        extra, args = " AND department = ?" + extra, [department, *args]
+    where = f"state = 'handed_over'{extra}"
+    n = conn.execute(f"SELECT COUNT(*) FROM cases WHERE {where}", args).fetchone()[0]
+    rows = conn.execute(f"SELECT id, type, source, deadline, version, department, handover_json FROM cases WHERE {where}"
+                        " ORDER BY deadline, id LIMIT ? OFFSET ?", (*args, limit, offset))
     return [dict(r) for r in rows], n
 
 
