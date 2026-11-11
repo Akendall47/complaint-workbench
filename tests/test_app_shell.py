@@ -41,7 +41,7 @@ def test_deadline_strip_counts_equal_direct_counts(client, app_db):
     html = client.get("/queue").text
     strip = re.sub(r"\s+", " ", re.search(r'<ul class="strip".*?</ul>', html, re.S).group(0))
     assert f"Past deadline <b>{past}</b>" in strip
-    assert f"Due within 5 business days <b>{soon}</b>" in strip
+    assert f"Due in 5 business days <b>{soon}</b>" in strip
     assert f"Urgent <b>{urgent}</b>" in strip
     assert "Rises" not in strip  # none in a 200-case set
 
