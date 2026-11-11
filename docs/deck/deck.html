@@ -128,6 +128,13 @@
   /* big figures: room for the glyphs so they never touch the caption below */
   .s1 .stats b, .s3 .callout b, .s4 .fig b, .s5 .nums b { line-height: 1.18; margin-bottom: 6px; }
   .foot a.url { color: inherit; font-weight: 500; text-decoration: none; border-bottom: 1px solid currentColor; }
+  .why { margin-top: 30px; display: grid; gap: 12px; max-width: 700px; }
+  .why h3 { font-weight: 500; font-size: 24px; color: var(--navy); margin: 0 0 2px; }
+  .why p { margin: 0; font-size: 20px; line-height: 1.45; color: var(--ink); padding-left: 16px; border-left: 3px solid var(--teal); }
+  .why b { font-weight: 500; }
+  .staff { margin-top: 30px; }
+  .staff h3 { font-weight: 500; font-size: 24px; color: var(--mint); margin: 0 0 8px; }
+  .staff p { margin: 0; font-size: 20px; line-height: 1.5; color: #c3d1dc; }
   @media print { body { background: none; } .slide { margin: 0; } }
 </style>
 </head>
@@ -165,6 +172,12 @@
       <div>
         <h1>Judgement,<br><em>not retyping.</em></h1>
         <p class="lede">The workbench routes each complaint, drafts a summary that quotes the customer's own words, and builds the handover. People keep every decision.</p>
+        <div class="why">
+          <h3>Why this approach</h3>
+          <p><b>Regulated work.</b> The AI only drafts, and every claim must quote the customer, so a person can check it in seconds.</p>
+          <p><b>Private by default.</b> A small local model: complaint data never leaves the bank.</p>
+          <p><b>Explainable routing.</b> Classic models a reviewer can audit; unsure cases go to a person.</p>
+        </div>
       </div>
       <div class="tiles">
         <div class="tile navy"><span class="big">1.85M</span><p>complaints to UK firms in H1 2026, each on an 8-week clock (FCA)</p></div>
@@ -193,6 +206,10 @@
         <div><span><small>Wrong team</small>Unsure cases wait for a person</span><b>11.3% to a person</b></div>
         <div><span><small>Hidden instructions</small>Notes are fenced as data, output checked</span><b>0 of 1 changed</b></div>
         <div><span><small>Silent edits</small>Every action in a hash-chained log</span><b class="warn">detected, not prevented</b></div>
+      </div>
+      <div class="staff">
+        <h3>Effects on staff</h3>
+        <p>Less reading and retyping; checking becomes the core skill. The risk is trusting the AI too much, so each claim is confirmed one at a time, staff need training in checking, and no one is ranked on speed.</p>
       </div>
     </div>
   </div>
