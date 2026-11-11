@@ -47,8 +47,9 @@ def test_specialist_accepts_a_waiting_case(base, browser):
     first = page.locator(".waiting tbody tr").first
     cid = first.locator(".plain-id").inner_text()
     first.get_by_role("button", name="Accept").click()
-    page.wait_for_url(f"**/cases/{cid}**")
-    assert "Accepted" in page.locator("main").inner_text()
+    page.wait_for_load_state("networkidle")
+    assert page.url.endswith("/departments")  # the specialist stays on the list
+    assert cid not in page.locator(".waiting").inner_text()
     page.close()
 
 

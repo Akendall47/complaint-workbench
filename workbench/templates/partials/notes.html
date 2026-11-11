@@ -4,7 +4,7 @@
     <span class="aside">{{ "Unmasked for this view only" if v.unmasked else "Personal details masked" }}</span>
     {% if not v.unmasked %}<details class="drop"><summary>Unmask</summary>
       <form class="drop-body" {{ hx("/cases/" ~ v.id ~ "/unmask") }}>{{ hidden() }}
-        <label>Reason (logged) <input name="reason" maxlength="500"></label>
+        <label>Reason (logged) <input name="reason" maxlength="500" required></label>
         <button type="submit">Show unmasked</button>
       </form>
     </details>{% endif %}

@@ -155,7 +155,8 @@ def test_no_department_shows_by_hand_message(client, app_db):
     cid = pick(app_db)
     sql(app_db, "UPDATE cases SET department = NULL WHERE id=?", cid, write=True)
     html = client.get(f"/cases/{cid}").text
-    assert "no department yet" in html and "by hand" in html
+    state = sql(app_db, "SELECT state FROM cases WHERE id=?", cid)[0][0]
+    assert "No department yet" in html and ("by hand" in html if state in ("in_review", "returned") else "Start review" in html if state == "new" else True)
 
 
 def test_reason_is_escaped_on_case_page_and_trail(client, app_db):

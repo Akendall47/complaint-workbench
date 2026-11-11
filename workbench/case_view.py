@@ -66,7 +66,7 @@ def build(conn, cfg, case_id, actor, step=1, all_=False, unmasked=False) -> dict
     notes = []
     for n in raw_notes:
         body = n["body"] if unmasked else shown[n["id"]]
-        marks = [] if unmasked else [(x["no"], x["quote"]) for x in claims if x["note_id"] == n["id"] and x["supported"] and x["quote"]]
+        marks = [(x["no"], x["quote"]) for x in claims if x["note_id"] == n["id"] and x["supported"] and x["quote"]]  # unmasked too: a quote with no masked words still matches
         parts = split_note(body, marks)
         for _, no in parts:
             for x in claims:
@@ -98,9 +98,10 @@ def build(conn, cfg, case_id, actor, step=1, all_=False, unmasked=False) -> dict
     if c["return_count"] and c["state"] in ("returned", "in_review"):
         r = conn.execute("SELECT detail_json FROM audit WHERE case_id = ? AND action = 'return_case' ORDER BY id DESC LIMIT 1", (case_id,)).fetchone()
         ret = _detail(r[0]).get("reason") if r else None
-    trail = [{"at": r["at"][:16].replace("T", " "), "who": f"{r['actor_id']} ({r['role']})", "what": ACTION.get(r["action"], r["action"]),
-              "reason": _detail(r["detail_json"]).get("reason")}
-             for r in conn.execute("SELECT at, actor_id, role, action, detail_json FROM audit WHERE case_id = ? ORDER BY id", (case_id,))]
+    trail = [{"at": r["at"][:16].replace("T", " "), "what": ACTION.get(r["action"], r["action"]), "reason": _detail(r["detail_json"]).get("reason"),
+              "who": "System" if r["actor_id"] == "system" else f"{r['name'] or r['actor_id']}, {r['role'].replace('_', ' ').capitalize()}"}
+             for r in conn.execute("SELECT a.at, a.actor_id, a.role, a.action, a.detail_json, s.name FROM audit a LEFT JOIN staff s ON s.id = a.actor_id"
+                                   " WHERE a.case_id = ? ORDER BY a.id", (case_id,))]
     query = " ".join([c["type"] or ""] + [x["text"] for x in claims if x["status"] in ("confirmed", "edited")])
     policies = search_policies(conn, query, 5) if c["state"] != "accepted" or claims else []
     can_decide, decide_msg = cases.can_decide(conn, case_id, actor)

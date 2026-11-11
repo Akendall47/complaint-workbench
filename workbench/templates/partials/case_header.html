@@ -15,7 +15,7 @@
       <form {{ hx("/cases/" ~ v.id ~ "/urgent") }}>{{ hidden() }}
         <b>Urgency</b>
         <label>Mark as <select name="urgent"><option value="1"{% if c.urgent %} selected{% endif %}>Urgent</option><option value="0"{% if not c.urgent %} selected{% endif %}>Not urgent</option></select></label>
-        <label>Reason <input name="reason" maxlength="500"></label>
+        <label>Reason <input name="reason" maxlength="500" required></label>
         <button type="submit">Save</button>
       </form>
       {% if c.state in ("new", "in_review", "returned") %}

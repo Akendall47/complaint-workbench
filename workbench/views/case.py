@@ -6,7 +6,7 @@ from fastapi import Form, Request
 from fastapi.responses import HTMLResponse, PlainTextResponse, RedirectResponse
 
 from .. import case_view, cases, drafts
-from ..app import CASE_ID
+from ..app import CASE_ID, safe_path
 from ..cases import NotAllowed, StaleCase
 from .shared import STATE_NAME, current_actor, to_int
 
@@ -85,7 +85,7 @@ def register(app, x):
     def case_page(request: Request, case_id: str, step: str = "1", all: str = "0"):
         return case_response(request, case_id, to_int(step, 1), all == "1")
 
-    def act(request, case_id, version, step, all_, do, unmask=False):
+    def act(request, case_id, version, step, all_, do, unmask=False, back=""):
         """Run one cases.py action. Success: htmx gets the fresh fragment, others a redirect. Failure: the plain message."""
         actor, st, al = current_actor(request), to_int(step, 1), all_ == "1"
         if not CASE_ID.match(case_id):
@@ -102,7 +102,8 @@ def register(app, x):
             return case_response(request, case_id, st, al, unmasked=True)
         if request.headers.get("HX-Request"):
             return case_response(request, case_id, st, al)
-        return RedirectResponse(f"/cases/{case_id}?step={st}&all={1 if al else 0}", status_code=303)
+        # a list that acts on a case (Departments) sends `next`, so the person stays on the list
+        return RedirectResponse(safe_path(back) or f"/cases/{case_id}?step={st}&all={1 if al else 0}", status_code=303)
 
     def need_reason(reason):
         """Return, reject, unmask and the urgent flag are logged with a reason, so an empty one is refused."""
@@ -113,18 +114,19 @@ def register(app, x):
     def simple(name, fn_name):
         """A route for an action that needs only the case version."""
         @app.post("/cases/{case_id}/" + name)
-        def _(request: Request, case_id: str, version: str = Form(""), step: str = Form("1"), all: str = Form("0")):
-            return act(request, case_id, version, step, all, lambda c, a, v: getattr(cases, fn_name)(c, case_id, a, v))
+        def _(request: Request, case_id: str, version: str = Form(""), step: str = Form("1"), all: str = Form("0"), next: str = Form("")):
+            return act(request, case_id, version, step, all, lambda c, a, v: getattr(cases, fn_name)(c, case_id, a, v), back=next)
     for n, f in (("open", "open_case"), ("approve", "approve"), ("accept", "accept")):
         simple(n, f)
 
     def with_reason(name, fn_name):
         """A route for an action that must carry a reason."""
         @app.post("/cases/{case_id}/" + name)
-        def _(request: Request, case_id: str, version: str = Form(""), step: str = Form("1"), all: str = Form("0"), reason: str = Form("")):
+        def _(request: Request, case_id: str, version: str = Form(""), step: str = Form("1"), all: str = Form("0"), reason: str = Form(""),
+              next: str = Form("")):
             def do(c, a, v):
                 getattr(cases, fn_name)(c, case_id, a, v, need_reason(reason))
-            return act(request, case_id, version, step, all, do, unmask=name == "unmask")
+            return act(request, case_id, version, step, all, do, unmask=name == "unmask", back=next)
     for n, f in (("reject", "reject_draft"), ("return", "return_case"), ("unmask", "unmask")):
         with_reason(n, f)
 

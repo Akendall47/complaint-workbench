@@ -204,7 +204,9 @@ def test_reject_needs_reason_and_help_panel(base, dbfile, browser):
     page.goto(f"{base}/cases/{cid}")
     page.locator("summary", has_text="Reject the draft").click()
     page.get_by_role("button", name="Reject draft").click()
-    page.wait_for_selector("text=Enter a reason")
+    # the browser stops an empty reason before it is sent: the field is required
+    assert page.locator("form[action$='/reject'] input[name=reason]").evaluate("e => !e.validity.valid")
+    assert "/reject" not in page.url
     page.get_by_role("button", name="Help", exact=True).click()
     assert page.locator("#help").is_visible()
     page.keyboard.press("Escape")

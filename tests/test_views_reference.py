@@ -142,7 +142,7 @@ def test_bad_text_is_kept_next_to_the_message(writer):
 def test_test_complaint_with_markup_is_created_audited_and_shown_escaped(writer, app_db):
     as_role(writer, "team_lead", "T1")
     r = writer.post("/intake", data={"text": "<img src=x onerror=alert(1)> my card was stolen", "source": "email"})
-    cid = re.search(r'href="/cases/(AB-\d{4}-\d{5})"', r.text).group(1)
+    cid = re.search(r'Added\. <a href="/cases/(AB-\d{4}-\d{5})"', r.text).group(1)  # the nav's Case link comes first on the page
     row = sqlite3.connect(app_db).execute("SELECT actor_id, role FROM audit WHERE case_id = ? AND action = 'received'", (cid,)).fetchone()
     assert row == ("T1", "team_lead")
     case = writer.get(f"/cases/{cid}?all=1").text

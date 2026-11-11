@@ -57,3 +57,19 @@
   window.addEventListener('hashchange', openTarget);
   openTarget();
 })();
+
+// Drop-down menus (Change, History, Unmask): only one open at a time, and Escape or a click elsewhere closes it.
+(function () {
+  function closeAll(except) {
+    document.querySelectorAll('details.drop[open]').forEach(function (d) { if (d !== except) d.open = false; });
+  }
+  document.addEventListener('toggle', function (e) {
+    if (e.target.matches && e.target.matches('details.drop') && e.target.open) closeAll(e.target);
+  }, true);
+  document.addEventListener('click', function (e) { if (!e.target.closest('details.drop')) closeAll(null); });
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Escape') return;
+    var open = document.querySelector('details.drop[open]');
+    if (open) { open.open = false; open.querySelector('summary').focus(); }
+  });
+})();

@@ -1,7 +1,7 @@
 {% from "partials/macros.html" import hx, hidden with context %}
 <section class="claims" aria-labelledby="claims-h">
   <div class="pane-head"><h2 id="claims-h">Summary</h2> <span class="tag">AI draft</span></div>
-  {% if not v.has_dept %}<p class="muted">This case has no department yet, so there is no draft. Choose one under Change, then complete the summary by hand.</p>
+  {% if not v.has_dept %}<p class="muted">No department yet, so there is no draft. {% if v.c.state == "new" %}Select Start review, then choose one under Change.{% elif v.c.state in ("in_review", "returned") %}Choose one under Change, then complete the summary by hand.{% endif %}</p>
   {% elif v.draft_state == "rejected" %}<p class="muted">Draft rejected. Complete the summary by hand.</p>
   {% elif v.draft_state == "invalid" %}<p class="muted">The draft could not be read. Complete the summary by hand.</p>
   {% elif v.draft_state == "none" %}<p class="muted">No draft recorded for this case. Complete the summary by hand.</p>
@@ -45,7 +45,7 @@
   {% if v.draft_state in ("available", "invalid") %}
   <details class="inline"><summary>Reject the draft</summary>
     <form {{ hx("/cases/" ~ v.id ~ "/reject") }}>{{ hidden() }}
-      <label>Reason <input name="reason" maxlength="500"></label>
+      <label>Reason <input name="reason" maxlength="500" required></label>
       <button type="submit">Reject draft</button>
       <p class="small muted">Removes only the claims you have not yet confirmed or edited.</p>
     </form></details>

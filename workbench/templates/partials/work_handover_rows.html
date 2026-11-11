@@ -4,9 +4,9 @@
   <td>{{ c.type or "Not set" }}</td><td>{{ c.source|capitalize }}</td><td>{{ due_chip(c.days) }}</td>
   <td>{% if c.missing is none %}<span class="tag">No department</span>{% elif c.missing %}<span class="tag warm" title="Missing: {{ c.missing|join(', ') }}">{{ c.missing|length }} field{{ '' if c.missing|length == 1 else 's' }} missing</span>{% else %}<span class="tag ok">Complete</span>{% endif %}</td>
   {% if act %}<td>{% if c.can %}<div class="acts">
-    <form method="post" action="/cases/{{ c.id }}/accept"><input type="hidden" name="version" value="{{ c.version }}"><button type="submit" class="primary">Accept<span class="sr-only"> {{ c.id }}</span></button></form>
+    <form method="post" action="/cases/{{ c.id }}/accept"><input type="hidden" name="version" value="{{ c.version }}"><input type="hidden" name="next" value="/departments"><button type="submit" class="primary">Accept<span class="sr-only"> {{ c.id }}</span></button></form>
     <details class="inline"><summary>Return<span class="sr-only"> {{ c.id }}</span></summary>
-      <form method="post" action="/cases/{{ c.id }}/return"><input type="hidden" name="version" value="{{ c.version }}">
+      <form method="post" action="/cases/{{ c.id }}/return"><input type="hidden" name="version" value="{{ c.version }}"><input type="hidden" name="next" value="/departments">
         <label>Reason <input name="reason" maxlength="500" required></label> <button type="submit">Return to the handler</button></form></details>
   </div>{% endif %}</td>{% endif %}</tr>
 {% endfor %}

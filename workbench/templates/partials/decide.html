@@ -12,7 +12,7 @@
   <form {{ hx("/cases/" ~ v.id ~ "/accept") }}>{{ hidden() }}<button type="submit" class="primary">Accept</button></form>
   <details class="inline"><summary>Return to the handler</summary>
     <form {{ hx("/cases/" ~ v.id ~ "/return") }}>{{ hidden() }}
-      <label>Reason <input name="reason" maxlength="500"></label>
+      <label>Reason <input name="reason" maxlength="500" required></label>
       <button type="submit">Return</button>
     </form></details>
   {% else %}<p class="muted">Nothing to decide here.</p>{% endif %}

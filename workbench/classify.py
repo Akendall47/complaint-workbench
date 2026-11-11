@@ -135,8 +135,10 @@ def apply_to_cases(conn: sqlite3.Connection, cfg: dict, models: dict) -> dict:
         res[key] = ([str(models[key].classes_[i]) for i in proba.argmax(1)], proba.max(1))
     for r, dep, dc, ty, tc, ok in zip(rows, *res["department"], *res["type"], map(looks_english, texts)):
         routed = dep if (dc >= thr and ok) else None  # below threshold or not English: "Needs routing"
-        conn.execute("UPDATE cases SET department_pred=?, department_conf=?, department=?, type=?, type_conf=? WHERE id=?",
-                     (dep, float(dc), routed, ty, float(tc), r["id"]))
+        # A case already handed over, returned or accepted was routed by a person, so it keeps its department.
+        conn.execute("UPDATE cases SET department_pred=?, department_conf=?, type=?, type_conf=?, department = CASE WHEN state IN"
+                     " ('handed_over','returned','accepted') THEN COALESCE(department, department_true) ELSE ? END WHERE id=?",
+                     (dep, float(dc), ty, float(tc), routed, r["id"]))
     notes = {}
     for r in conn.execute("SELECT case_id, body FROM notes ORDER BY case_id, seq"):
         notes.setdefault(r["case_id"], []).append(r["body"])
