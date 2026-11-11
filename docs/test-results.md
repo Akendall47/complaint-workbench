@@ -1,5 +1,24 @@
 # Test results
 
+## Summary
+Every figure comes from one command: `uv run python tests/bench/bench.py --suites`. Machine: Windows-11-10.0.26300-SP0, AMD64 Family 25 Model 116 Stepping 1, AuthenticAMD, Python 3.13.16. All data is synthetic.
+
+| What | Result | Limit |
+|---|---|---|
+| Scale | 1,600 cases: Queue 28.93 ms median, 34.44 ms p95; 1,600 cases: Queue 28.93 ms, 34.44 ms p95 | Synthetic data, one machine, no network |
+| Slowest page | /audit at 64.7 ms median (budget 100 ms) | Median of 20 requests per view, 1,600 cases |
+| Routing | 84.4% overall; 90.5% when sent on; 11.3% go to a person | Held-out 20% of synthetic labels |
+| Complaint type | 99.4% | Synthetic labels, so this is flattering |
+| Policy search | 13 of 20 right clause in top five | Hand-labelled set of 20 |
+| Citation check | 42 of 864 claims fail | Recorded drafts, 150 cases |
+| Masking | 21 of 22 test strings caught | A small test set, not real data |
+| Injection | 1 of 1 recorded drafts changed | Hidden-instruction cases |
+| Audit tamper | detected | Edit of one row, chain check |
+| Queue to approved | 8 clicks, 59 keystrokes | Queue opened by filtered URL; filter clicks not counted |
+| Tests | 423 (380 unit and property, 43 browser) | Counted by pytest --collect-only |
+| Draft speed | 12.0 s median, 13.2 s p95 | Local qwen3:4b-instruct, recorded in advance |
+| Slowest stage | 2.2 ms median | Per stage, 500 notes |
+
 ## Known misses in masking
 
 Bare first names that are not in the known values are not caught, so "Ann phoned" survives if Ann Smith is not listed for that case. Numbers written with separators other than space, dot, hyphen, slash or underscore, or in unusual groupings, can survive, and non-UK phone formats are not caught unless they are a run of nine or more digits. A card number whose first three groups form a valid dd-mm-yyyy date keeps up to 8 trailing digits. Separated digit runs of 9 to 12 digits that are not a phone number, sort code or account number can survive.
@@ -90,3 +109,93 @@ Model `qwen3:4b-instruct`, prompt version 2, seed 7, run locally through Ollama.
 - Total model time: 29.9 minutes
 
 A passing citation check proves only that the quoted words are in the cited note. It does not prove the claim is a fair summary, which is why a person confirms each claim. The 42 failing claims were counted and kept, and are shown to the handler as unsupported. Cases with no department (below the routing threshold) get no draft and show "No draft recorded".
+
+## Volume
+Median / 95th centile in ms over 200 requests per view, through `TestClient` (no network). Budget 100 ms. Drafts are not recorded for bench data.
+
+| Cases | Build | Database | / | /queue | /departments | /pipeline | /policies?q=refund | a case page |
+|---|---|---|---|---|---|---|---|---|
+| 1600 | 0.8 s | 5.0 MB | 29.07 / 33.82 | 28.93 / 34.44 | 22.43 / 25.73 | 32.67 / 38.13 | 19.88 / 22.82 | 24.55 / 29.03 |
+
+No view missed 100 ms at the 95th centile at any size run.
+
+Slowest of the nine views, median of 20 requests (1,600 cases):
+
+| View | Median / p95 (ms) |
+|---|---|
+| / | 27.78 / 32.14 |
+| /queue | 28.85 / 33.74 |
+| /cases/AB-2026-00768 | 27.46 / 29.26 |
+| /departments | 22.05 / 25.17 |
+| /team | 22.22 / 30.08 |
+| /pipeline | 32.72 / 40.0 |
+| /policies | 20.77 / 29.58 |
+| /audit | 64.7 / 70.38 |
+| /settings | 18.33 / 31.23 |
+
+## Speed per stage
+500 notes, 1,600-case database. Only the draft (about 12 s) is slow; nothing needed rewriting in a lower-level language.
+
+| Stage | Median (ms) | p95 (ms) |
+|---|---|---|
+| classify department | 1.43 | 2.07 |
+| classify type | 1.53 | 2.23 |
+| mask | 0.34 | 0.57 |
+| policy search | 2.2 | 3.26 |
+| citation check | 0.1 | 0.18 |
+
+## Odd inputs
+| Row | Input | Result | Note |
+|---|---|---|---|
+| 1 | empty or whitespace complaint is rejected | pass |  |
+| 2 | very long complaint is stored and handled | pass | Typed text is limited to 5,000 characters; the 50,000 character case is stored from generated data. The draft prompt holds the whole masked note, not retrieved passages. |
+| 3 | not english is routed to a person and gets no draft | pass |  |
+| 4 | text that instructs the ai is only text | pass |  |
+| 5 | personal details in unusual formats are masked | pass |  |
+| 6 | no personal details means nothing masked | pass |  |
+| 7 | same complaint twice is flagged as duplicate | pass |  |
+| 8 | complaint that fits no type shows low confidence | pass | The confidence is low, but the label is not always Other. |
+| 9 | two departments about equal needs routing | pass |  |
+| 10 | deadline on weekend or bank holiday counts business days | pass |  |
+| 11 | case returned twice goes to the team lead | pass |  |
+| 12 | citation not in source cannot be confirmed | pass |  |
+| 13 | invalid or missing ai answer means no draft | pass |  |
+| 14 | two people acting at once second is refused | pass |  |
+| 15 | audit rows cannot be changed or deleted | pass |  |
+
+## Security checks
+| Kind | Caught | Missed | Missed examples |
+|---|---|---|---|
+| card | 5 | 0 |  |
+| sort code | 3 | 1 | 123456 is my sort code |
+| account number | 3 | 0 |  |
+| phone | 5 | 0 |  |
+| email | 2 | 0 |  |
+| postcode | 3 | 0 |  |
+
+Response headers present: content-security-policy, x-content-type-options, referrer-policy. Missing: none. Refused-action checks in the rule tests: 38. Requests to other hosts: every browser page test asserts none (see Browser tests).
+
+## Browser tests
+43 browser tests (Playwright, Chromium) on all nine views at 1440, 1100 and 1024 px: no sideways scroll, no console errors, no request to another host, skip link first, every control reachable by keyboard. Not run this time (pass --suites).
+
+Contrast (WCAG ratio from the CSS colours): lowest 5.48:1, target 4.5:1.
+
+| Pair | Ratio |
+|---|---|
+| body text (ink on paper) | 14.54 |
+| body text (ink on white) | 16.24 |
+| muted text on white | 6.72 |
+| muted text on paper | 6.02 |
+| chip text (ink on #ececf1) | 13.8 |
+| warning chip (accent-dark on tint) | 5.48 |
+| links (indigo-dark on white) | 8.48 |
+
+Chart label size (14 px at full width) as the page narrows: 639px viewport 13.1 px, 480px viewport 9.6 px, 375px viewport 7.3 px. Computed from the SVG scale, not measured in a browser. Below 640 px the labels fall under 13 px.
+
+Automated accessibility check (axe): not run, it could not be vendored offline.
+
+## Test counts
+Unit and property: 380 collected (6 of them property tests). End to end: 43. Total 423.
+
+## Not tested
+Real complaints, real handlers, many users at once beyond two, a live model under load, and a 100,000 case run in a browser. Spec section 26.

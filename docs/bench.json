@@ -1,0 +1,280 @@
+{
+ "machine": "Windows-11-10.0.26300-SP0, AMD64 Family 25 Model 116 Stepping 1, AuthenticAMD, Python 3.13.16",
+ "date": "2026-11-10",
+ "volume": {
+  "runs": [
+   {
+    "cases": 1600,
+    "build_seconds": 0.8,
+    "db_mb": 5.0,
+    "views_ms": {
+     "/": {
+      "median": 29.07,
+      "p95": 33.82
+     },
+     "/queue": {
+      "median": 28.93,
+      "p95": 34.44
+     },
+     "/departments": {
+      "median": 22.43,
+      "p95": 25.73
+     },
+     "/pipeline": {
+      "median": 32.67,
+      "p95": 38.13
+     },
+     "/policies?q=refund": {
+      "median": 19.88,
+      "p95": 22.82
+     },
+     "a case page": {
+      "median": 24.55,
+      "p95": 29.03
+     }
+    },
+    "misses": []
+   }
+  ],
+  "first_size_missing_100ms": null,
+  "budget_ms": 100
+ },
+ "nine_views": {
+  "slowest": "/audit",
+  "slowest_median_ms": 64.7,
+  "views_ms": {
+   "/": {
+    "median": 27.78,
+    "p95": 32.14
+   },
+   "/queue": {
+    "median": 28.85,
+    "p95": 33.74
+   },
+   "/cases/AB-2026-00768": {
+    "median": 27.46,
+    "p95": 29.26
+   },
+   "/departments": {
+    "median": 22.05,
+    "p95": 25.17
+   },
+   "/team": {
+    "median": 22.22,
+    "p95": 30.08
+   },
+   "/pipeline": {
+    "median": 32.72,
+    "p95": 40.0
+   },
+   "/policies": {
+    "median": 20.77,
+    "p95": 29.58
+   },
+   "/audit": {
+    "median": 64.7,
+    "p95": 70.38
+   },
+   "/settings": {
+    "median": 18.33,
+    "p95": 31.23
+   }
+  }
+ },
+ "stage_ms": {
+  "classify department": {
+   "median": 1.43,
+   "p95": 2.07
+  },
+  "classify type": {
+   "median": 1.53,
+   "p95": 2.23
+  },
+  "mask": {
+   "median": 0.34,
+   "p95": 0.57
+  },
+  "policy search": {
+   "median": 2.2,
+   "p95": 3.26
+  },
+  "citation check": {
+   "median": 0.1,
+   "p95": 0.18
+  }
+ },
+ "accuracy": {
+  "classifiers": {
+   "department": {
+    "accuracy": 0.844,
+    "accuracy_above_threshold": 0.905,
+    "share_below_threshold": 0.113,
+    "test_cases": 320
+   },
+   "type": {
+    "accuracy": 0.994,
+    "accuracy_above_threshold": 1.0,
+    "share_below_threshold": 0.022,
+    "test_cases": 320
+   },
+   "threshold": 0.45
+  },
+  "retrieval": {
+   "hits_top5": 13,
+   "of": 20
+  },
+  "drafts": {
+   "recorded": 150,
+   "invalid": 0,
+   "claims": 864,
+   "failing_citation_check": 42,
+   "seconds_median": 12.0,
+   "seconds_p95": 13.2,
+   "model": "qwen3:4b-instruct"
+  }
+ },
+ "security": {
+  "masking": {
+   "by_kind": {
+    "card": {
+     "caught": 5,
+     "missed": 0,
+     "missed_examples": []
+    },
+    "sort code": {
+     "caught": 3,
+     "missed": 1,
+     "missed_examples": [
+      "123456 is my sort code"
+     ]
+    },
+    "account number": {
+     "caught": 3,
+     "missed": 0,
+     "missed_examples": []
+    },
+    "phone": {
+     "caught": 5,
+     "missed": 0,
+     "missed_examples": []
+    },
+    "email": {
+     "caught": 2,
+     "missed": 0,
+     "missed_examples": []
+    },
+    "postcode": {
+     "caught": 3,
+     "missed": 0,
+     "missed_examples": []
+    }
+   },
+   "caught": 21,
+   "total": 22
+  },
+  "injection": {
+   "cases_with_hidden_instruction": 2,
+   "recorded_drafts": 1,
+   "changed_or_leaked": 1
+  },
+  "headers": {
+   "content-security-policy": true,
+   "x-content-type-options": true,
+   "referrer-policy": true
+  },
+  "audit_tamper_detected": true
+ },
+ "ease_of_use": {
+  "clicks": 8,
+  "keystrokes": 59,
+  "case_id": "AB-2026-00768",
+  "note": "Queue opened by filtered URL; filter clicks not counted"
+ },
+ "accessibility": {
+  "min_contrast": 5.48,
+  "ratios": {
+   "body text (ink on paper)": 14.54,
+   "body text (ink on white)": 16.24,
+   "muted text on white": 6.72,
+   "muted text on paper": 6.02,
+   "chip text (ink on #ececf1)": 13.8,
+   "warning chip (accent-dark on tint)": 5.48,
+   "links (indigo-dark on white)": 8.48
+  },
+  "chart_label_px_by_viewport": {
+   "639px viewport": 13.1,
+   "480px viewport": 9.6,
+   "375px viewport": 7.3
+  },
+  "chart_label_px_at_full_width": 14
+ },
+ "test_counts": {
+  "unit_and_property": 380,
+  "property_tests": 6,
+  "end_to_end": 43,
+  "total": 423,
+  "refused_action_checks": 38
+ },
+ "odd_inputs": [
+  {
+   "test": "test_01_empty_or_whitespace_complaint_is_rejected",
+   "result": "pass"
+  },
+  {
+   "test": "test_02_very_long_complaint_is_stored_and_handled",
+   "result": "pass"
+  },
+  {
+   "test": "test_03_not_english_is_routed_to_a_person_and_gets_no_draft",
+   "result": "pass"
+  },
+  {
+   "test": "test_04_text_that_instructs_the_ai_is_only_text",
+   "result": "pass"
+  },
+  {
+   "test": "test_05_personal_details_in_unusual_formats_are_masked",
+   "result": "pass"
+  },
+  {
+   "test": "test_06_no_personal_details_means_nothing_masked",
+   "result": "pass"
+  },
+  {
+   "test": "test_07_same_complaint_twice_is_flagged_as_duplicate",
+   "result": "pass"
+  },
+  {
+   "test": "test_08_complaint_that_fits_no_type_shows_low_confidence",
+   "result": "pass"
+  },
+  {
+   "test": "test_09_two_departments_about_equal_needs_routing",
+   "result": "pass"
+  },
+  {
+   "test": "test_10_deadline_on_weekend_or_bank_holiday_counts_business_days",
+   "result": "pass"
+  },
+  {
+   "test": "test_11_case_returned_twice_goes_to_the_team_lead",
+   "result": "pass"
+  },
+  {
+   "test": "test_12_citation_not_in_source_cannot_be_confirmed",
+   "result": "pass"
+  },
+  {
+   "test": "test_13_invalid_or_missing_ai_answer_means_no_draft",
+   "result": "pass"
+  },
+  {
+   "test": "test_14_two_people_acting_at_once_second_is_refused",
+   "result": "pass"
+  },
+  {
+   "test": "test_15_audit_rows_cannot_be_changed_or_deleted",
+   "result": "pass"
+  }
+ ]
+}
