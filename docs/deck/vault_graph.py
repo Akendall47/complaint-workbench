@@ -50,3 +50,9 @@ dots = "".join(f'<circle cx="{xy[i][0]:.1f}" cy="{xy[i][1]:.1f}" r="{3 + 1.6 * n
 OUT.write_text(f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" role="img" aria-label="The research vault: {n} notes and {len(edges)} links">'
                f'<g stroke="#c9c9d6" stroke-width="0.8" stroke-opacity="0.7">{lines}</g><g stroke="white" stroke-width="1.2">{dots}</g></svg>', encoding="utf-8")
 print(f"{n} notes, {len(edges)} links, wrote {OUT.name}")
+
+# A second copy for dark slides: lighter tints of the same colours so the dots read on navy.
+DARK = {"research": "#e5707f", "concepts": "#8fb0d6", "decisions": "#62b8a3", "features": "#e5b922", "maps": "#b7c7d6", "": "#ffffff"}
+dots = "".join(f'<circle cx="{xy[i][0]:.1f}" cy="{xy[i][1]:.1f}" r="{3 + 1.6 * np.sqrt(degree[i]):.1f}" fill="{DARK[notes[nm]]}"/>' for i, nm in enumerate(names))
+(OUT.parent / "vault-graph-dark.svg").write_text(f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}">'
+                                                 f'<g stroke="#9fb6cc" stroke-width="0.8" stroke-opacity="0.22">{lines}</g><g>{dots}</g></svg>', encoding="utf-8")
