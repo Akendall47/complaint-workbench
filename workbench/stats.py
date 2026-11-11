@@ -145,13 +145,17 @@ def needs_attention(conn, actor, limit=5, offset=0) -> list[dict]:
     return [dict(r) for r in rows]
 
 
-def due_by_day(conn, today, holidays, days=5) -> list[tuple[str, int]]:
-    """Open cases due on each of the next `days` business days, today first when today is a business day (ISO date, count)."""
+def due_by_day(conn, today, holidays, days=6) -> list[tuple[str, int]]:
+    """Open cases due on each of `days` business days, today first when today is a business day (ISO date, count).
+    A deadline on a weekend or bank holiday counts on the business day before it, the last day to act. With the default,
+    the counts add up to headline's due_soon (today to five business days ahead)."""
     first = today if add_business_days(today - timedelta(days=1), 1, holidays) == today else add_business_days(today, 1, holidays)
     dates = [first] + [add_business_days(first, i, holidays) for i in range(1, days)]
-    got = dict(conn.execute(f"SELECT deadline, COUNT(*) FROM cases WHERE {OPEN} AND deadline BETWEEN ? AND ? GROUP BY 1",
-                            (str(dates[0]), str(dates[-1]))).fetchall())
-    return [(str(d), got.get(str(d), 0)) for d in dates]
+    out = {str(d): 0 for d in dates}
+    for deadline, n in conn.execute(f"SELECT deadline, COUNT(*) FROM cases WHERE {OPEN} AND deadline BETWEEN ? AND ? GROUP BY 1",
+                                    (str(today), str(dates[-1]))):
+        out[max((d for d in out if d <= deadline), default=str(first))] += n
+    return list(out.items())
 
 
 def draft_checks(conn) -> dict:

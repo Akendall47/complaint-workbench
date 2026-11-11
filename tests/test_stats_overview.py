@@ -218,7 +218,14 @@ def test_team_due_soon_and_closed_week(twelve):
 
 def test_due_by_day_counts_open_cases_on_each_of_the_next_five_business_days(twelve):
     # Tue 10 (c), Wed 11 (none), Thu 12 (d), Fri 13 (j), Mon 16 (none): b is past deadline and the weekend is skipped
-    assert stats.due_by_day(twelve, TODAY, set()) == [("2026-11-10", 1), ("2026-11-11", 0), ("2026-11-12", 1), ("2026-11-13", 1), ("2026-11-16", 0)]
+    assert stats.due_by_day(twelve, TODAY, set(), days=5) == [("2026-11-10", 1), ("2026-11-11", 0), ("2026-11-12", 1), ("2026-11-13", 1), ("2026-11-16", 0)]
+
+
+def test_due_by_day_counts_a_weekend_deadline_on_the_friday_and_adds_up_to_due_soon(twelve):
+    twelve.execute("INSERT INTO cases(id, received_at, state, deadline, version) VALUES ('w', '2026-11-01T09:00', 'new', '2026-11-14', 0)")
+    got = stats.due_by_day(twelve, TODAY, set())
+    assert ("2026-11-13", 2) in got  # j, and w due on Saturday 14
+    assert sum(n for _, n in got) == stats.headline(twelve, TODAY, set())["due_soon"]
 
 
 def test_due_by_day_starts_on_the_next_business_day_at_a_weekend(twelve):

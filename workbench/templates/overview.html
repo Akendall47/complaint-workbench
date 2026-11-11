@@ -17,7 +17,7 @@
   </section>
 
   <section class="panel s3" aria-labelledby="ahead-h">
-    <div class="panel-head"><h2 id="ahead-h">Deadlines approaching</h2><a class="aside" href="{{ q(due='soon') }}">{{ ahead_total }} due</a></div>
+    <div class="panel-head"><h2 id="ahead-h">Deadlines approaching</h2><a class="aside" href="{{ q(due='soon') }}">{{ "{:,}".format(ahead_total) }} due by {{ ahead_last }}</a></div>
     <div class="panel-body">{{ ahead }}</div>
   </section>
 
@@ -41,7 +41,7 @@
   </section>
 
   <section class="panel s5" aria-labelledby="att-h">
-    <div class="panel-head"><h2 id="att-h">Needs attention</h2><span class="aside">{{ n_attention }} cases, soonest deadline first</span></div>
+    <div class="panel-head"><h2 id="att-h">Needs attention</h2><span class="aside">{{ "{:,}".format(n_attention) }} cases, soonest deadline first</span></div>
     <div class="panel-body scroll">
       {% if attention %}<ol class="att">{% include "partials/attention_items.html" %}</ol>
       {% else %}<p class="empty">Nothing needs you today.</p>{% endif %}

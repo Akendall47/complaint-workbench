@@ -51,7 +51,7 @@ def register(app, x):
                      change(None if ch["avg_days_open"] is None else round(ch["avg_days_open"]), " days")),
                     ("Handovers returned", "–" if h["returned_share"] is None else f"{h['returned_share']:.0%}", None, False,
                      change(pts(ch["returned_share"]), " pts"))]
-            ahead = [("Today" if d == str(today) else f"{date.fromisoformat(d):%a} {date.fromisoformat(d).day}", n) for d, n in stats.due_by_day(conn, today, hol, lim)]
+            ahead = [("Today" if d == str(today) else f"{date.fromisoformat(d):%a} {date.fromisoformat(d).day}", n) for d, n in stats.due_by_day(conn, today, hol, lim + 1)]
             days = [(short(d), n) for d, n in stats.daily(conn, today)]
             peak = max(days, key=lambda x: x[1]) if days else ("", 0)
             stages = [(STATE_NAME[s], n) for s, n in stats.by_stage(conn)]
@@ -59,8 +59,8 @@ def register(app, x):
             checks = stats.draft_checks(conn)
             src = cfg.get("source_names", {})
             return page(request, conn, "overview.html", kpis=kpis, strip=st, updated=st["updated"], q=q, rise=rises[0] if rises else None, n_rises=len(rises), rise_query=st["rise_query"],
-                        ahead=fluid.cols(ahead, f"Open cases due on each of the next {lim} business days: " + ", ".join(f"{k} {v}" for k, v in ahead), hot=("Today",)),
-                        ahead_total=sum(n for _, n in ahead),
+                        ahead=fluid.cols(ahead, f"Open cases due today and on each of the next {lim} business days: " + ", ".join(f"{k} {v}" for k, v in ahead), hot=("Today",)),
+                        ahead_total=sum(n for _, n in ahead), ahead_last=ahead[-1][0],
                         daily=fluid.area(days, f"New complaints per day, last 30 days. Peak {peak[1]} on {peak[0]}."),
                         hours=fluid.heat(stats.heatmap(conn, stats.ALL_HOURS), stats.ALL_HOURS, "Complaints received by weekday and hour of day. Darker is busier."),
                         cmap=fluid.band_map(stats.complaint_map(conn), href=lambda d, t: q(department=d, type=t), label="Open complaints by department and type"),

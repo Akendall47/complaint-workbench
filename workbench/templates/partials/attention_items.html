@@ -6,5 +6,5 @@
   {% if c.why %}<span class="why">{{ c.why|join(" · ") }}</span>{% endif %}</li>
 {% endfor %}
 {% if next < n_attention %}
-<li class="more-row"><a class="load-more" href="/queue" hx-get="/overview/attention?offset={{ next }}" hx-target="closest li" hx-swap="outerHTML">Load more ({{ n_attention - next }} left)</a></li>
+<li class="more-row"><a class="load-more" href="/queue" hx-get="/overview/attention?offset={{ next }}" hx-target="closest li" hx-swap="outerHTML">Load more ({{ "{:,}".format(n_attention - next) }} left)</a></li>
 {% endif %}
