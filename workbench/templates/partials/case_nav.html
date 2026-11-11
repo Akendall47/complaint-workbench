@@ -1,0 +1,14 @@
+{# Move between cases without going back: the cases opened last, then Previous and Next through this person's own list. #}
+<nav class="case-nav" aria-label="Cases">
+  <ul class="recent">
+    {% for r in recent %}<li><a href="/cases/{{ r.id }}"{% if r.id == v.id %} aria-current="true"{% endif %}><i class="dot st-{{ r.state }}" title="{{ state_name[r.state] }}"></i>{{ r.id }}<span class="sr-only">, {{ state_name[r.state] }}</span></a></li>{% endfor %}
+  </ul>
+  <div class="step-cases" title="{{ near.name }}, in Queue order">
+    {% if near.pos %}
+    {% if near.prev %}<a href="/cases/{{ near.prev }}" rel="prev">Previous</a>{% else %}<span class="off">Previous</span>{% endif %}
+    <span class="pos">{{ near.pos }} of {{ "{:,}".format(near.n) }}</span>
+    {% if near.next %}<a href="/cases/{{ near.next }}" rel="next">Next</a>{% else %}<span class="off">Next</span>{% endif %}
+    {% elif near.next %}<span class="pos">Not in your {{ "{:,}".format(near.n) }}</span><a href="/cases/{{ near.next }}" rel="next">First</a>
+    {% endif %}
+  </div>
+</nav>

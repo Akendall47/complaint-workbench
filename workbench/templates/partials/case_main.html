@@ -1,29 +1,27 @@
-<div id="case" tabindex="-1" hx-history="false">
-{% if message %}<p class="notice" role="alert">{{ message }}{% if stale %} <a href="/cases/{{ v.id }}">Reload</a>{% endif %}</p>{% endif %}
+{# The case panel: header line, step tabs, two panes that scroll inside themselves, then the action bar. htmx swaps this whole block. #}
+<div id="case" class="board case-board" tabindex="-1" hx-history="false">
+<section class="panel s12 case-panel" aria-label="Case {{ v.id }}">
 {% include "partials/case_header.html" %}
+{% if message %}<p class="notice" role="alert">{{ message }}{% if stale %} <a href="/cases/{{ v.id }}">Reload</a>{% endif %}</p>{% endif %}
 {% if v.returned_reason %}<p class="returned"><b>Returned by the specialist.</b> {{ v.returned_reason }}</p>{% endif %}
-{% if not v.all %}
-<nav class="stepper" aria-label="Steps">
-  <a href="/cases/{{ v.id }}?step=1"{% if v.step == 1 %} aria-current="step"{% endif %}><b>1 Check the summary</b> <span>{{ v.reviewed }} of {{ v.claims|length }} confirmed</span></a>
-  <a href="/cases/{{ v.id }}?step=2"{% if v.step == 2 %} aria-current="step"{% endif %}><b>2 Handover</b> <span>{{ v.missing }} missing</span></a>
-  <a href="/cases/{{ v.id }}?step=3"{% if v.step == 3 %} aria-current="step"{% endif %}><b>3 Decide</b> <span>{{ "Locked" if v.locked else "Ready" }}</span></a>
-</nav>
-{% endif %}
-{% if v.all or v.step == 1 %}
-<div class="check">
-  {% include "partials/notes.html" %}
-  {% include "partials/claims.html" %}
+{% if v.editable %}
+<div class="steps-row">
+  <nav class="stepper" aria-label="Steps">
+    <a href="/cases/{{ v.id }}?step=1"{% if v.step == 1 and not v.all %} aria-current="step"{% endif %}><b>1 Check the summary</b> <span>{{ v.reviewed }} of {{ v.claims|length }} confirmed</span></a>
+    <a href="/cases/{{ v.id }}?step=2"{% if v.step == 2 and not v.all %} aria-current="step"{% endif %}><b>2 Handover</b> <span>{{ v.missing }} missing</span></a>
+    <a href="/cases/{{ v.id }}?step=3"{% if v.step == 3 and not v.all %} aria-current="step"{% endif %}><b>3 Decide</b> <span>{{ "Locked" if v.locked else "Ready" }}</span></a>
+  </nav>
+  {% if v.all %}<a class="mode" href="/cases/{{ v.id }}?step=1&amp;all=0">One step at a time</a>{% else %}<a class="mode" href="/cases/{{ v.id }}?all=1">Show everything</a>{% endif %}
 </div>
 {% endif %}
-{% if v.all or v.step == 2 %}{% include "partials/handover.html" %}{% endif %}
-{% if v.all or v.step == 3 %}{% include "partials/decide.html" %}{% endif %}
-<details class="more-info">
-  <summary>Policy that may apply</summary>
-  {% if v.policies %}<ul>{% for p in v.policies %}<li><a href="/policies#{{ p.id }}">{{ p.id }}</a> {{ p.title }}</li>{% endfor %}</ul>{% else %}<p class="muted">Nothing found.</p>{% endif %}
-</details>
-<details class="more-info">
-  <summary>History of this case</summary>
-  <ul class="trail">{% for t in v.trail %}<li>{{ t.at }} · {{ t.who }} · {{ t.what }}{% if t.reason %} · Reason: {{ t.reason }}{% endif %}</li>{% else %}<li class="muted">No actions yet.</li>{% endfor %}</ul>
-</details>
+<div class="work">
+  {% include "partials/notes.html" %}
+  <div class="pane step-pane scroll">
+    {% if v.all or v.step == 1 %}{% include "partials/claims.html" %}{% endif %}
+    {% if v.all or v.step == 2 %}{% include "partials/handover.html" %}{% endif %}
+    {% if v.all or v.step == 3 %}{% include "partials/decide.html" %}{% endif %}
+  </div>
+</div>
 {% include "partials/bottom_bar.html" %}
+</section>
 </div>

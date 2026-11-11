@@ -93,7 +93,7 @@ def test_claim_labels_and_no_confirm_on_unsupported(client, app_db):
     client.get(f"/cases/{cid}")
     sql(app_db, "UPDATE claims SET supported = 0 WHERE id = (SELECT MIN(id) FROM claims WHERE case_id=?)", cid, write=True)
     html = client.get(f"/cases/{cid}").text
-    assert "Not found in the notes" in html and "Quote not found in the note" in html
+    assert "Quote not found in the note" in html
     first = html.split('<li class="claim"')[1].split("</li>")[0]
     assert "/confirm" not in first and "Confirm" not in first
     assert "AI draft" in html and html.count("AI draft") == 1
@@ -268,10 +268,10 @@ def test_no_deadline_strip_on_case_and_not_found_but_on_queue(client, app_db):
 def test_header_prints_no_deadline_reason_and_set_by_hand_only_when_set(client, app_db):
     cid = pick(app_db)
     sql(app_db, "UPDATE cases SET urgent=1, urgent_manual=NULL, deadline='2026-10-01' WHERE id=?", cid, write=True)
-    head = client.get(f"/cases/{cid}").text.split('class="card case-head"')[1].split("</section>")[0]
+    head = client.get(f"/cases/{cid}").text.split('class="case-head"')[1].split("</header>")[0]
     assert "Deadline within" not in head and "Set by hand" not in head and "Urgent" in head
     sql(app_db, "UPDATE cases SET urgent_manual=1 WHERE id=?", cid, write=True)
-    head = client.get(f"/cases/{cid}").text.split('class="card case-head"')[1].split("</section>")[0]
+    head = client.get(f"/cases/{cid}").text.split('class="case-head"')[1].split("</header>")[0]
     assert "Set by hand" in head
 
 

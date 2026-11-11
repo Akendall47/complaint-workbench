@@ -1,34 +1,35 @@
-{% from "partials/macros.html" import hx, hidden with context %}
+{% from "partials/macros.html" import hx, hidden, stage_chip, due_chip with context %}
 {% set c = v.c %}
-<section class="card case-head" aria-label="Case summary">
-  <p class="head-line">
-    <span class="status-label">{{ state_name[c.state] }}</span>
-    <span>{{ c.type or "No type" }}</span>
-    <span class="{{ 'deadline-past' if v.days < 0 else '' }}">{% if v.days < 0 %}{{ -v.days }} business days past deadline{% else %}{{ v.days }} business days left{% endif %}</span>
-    <span>Owner: {{ v.owner_name or c.owner_id or "none" }}</span>
-    <span>Department: <b>{{ c.department or "not set" }}</b></span>
-    {% if v.editable and v.all %}<a class="small" href="/cases/{{ v.id }}?step=1&amp;all=0">One step at a time</a>{% elif not v.all %}<a class="small" href="/cases/{{ v.id }}?all=1">Show everything</a>{% endif %}
-  </p>
-  {% if c.urgent %}<p class="urgent-line"><span class="urgent-tag">Urgent</span>{% if v.reasons %} {{ v.reasons|join(". ") }}{% endif %}</p>{% endif %}
+<header class="case-head">
+  {{ stage_chip(c.state) }}
+  <span>{{ due_chip(v.days) }} <span class="due-on">due {{ due_on }}</span></span>
+  {% if c.urgent %}<span class="urgent-line"><span class="urgent-tag">Urgent</span>{% if v.reasons %} {{ v.reasons|join(". ") }}{% endif %}</span>{% endif %}
+  <span><i>Type:</i> {{ c.type or "not set" }}</span>
+  <span><i>Department:</i> {{ c.department or "not set" }}</span>
+  <span><i>Owner:</i> {{ v.owner_name or c.owner_id or "none" }}</span>
+  <span><i>Channel:</i> {{ (c.source or "")|capitalize }}</span>
+  <span class="head-tools">
   {% if v.worker and c.state in ("new", "in_review", "returned", "handed_over") %}
-  <details class="inline"><summary>Change urgency or department</summary>
-    <div class="head-change">
-    <div><b>Urgency</b>
+  <details class="drop"><summary>Change<span class="sr-only"> urgency or department</span></summary>
+    <div class="drop-body">
       <form {{ hx("/cases/" ~ v.id ~ "/urgent") }}>{{ hidden() }}
+        <b>Urgency</b>
         <label>Mark as <select name="urgent"><option value="1"{% if c.urgent %} selected{% endif %}>Urgent</option><option value="0"{% if not c.urgent %} selected{% endif %}>Not urgent</option></select></label>
         <label>Reason <input name="reason" maxlength="500"></label>
         <button type="submit">Save</button>
       </form>
-    </div>
-    {% if c.state in ("new", "in_review", "returned") %}
-    <div><b>Department</b>
+      {% if c.state in ("new", "in_review", "returned") %}
       <form {{ hx("/cases/" ~ v.id ~ "/department") }}>{{ hidden() }}
-        <label>Department <select name="department">{% for d in v.departments %}<option{% if d == c.department %} selected{% endif %}>{{ d }}</option>{% endfor %}</select></label>
+        <b>Department</b>
+        <label>Department <select name="department">{% for dep in v.departments %}<option{% if dep == c.department %} selected{% endif %}>{{ dep }}</option>{% endfor %}</select></label>
         <button type="submit">Save</button>
       </form>
-    </div>
-    {% endif %}
+      {% endif %}
     </div>
   </details>
   {% endif %}
-</section>
+  <details class="drop"><summary>History</summary>
+    <ol class="drop-body trail">{% for t in v.trail %}<li><span class="muted">{{ t.at }} · {{ t.who }}</span> {{ t.what }}{% if t.reason %}. Reason: {{ t.reason }}{% endif %}</li>{% else %}<li class="muted">No actions yet.</li>{% endfor %}</ol>
+  </details>
+  </span>
+</header>

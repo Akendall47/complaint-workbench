@@ -1,15 +1,18 @@
 {% from "partials/macros.html" import hx, hidden with context %}
-<section class="card notes" aria-labelledby="notes-h">
-  <h2 id="notes-h">Customer's notes</h2>
-  <p class="muted small">{{ "Unmasked for this view only." if v.unmasked else "Personal details are masked." }}</p>
+<section class="pane notes" aria-labelledby="notes-h">
+  <div class="pane-head"><h2 id="notes-h">Source notes</h2>
+    <span class="aside">{{ "Unmasked for this view only" if v.unmasked else "Personal details masked" }}</span>
+    {% if not v.unmasked %}<details class="drop"><summary>Unmask</summary>
+      <form class="drop-body" {{ hx("/cases/" ~ v.id ~ "/unmask") }}>{{ hidden() }}
+        <label>Reason (logged) <input name="reason" maxlength="500"></label>
+        <button type="submit">Show unmasked</button>
+      </form>
+    </details>{% endif %}
+  </div>
+  <div class="pane-body scroll">
   {% for n in v.notes %}
-  <article class="note"><p class="small muted">Note {{ n.seq }} · {{ n.at }} · {{ n.author }}</p>
+  <article class="note"><p class="note-meta">Note {{ n.seq }} · {{ n.at }} · {{ n.author }}</p>
     <p class="note-body">{% for text, no in n.parts %}{% if no %}<mark id="src-{{ no }}" tabindex="-1"><sup>{{ no }}</sup> {{ text }}</mark>{% else %}{{ text }}{% endif %}{% endfor %}</p></article>
   {% else %}<p class="muted">No notes.</p>{% endfor %}
-  <details class="inline"><summary>Show unmasked notes</summary>
-    <form {{ hx("/cases/" ~ v.id ~ "/unmask") }}>{{ hidden() }}
-      <label>Reason (logged) <input name="reason" maxlength="500"></label>
-      <button type="submit">Show unmasked</button>
-    </form>
-  </details>
+  </div>
 </section>

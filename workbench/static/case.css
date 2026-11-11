@@ -1,0 +1,102 @@
+/* Case page. One panel: the header line, the step tabs, two panes that scroll inside themselves, and the action bar at its foot. */
+
+/* Head: the cases opened last as tabs, then Previous and Next through this person's own list */
+.case-nav{display:flex;align-items:center;gap:6px 16px;flex:1 1 auto;min-width:0;max-width:100%;flex-wrap:wrap}
+.recent{display:flex;gap:2px;list-style:none;padding:3px;margin:0;border-radius:12px;background:#e3e3ea;overflow-x:auto;min-width:0;max-width:100%}
+.recent a{display:flex;align-items:center;gap:6px;min-height:30px;padding:3px 10px;border-radius:9px;font-size:13px;color:#3f404a;text-decoration:none;white-space:nowrap;font-variant-numeric:tabular-nums}
+.recent a:hover{background:#d8d8e1}
+.recent a[aria-current]{background:white;color:var(--ink);font-weight:600;box-shadow:var(--shadow)}
+.dot{display:inline-block;flex:none;width:8px;height:8px;border-radius:50%;background:var(--strong)}
+.dot.st-new{background:var(--st-new)}.dot.st-in_review{background:var(--st-review)}.dot.st-handed_over{background:var(--st-handed)}.dot.st-returned{background:var(--st-returned)}.dot.st-accepted{background:var(--st-accepted)}
+.step-cases{margin-left:auto;display:flex;align-items:center;gap:6px;font-size:13px;white-space:nowrap}
+.step-cases a,.step-cases .off{display:flex;align-items:center;min-height:30px;padding:3px 12px;border-radius:9px;text-decoration:none;font-weight:600}
+.step-cases a{background:white;color:var(--indigo-dark);box-shadow:var(--shadow)}
+.step-cases a:hover{background:var(--indigo-tint)}
+.step-cases .off{color:#9a9aa6;font-weight:500}
+.step-cases .pos{color:var(--muted);font-variant-numeric:tabular-nums;padding:0 4px}
+
+/* The case panel */
+.fit .case-board{grid-template-rows:minmax(0,1fr)}
+.case-panel{gap:8px;padding:10px 16px 0}
+.case-panel .notice,.case-panel .returned{margin:0;padding:6px 12px;font-size:14px}
+.case-head{display:flex;flex-wrap:wrap;align-items:center;gap:6px 16px;font-size:14px;min-height:32px}
+.case-head i,.due-on{font-style:normal;font-size:12px;color:var(--muted)}
+.case-head .urgent-line{margin:0;font-size:13px;color:var(--accent-dark)}
+.case-head .urgent-tag{font-size:12px;padding:2px 8px;margin-right:4px}
+.head-tools{margin-left:auto;display:flex;gap:6px}
+
+/* Small menus that open over the page instead of pushing it down */
+.drop{position:relative}
+.drop>summary{list-style:none;font-size:13px;padding:4px 12px;border-radius:9px;background:#efeff4;color:var(--ink);white-space:nowrap}
+.drop>summary::-webkit-details-marker{display:none}
+.drop>summary::after{content:" \25BE";color:var(--muted)}
+.drop[open]>summary{background:var(--indigo-tint);color:var(--indigo-dark)}
+.drop-body{position:absolute;right:0;top:calc(100% + 6px);z-index:6;width:min(420px,80vw);max-height:min(60vh,440px);overflow:auto;margin:0;
+  background:white;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.18);padding:12px 14px;display:grid;gap:12px;font-size:13px}
+.drop-body form{display:grid;gap:6px}
+.drop-body button{justify-self:start;min-height:34px}
+.trail{list-style:none;padding:12px 14px;gap:6px}
+.trail li{line-height:1.4}
+
+/* Step tabs */
+.steps-row{display:flex;align-items:center;gap:8px 16px;flex-wrap:wrap}
+.case-panel .stepper{margin:0;gap:2px;padding:3px;border-radius:12px;background:#efeff4}
+.case-panel .stepper a{display:flex;gap:8px;align-items:baseline;padding:4px 14px;border-radius:9px;background:transparent;font-size:13px}
+.case-panel .stepper a span{color:var(--muted)}
+.case-panel .stepper a[aria-current=step]{background:white;box-shadow:var(--shadow)}
+.case-panel .stepper a[aria-current=step]:not(:focus-visible){outline:none}
+.mode{margin-left:auto;font-size:13px}
+
+/* Two panes side by side: the source notes, and the step at hand */
+.work{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}
+.pane{min-height:0;display:flex;flex-direction:column;border:1px solid var(--line);border-radius:12px;padding:8px 12px}
+.pane-head{display:flex;align-items:center;gap:8px;min-height:30px;margin-bottom:4px}
+.pane-head h2{font-size:15px;font-weight:600}
+.pane-head .aside{margin-left:auto;font-size:12px;color:var(--muted)}
+.pane-body{flex:1;min-height:0}
+.notes{background:#fbfbfd}
+.note{margin:0;padding:8px 0;border-bottom:1px solid #ededf2}
+.note:last-child{border-bottom:0}
+.note-meta{font-size:12px;color:var(--muted)}
+.note-body{font-size:14px;line-height:1.55}
+.step-pane{display:block}
+.step-pane>section+section{margin-top:14px;padding-top:10px;border-top:1px solid var(--line)}
+.caveat{font-size:12px;color:var(--muted);margin-bottom:6px}
+
+/* Claims */
+.case-panel .claim-list{gap:8px;margin:0 0 8px}
+.case-panel .claim{padding:8px 10px;border-radius:10px;font-size:14px}
+.claim-foot{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:6px 12px;margin-top:4px}
+.case-panel .claim .chips{margin:0;font-size:13px;gap:4px 8px}
+.case-panel .chip{font-size:12px}
+.chip.ok{background:var(--good-tint);color:var(--good)}
+.case-panel .claim-actions{margin:0;gap:6px;align-items:center}
+.claim-actions details[open]{flex-basis:100%;order:9}
+.case-panel .claim-actions button,.claim-actions summary,.claim-more summary{min-height:32px;padding:4px 12px;border-radius:9px;font-size:13px}
+.claim-actions summary,.claim-more summary{display:flex;align-items:center;list-style:none;background:#ececf1;color:var(--ink)}
+.claim-actions summary::-webkit-details-marker,.claim-more summary::-webkit-details-marker{display:none}
+.case-panel button.confirm{background:var(--indigo-tint);color:var(--indigo-dark);font-weight:600}
+.claim-more{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-start}
+.claim-more details[open]{flex-basis:100%}
+.claim-more details[open]>summary{width:fit-content}
+.case-panel .inline form{max-width:none}
+.case-panel .inline form button{justify-self:start;min-height:34px}
+
+/* Handover and decide */
+.case-panel .fields{grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px 12px;margin:6px 0 10px}
+.case-panel .fields label{position:relative;display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;font-size:13px}
+.case-panel .fields input{flex-basis:100%;min-height:36px;padding:6px 10px;font-size:14px}
+.case-panel .fields .money{position:absolute;left:10px;bottom:8px;margin:0;color:var(--ink)}
+.case-panel .fields .money+input{padding-left:24px}
+.case-panel .pairs{font-size:14px}
+.decide-actions{display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap;margin:4px 0 12px}
+.decide-actions form{margin:0}
+.decide h3{font-size:13px;font-weight:600;color:var(--muted);margin:0 0 4px}
+.policy{list-style:none;padding:0;margin:0;display:grid;gap:4px;font-size:13px}
+
+/* The action bar: the foot of the panel, always in view while the panes scroll */
+.case-panel .bottom-bar{position:static;flex:none;min-height:58px;margin:0 -16px;border-radius:0;box-shadow:none;border-top:1px solid var(--line);padding:8px 16px}
+.case-panel .bottom-bar p{font-size:14px}
+.case-panel .bottom-bar .primary{padding:8px 18px}
+
+@media (max-width:1099px){.work{grid-template-columns:minmax(0,1fr)}}

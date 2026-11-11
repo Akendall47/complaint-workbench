@@ -1,7 +1,8 @@
 {% from "partials/macros.html" import hx, hidden with context %}
 {% set c = v.c %}
-<section class="card decide" id="decide" aria-labelledby="decide-h">
-  <h2 id="decide-h">Decide</h2>
+<section class="decide" id="decide" aria-labelledby="decide-h">
+  <div class="pane-head"><h2 id="decide-h">Decide</h2></div>
+  <div class="decide-actions">
   {% if v.worker and c.state in ("new", "returned") %}
   <form {{ hx("/cases/" ~ v.id ~ "/open") }}>{{ hidden() }}<button type="submit" class="primary">Start review</button></form>
   {% elif v.worker and c.state == "in_review" %}
@@ -15,4 +16,7 @@
       <button type="submit">Return</button>
     </form></details>
   {% else %}<p class="muted">Nothing to decide here.</p>{% endif %}
+  </div>
+  <h3>Policy to check</h3>
+  {% if v.policies %}<ul class="policy">{% for p in v.policies %}<li><a href="/policies#{{ p.id }}">{{ p.id }}</a> {{ p.title }}</li>{% endfor %}</ul>{% else %}<p class="muted">Nothing found.</p>{% endif %}
 </section>

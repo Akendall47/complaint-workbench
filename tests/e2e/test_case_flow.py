@@ -205,7 +205,7 @@ def test_reject_needs_reason_and_help_panel(base, dbfile, browser):
     page.locator("summary", has_text="Reject the draft").click()
     page.get_by_role("button", name="Reject draft").click()
     page.wait_for_selector("text=Enter a reason")
-    page.get_by_role("button", name="How this page works").click()
+    page.get_by_role("button", name="Help", exact=True).click()
     assert page.locator("#help").is_visible()
     page.keyboard.press("Escape")
     assert not page.locator("#help").is_visible()
