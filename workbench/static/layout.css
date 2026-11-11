@@ -1,20 +1,20 @@
 
 /* Shell: one top bar. At desktop sizes a page with class "fit" fills the window; only lists scroll, inside their cards. */
-:root{--st-new:#2f6fd0;--st-new-ink:#1b4f9c;--st-new-tint:#e4eefc;--st-review:#5b57d6;--st-review-ink:#4038b8;--st-review-tint:#eeedfc;--st-handed:#13857f;--st-handed-ink:#0b5d59;--st-handed-tint:#dff3f1;--st-returned:#d08a00;--st-returned-ink:#7a4a00;--st-returned-tint:#fdf0d9;--st-accepted:#1f8a4c;--st-accepted-ink:#17663a;--st-accepted-tint:#e2f4e8}
+:root{--r-card:16px;--r-ctl:10px;--r-chip:6px;--st-new:#2f6fd0;--st-new-ink:#1b4f9c;--st-new-tint:#e4eefc;--st-review:#5b57d6;--st-review-ink:#4038b8;--st-review-tint:#eeedfc;--st-handed:#13857f;--st-handed-ink:#0b5d59;--st-handed-tint:#dff3f1;--st-returned:#d08a00;--st-returned-ink:#7a4a00;--st-returned-tint:#fdf0d9;--st-accepted:#1f8a4c;--st-accepted-ink:#17663a;--st-accepted-tint:#e2f4e8}
 .topbar{position:sticky;top:0;z-index:8;display:flex;align-items:center;gap:12px;padding:8px 20px;background:#e9e9ee;border-bottom:1px solid #dcdce4;min-height:56px}
 .brand{display:grid;line-height:1.15;font-size:17px;font-weight:650;letter-spacing:-.3px;color:var(--ink);text-decoration:none;white-space:nowrap;margin-right:6px}
 .brand span{font-size:12px;font-weight:500;letter-spacing:0;color:var(--muted)}
 .topbar nav{flex:1;min-width:0;overflow-x:auto}
 .app-nav{display:flex;align-items:center;gap:2px;list-style:none;padding:0;margin:0}
-.nav-link{display:flex;align-items:center;min-height:36px;padding:6px 12px;border-radius:18px;color:#3f404a;font-size:14px;text-decoration:none;white-space:nowrap}
+.nav-link{display:flex;align-items:center;min-height:36px;padding:6px 12px;border-radius:16px;color:#3f404a;font-size:14px;text-decoration:none;white-space:nowrap}
 .nav-link.minor{color:var(--muted);font-size:13px;padding:6px 10px}
 .app-nav li:not(:has(.minor))+li:has(.minor){margin-left:8px;padding-left:8px;border-left:1px solid #cfcfd8}
 a.nav-link:hover{background:#dddde5}
 a.nav-link[aria-current=page]{background:white;color:var(--ink);font-weight:600;box-shadow:var(--shadow)}
 .role-form{display:flex;align-items:center;gap:8px;margin:0}
 .role-label{font-size:13px;color:var(--muted);white-space:nowrap}
-.role-switch{display:flex;gap:2px;padding:3px;border-radius:12px;background:#dddde5}
-.role-switch button{min-height:30px;padding:4px 10px;border-radius:9px;background:transparent;color:#3f404a;font-size:13px;white-space:nowrap}
+.role-switch{display:flex;gap:2px;padding:3px;border-radius:10px;background:#dddde5}
+.role-switch button{min-height:30px;padding:4px 10px;border-radius:10px;background:transparent;color:#3f404a;font-size:13px;white-space:nowrap}
 .role-switch button[aria-pressed=true]{background:white;color:var(--ink);font-weight:600;box-shadow:var(--shadow)}
 .help-button{min-height:34px;padding:4px 14px;background:white;box-shadow:var(--shadow)}
 .page{padding:12px 20px;max-width:1880px;margin:0 auto;outline:none;width:100%}
@@ -38,14 +38,14 @@ a.nav-link[aria-current=page]{background:white;color:var(--ink);font-weight:600;
 }
 
 /* Stage colours: the same five colours on chips, bars and the flow, always with the stage name beside them */
-.stage-chip{display:inline-block;border-radius:7px;font-size:12px;font-weight:600;padding:2px 8px;white-space:nowrap}
+.stage-chip{display:inline-block;border-radius:6px;font-size:12px;font-weight:600;padding:2px 8px;white-space:nowrap}
 .st-new.stage-chip{background:var(--st-new-tint);color:var(--st-new-ink)}
 .st-in_review.stage-chip{background:var(--st-review-tint);color:var(--st-review-ink)}
 .st-handed_over.stage-chip{background:var(--st-handed-tint);color:var(--st-handed-ink)}
 .st-returned.stage-chip{background:var(--st-returned-tint);color:var(--st-returned-ink)}
 .st-accepted.stage-chip{background:var(--st-accepted-tint);color:var(--st-accepted-ink)}
 .tk-fill.st-new{fill:var(--st-new)}.tk-fill.st-in_review{fill:var(--st-review)}.tk-fill.st-handed_over{fill:var(--st-handed)}.tk-fill.st-returned{fill:var(--st-returned)}.tk-fill.st-accepted{fill:var(--st-accepted)}
-.due{display:inline-block;border-radius:7px;font-size:12px;padding:2px 8px;white-space:nowrap;background:#ececf1;font-variant-numeric:tabular-nums}
+.due{display:inline-block;border-radius:6px;font-size:12px;padding:2px 8px;white-space:nowrap;background:#ececf1;font-variant-numeric:tabular-nums}
 .due.late{background:var(--tint);color:var(--accent-dark);font-weight:600}
 .due.today,.due.soon{background:#fff3d6;color:#7a4a00;font-weight:600}
 
@@ -144,3 +144,19 @@ a.tk-label:hover{text-decoration:underline;color:var(--indigo-dark)}
 .rise:hover{text-decoration:underline}
 .foot-note{font-size:12px;color:var(--muted);margin-top:8px}
 .case-table.compact th[scope=row]{white-space:nowrap;max-width:150px;overflow:hidden;text-overflow:ellipsis}
+
+/* Type: headlines break into even lines; field names in headers are muted, never italic */
+h1,h2,h3{text-wrap:balance}
+p{text-wrap:pretty}
+.k{color:var(--muted)}
+
+/* Loading: htmx marks what asked with .htmx-request. The button dims and shows a small spinner, so a slow request never looks dead */
+.htmx-request{cursor:progress}
+button.htmx-request,form.htmx-request button,.load-more.htmx-request,a.htmx-request{opacity:.6;pointer-events:none}
+.load-more.htmx-request::after,form.htmx-request button[type=submit]::after{content:"";display:inline-block;width:11px;height:11px;margin-left:8px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;vertical-align:-1px;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Feedback: rows and panes that htmx swaps in fade up, so the eye sees what changed */
+.att li,.case-table tbody tr,#preview>*,.claim{transition:opacity .25s ease-out,transform .25s ease-out}
+.htmx-added{opacity:0;transform:translateY(4px)}
+@media (prefers-reduced-motion:reduce){*,*::after{animation:none!important;transition:none!important}.htmx-added{opacity:1;transform:none}}

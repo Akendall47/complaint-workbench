@@ -4,10 +4,10 @@
   {{ stage_chip(c.state) }}
   <span>{{ due_chip(v.days) }} <span class="due-on">due {{ due_on }}</span></span>
   {% if c.urgent %}<span class="urgent-line"><span class="urgent-tag">Urgent</span>{% if v.reasons %} {{ v.reasons|join(". ") }}{% endif %}</span>{% endif %}
-  <span><i>Type:</i> {{ c.type or "not set" }}</span>
-  <span><i>Department:</i> {{ c.department or "not set" }}</span>
-  <span><i>Owner:</i> {{ v.owner_name or c.owner_id or "none" }}</span>
-  <span><i>Channel:</i> {{ (c.source or "")|capitalize }}</span>
+  <span><span class="k">Type:</span> {{ c.type or "not set" }}</span>
+  <span><span class="k">Department:</span> {{ c.department or "not set" }}</span>
+  <span><span class="k">Owner:</span> {{ v.owner_name or c.owner_id or "none" }}</span>
+  <span><span class="k">Channel:</span> {{ (c.source or "")|capitalize }}</span>
   <span class="head-tools">
   {% if v.worker and c.state in ("new", "in_review", "returned", "handed_over") %}
   <details class="drop"><summary>Change<span class="sr-only"> urgency or department</span></summary>

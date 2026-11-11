@@ -23,7 +23,7 @@
 .tag.warm{background:var(--tint);color:var(--accent-dark)}
 .tag.ok{background:var(--st-accepted-tint);color:var(--st-accepted-ink)}
 .waiting .acts{display:flex;gap:6px;align-items:flex-start;flex-wrap:wrap}
-.waiting td button.primary{min-height:30px;padding:3px 12px;border-radius:9px;background:var(--indigo-dark);color:white}
+.waiting td button.primary{min-height:30px;padding:3px 12px;border-radius:10px;background:var(--indigo-dark);color:white}
 .waiting .inline summary{padding:4px 0;font-size:13px}
 .waiting .inline form{min-width:220px}
 .more-tr td{text-align:center;border-bottom:0}
@@ -35,7 +35,7 @@
 .open-cell b{text-align:right;font-variant-numeric:tabular-nums}
 .wl-bar{display:block;width:100%;height:10px;overflow:visible}
 .wl-tick{stroke:var(--ink);stroke-width:2}
-.avg-row th,.avg-row td{background:#f6f6fa;font-style:italic}
+.avg-row th,.avg-row td{background:#f6f6fa;color:var(--muted)}
 .unassigned form{margin:0}
 .unassigned button{min-height:26px;padding:2px 10px;font-size:12px;border-radius:8px;background:var(--indigo-tint);color:var(--indigo-dark);font-weight:600}
 

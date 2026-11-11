@@ -2,14 +2,14 @@
 
 /* Head: the cases opened last as tabs, then Previous and Next through this person's own list */
 .case-nav{display:flex;align-items:center;gap:6px 16px;flex:1 1 auto;min-width:0;max-width:100%;flex-wrap:wrap}
-.recent{display:flex;gap:2px;list-style:none;padding:3px;margin:0;border-radius:12px;background:#e3e3ea;overflow-x:auto;min-width:0;max-width:100%}
-.recent a{display:flex;align-items:center;gap:6px;min-height:30px;padding:3px 10px;border-radius:9px;font-size:13px;color:#3f404a;text-decoration:none;white-space:nowrap;font-variant-numeric:tabular-nums}
+.recent{display:flex;gap:2px;list-style:none;padding:3px;margin:0;border-radius:10px;background:#e3e3ea;overflow-x:auto;min-width:0;max-width:100%}
+.recent a{display:flex;align-items:center;gap:6px;min-height:30px;padding:3px 10px;border-radius:10px;font-size:13px;color:#3f404a;text-decoration:none;white-space:nowrap;font-variant-numeric:tabular-nums}
 .recent a:hover{background:#d8d8e1}
 .recent a[aria-current]{background:white;color:var(--ink);font-weight:600;box-shadow:var(--shadow)}
 .dot{display:inline-block;flex:none;width:8px;height:8px;border-radius:50%;background:var(--strong)}
 .dot.st-new{background:var(--st-new)}.dot.st-in_review{background:var(--st-review)}.dot.st-handed_over{background:var(--st-handed)}.dot.st-returned{background:var(--st-returned)}.dot.st-accepted{background:var(--st-accepted)}
 .step-cases{margin-left:auto;display:flex;align-items:center;gap:6px;font-size:13px;white-space:nowrap}
-.step-cases a,.step-cases .off{display:flex;align-items:center;min-height:30px;padding:3px 12px;border-radius:9px;text-decoration:none;font-weight:600}
+.step-cases a,.step-cases .off{display:flex;align-items:center;min-height:30px;padding:3px 12px;border-radius:10px;text-decoration:none;font-weight:600}
 .step-cases a{background:white;color:var(--indigo-dark);box-shadow:var(--shadow)}
 .step-cases a:hover{background:var(--indigo-tint)}
 .step-cases .off{color:#9a9aa6;font-weight:500}
@@ -27,12 +27,12 @@
 
 /* Small menus that open over the page instead of pushing it down */
 .drop{position:relative}
-.drop>summary{list-style:none;font-size:13px;padding:4px 12px;border-radius:9px;background:#efeff4;color:var(--ink);white-space:nowrap}
+.drop>summary{list-style:none;font-size:13px;padding:4px 12px;border-radius:10px;background:#efeff4;color:var(--ink);white-space:nowrap}
 .drop>summary::-webkit-details-marker{display:none}
 .drop>summary::after{content:" \25BE";color:var(--muted)}
 .drop[open]>summary{background:var(--indigo-tint);color:var(--indigo-dark)}
 .drop-body{position:absolute;right:0;top:calc(100% + 6px);z-index:6;width:min(420px,80vw);max-height:min(60vh,440px);overflow:auto;margin:0;
-  background:white;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.18);padding:12px 14px;display:grid;gap:12px;font-size:13px}
+  background:white;border-radius:10px;box-shadow:0 8px 32px rgba(0,0,0,.18);padding:12px 14px;display:grid;gap:12px;font-size:13px}
 .drop-body form{display:grid;gap:6px}
 .drop-body button{justify-self:start;min-height:34px}
 .trail{list-style:none;padding:12px 14px;gap:6px}
@@ -40,8 +40,8 @@
 
 /* Step tabs */
 .steps-row{display:flex;align-items:center;gap:8px 16px;flex-wrap:wrap}
-.case-panel .stepper{margin:0;gap:2px;padding:3px;border-radius:12px;background:#efeff4}
-.case-panel .stepper a{display:flex;gap:8px;align-items:baseline;padding:4px 14px;border-radius:9px;background:transparent;font-size:13px}
+.case-panel .stepper{margin:0;gap:2px;padding:3px;border-radius:10px;background:#efeff4}
+.case-panel .stepper a{display:flex;gap:8px;align-items:baseline;padding:4px 14px;border-radius:10px;background:transparent;font-size:13px}
 .case-panel .stepper a span{color:var(--muted)}
 .case-panel .stepper a[aria-current=step]{background:white;box-shadow:var(--shadow)}
 .case-panel .stepper a[aria-current=step]:not(:focus-visible){outline:none}
@@ -49,7 +49,7 @@
 
 /* Two panes side by side: the source notes, and the step at hand */
 .work{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}
-.pane{min-height:0;display:flex;flex-direction:column;border:1px solid var(--line);border-radius:12px;padding:8px 12px}
+.pane{min-height:0;display:flex;flex-direction:column;border:1px solid var(--line);border-radius:10px;padding:8px 12px}
 .pane-head{display:flex;align-items:center;gap:8px;min-height:30px;margin-bottom:4px}
 .pane-head h2{font-size:15px;font-weight:600}
 .pane-head .aside{margin-left:auto;font-size:12px;color:var(--muted)}
@@ -72,7 +72,7 @@
 .chip.ok{background:var(--good-tint);color:var(--good)}
 .case-panel .claim-actions{margin:0;gap:6px;align-items:center}
 .claim-actions details[open]{flex-basis:100%;order:9}
-.case-panel .claim-actions button,.claim-actions summary,.claim-more summary{min-height:32px;padding:4px 12px;border-radius:9px;font-size:13px}
+.case-panel .claim-actions button,.claim-actions summary,.claim-more summary{min-height:32px;padding:4px 12px;border-radius:10px;font-size:13px}
 .claim-actions summary,.claim-more summary{display:flex;align-items:center;list-style:none;background:#ececf1;color:var(--ink)}
 .claim-actions summary::-webkit-details-marker,.claim-more summary::-webkit-details-marker{display:none}
 .case-panel button.confirm{background:var(--indigo-tint);color:var(--indigo-dark);font-weight:600}

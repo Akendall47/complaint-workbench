@@ -11,7 +11,7 @@
 .ref-search input{min-height:34px;padding:4px 12px;font-size:14px}
 .ref-search button{min-height:34px;padding:4px 16px}
 .sections{list-style:none;padding:0;margin:0;display:grid;gap:2px}
-.sections a{display:flex;justify-content:space-between;gap:8px;padding:7px 10px;border-radius:9px;color:var(--ink);text-decoration:none;font-size:14px}
+.sections a{display:flex;justify-content:space-between;gap:8px;padding:7px 10px;border-radius:10px;color:var(--ink);text-decoration:none;font-size:14px}
 .sections a:hover{background:#f4f4f8}
 .sections a[aria-current]{background:var(--indigo-tint);color:var(--indigo-dark);font-weight:600}
 .count{color:var(--muted);font-variant-numeric:tabular-nums}

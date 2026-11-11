@@ -12,7 +12,7 @@
       <p><b class="num">{{ x.no }}</b> {{ x.text }}</p>
       <div class="claim-foot">
         <p class="chips">
-          <span class="chip{{ ' ok' if x.status != 'draft' }}">{{ {"draft": "Not checked yet", "confirmed": "Confirmed", "edited": "Edited"}[x.status] }}</span>
+          {% if x.status != 'draft' %}<span class="chip ok">{{ {"confirmed": "Confirmed", "edited": "Edited"}[x.status] }}</span>{% endif %}
           {% if x.by_hand %}<span class="chip">Added by you</span>{% endif %}
           {% if x.inferred %}<span class="chip warn">Check this</span>{% endif %}
           {% if not x.by_hand and not x.supported %}<span class="chip warn">Quote not found in the note</span>

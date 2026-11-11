@@ -29,8 +29,9 @@
   .meta .num { color: var(--teal); font-weight: 500; }
   .dark .meta .num, .left .meta .num { color: var(--mint); }
   .logo { height: 34px; }
-  .foot { position: absolute; left: 96px; right: 96px; bottom: 34px; display: flex; justify-content: space-between; font-size: 15px; letter-spacing: 1px; color: #8a979e; }
-  .dark .foot { color: #6f8494; }
+  .foot { position: absolute; left: 96px; right: 96px; bottom: 34px; display: flex; justify-content: space-between; font-size: 15px; letter-spacing: 1px; color: #5b6b73; }
+  .dark .foot { color: #a9bccb; }
+  h1, h3 { text-wrap: balance; }
   h1 { font-weight: 300; font-size: 84px; line-height: 1.02; letter-spacing: -2px; margin: 0; }
   h1 em { font-style: normal; color: var(--teal); }
   .dark h1 em, .left h1 em { color: var(--mint); }
@@ -83,7 +84,7 @@
   .s3 .callout div { background: white; border-radius: 16px; padding: 18px 24px; box-shadow: 0 12px 34px rgba(15,34,51,.14); }
   .s3 .callout b { display: block; font-weight: 300; font-size: 48px; letter-spacing: -1.5px; color: var(--navy); line-height: 1; }
   .s3 .callout span { font-size: 17px; color: var(--muted); }
-  .s3 .foot span:first-child { color: #6f8494; }
+  .s3 .foot span:first-child { color: #a9bccb; }
   .controls { margin-top: 36px; }
   .controls div { display: grid; grid-template-columns: 1fr auto; gap: 24px; align-items: baseline; padding: 13px 0; border-top: 1px solid rgba(255,255,255,.14); }
   .controls div:last-child { border-bottom: 1px solid rgba(255,255,255,.14); }
@@ -102,11 +103,13 @@
   .s4 .fig span { font-size: 18px; color: var(--muted); }
   .s4 .band { position: absolute; left: 0; right: 0; bottom: 0; height: 430px; background: var(--deep); color: white; }
   .s4 .band .grid { position: absolute; inset: 56px 96px 76px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 56px; }
-  .s4 .band h3 { font-weight: 400; font-size: 28px; margin: 14px 0 16px; }
+  .s4 .band h3 { font-weight: 400; font-size: 30px; margin: 0 0 16px; }
   .s4 .band p { margin: 0 0 12px; font-size: 20px; line-height: 1.45; color: #c3d1dc; }
+  .s4 .band .tools { color: white; font-size: 19px; letter-spacing: .3px; }
+  .s4 .band b.ok { color: var(--mint); font-weight: 500; } .s4 .band b.no { color: var(--gold); font-weight: 500; }
   .s4 .band .chip { display: inline-block; font-size: 15px; letter-spacing: 1px; padding: 3px 10px; border-radius: 999px; background: rgba(143,176,214,.18); color: #dce6ee; margin: 0 6px 6px 0; }
   .s4 .band .chip.ok { background: rgba(98,184,163,.25); color: #bfe8dc; } .s4 .band .chip.no { background: rgba(229,185,34,.2); color: #f3dc8c; }
-  .s4 .foot { color: #6f8494; }
+  .s4 .foot { color: #a9bccb; }
 
   /* 5: technical features */
   .s5 .row { flex: 1; display: grid; grid-template-columns: 1fr 980px; gap: 64px; margin-top: 48px; min-height: 0; }
@@ -214,9 +217,9 @@
   </div>
   <div class="band glow">
     <div class="grid">
-      <div><span class="label">AI in the product</span><h3>One stage in ten uses a language model</h3><p><span class="chip">TF-IDF + logistic regression</span><span class="chip">BM25 search</span><span class="chip">qwen3:4b-instruct, local</span></p><p>Routing and search use classic methods; the model only drafts, and its drafts are checked.</p></div>
-      <div><span class="label">AI in the build</span><h3>A controller and a team of agents</h3><p><span class="chip">Claude Code</span><span class="chip">Codex</span><span class="chip">Local Qwen</span></p><p>Builder and reviewer agents worked from a written plan and a ledger, four builders in parallel at the peak, each on the cheapest model that could do the job.</p></div>
-      <div><span class="label">Assessment</span><h3>Fast, but only as good as its checks</h3><p><span class="chip ok">Worked</span>Separate reviewers caught masking leaks, an audit gap and an accuracy figure that flattered itself (0.894 fell to 0.844).</p><p><span class="chip no">Did not</span>Codex could not commit from its sandbox; an outage stopped every agent at once.</p></div>
+      <div><h3>One stage in ten uses a language model</h3><p class="tools">TF-IDF and logistic regression · BM25 search · a small Qwen model, run locally</p><p>Routing and search use classic methods; the model only drafts, and its drafts are checked.</p></div>
+      <div><h3>A controller and a team of agents</h3><p class="tools">Claude Code · Codex · a local Qwen model</p><p>Builder and reviewer agents worked from a written plan and a ledger, four builders in parallel at the peak, each on the cheapest model that could do the job.</p></div>
+      <div><h3>Fast, but only as good as its checks</h3><p><b class="ok">Worked.</b> Separate reviewers caught masking leaks, an audit gap and an accuracy figure that flattered itself (0.894 fell to 0.844).</p><p><b class="no">Did not.</b> Codex could not commit from its sandbox; an outage stopped every agent at once.</p></div>
     </div>
   </div>
   <div class="foot"><span>Figures and misses: docs/test-results.md · Build log: docs/loop-log.md</span><span>04 / 05</span></div>
@@ -242,7 +245,6 @@
         <img class="c" src="../screenshots/departments.png" alt="">
       </div>
     </div>
-    <div class="feats"><span>Word-for-word citation check</span><span>Masking before the model</span><span>Hash-chained audit log</span><span>Server-drawn charts</span><span>Queue preview and actions</span><span>Previous and Next through your cases</span></div>
   </div>
   <div class="foot"><span>Run it: uv sync, then uv run workbench · Bench: uv run python tests/bench/bench.py --suites</span><span>05 / 05</span></div>
 </section>

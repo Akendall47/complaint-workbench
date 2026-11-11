@@ -137,8 +137,8 @@ def test_full_flow(base, dbfile, browser):
     n.fill(last.locator("textarea"), "The customer reports a problem with the account.")
     n.click(last.get_by_role("button", name="Save"))
     page.wait_for_load_state("networkidle")
-    while page.locator("li.claim", has_text="Quote not found in the note").filter(has=page.locator(".chip", has_text="Not checked yet")).count():
-        n.click(page.locator("li.claim", has_text="Quote not found in the note").filter(has=page.locator(".chip", has_text="Not checked yet")).first
+    while page.locator("li.claim", has_text="Quote not found in the note").filter(has_not=page.locator(".chip.ok")).count():
+        n.click(page.locator("li.claim", has_text="Quote not found in the note").filter(has_not=page.locator(".chip.ok")).first
                 .get_by_role("button", name="Remove"))
         page.wait_for_load_state("networkidle")
     while page.locator("button.confirm").count():

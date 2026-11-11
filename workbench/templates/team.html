@@ -37,7 +37,7 @@
   </section>
 
   <section class="panel s4" aria-labelledby="un-h">
-    <div class="panel-head"><h2 id="un-h">Unassigned</h2><a class="aside" href="/queue?owner=unassigned">{{ n_unassigned }} cases, soonest deadline first</a></div>
+    <div class="panel-head"><h2 id="un-h">Unassigned</h2><a class="aside" href="/queue?owner=unassigned">{{ n_unassigned }} cases</a></div>
     <div class="panel-body scroll">
       {% if unassigned %}<ol class="att unassigned">{% include "partials/work_unassigned_items.html" %}</ol>
       {% else %}<p class="empty">Every open case has an owner.</p>{% endif %}

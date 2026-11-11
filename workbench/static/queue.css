@@ -22,7 +22,7 @@
 .q-table tbody tr:has(.q-pick:checked) td:first-child{box-shadow:inset 3px 0 0 var(--indigo-dark)}
 .q-table tbody tr:has(.q-pick:focus-visible){outline:3px solid var(--indigo-dark);outline-offset:-3px}
 .q-table .urgent-tag,.ret-tag{font-size:11px;padding:1px 7px}
-.ret-tag{display:inline-block;border-radius:7px;background:var(--st-returned-tint);color:var(--st-returned-ink);font-weight:600;white-space:nowrap}
+.ret-tag{display:inline-block;border-radius:6px;background:var(--st-returned-tint);color:var(--st-returned-ink);font-weight:600;white-space:nowrap}
 .clock{display:inline-block;margin-left:4px;font-size:11px;color:var(--muted);border:1px solid #d3d3dc;border-radius:6px;padding:0 5px;white-space:nowrap}
 .routing{color:var(--st-returned-ink);font-weight:600}
 .q-more td{border-bottom:0;padding:2px}
