@@ -64,6 +64,7 @@ def test_audit_newest_first_with_verified_chip_for_team_lead(writer, app_db):
     assert f"Chain verified, {n:,} entries" in text_of(html)
     ids = re.findall(r'href="/cases/(AB-\d{4}-\d{5})"', html)
     assert ids[0] > ids[1]  # the second complaint came last, so it is listed first
+    assert html.index('class="filters"') < html.index("<table")  # the filters are a row above the table
 
 
 def test_audit_is_for_the_team_lead_only(client):
