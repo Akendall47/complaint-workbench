@@ -226,11 +226,10 @@ def accessibility():
              "chip text (ink on #ececf1)": (v["ink"], "#ececf1"), "warning chip (accent-dark on tint)": (v["accent-dark"], v["tint"]),
              "links (indigo-dark on white)": (v["indigo-dark"], v["white"])}
     ratios = {k: contrast(*c) for k, c in pairs.items()}
-    w = int(re.search(r"^W = (\d+)", (ROOT / "workbench/charts.py").read_text(encoding="utf-8"), re.M).group(1))
-    label = int(re.search(r"\.chart-svg \.lbl\{font-size:(\d+)px", css).group(1))
-    # The SVG scales with its box; at a viewport of V the box is about V - 40 wide (20 px page padding each side).
-    sizes = {f"{vp}px viewport": round(label * min(vp - 40, w) / w, 1) for vp in (639, 480, 375)}
-    return {"min_contrast": min(ratios.values()), "ratios": ratios, "chart_label_px_by_viewport": sizes, "chart_label_px_at_full_width": label}
+    # The fluid charts (workbench/fluid.py) stretch their shapes, not their text: chart text keeps its CSS size at any width.
+    layout = (ROOT / "workbench/static/layout.css").read_text(encoding="utf-8")
+    chart = [int(n) for n in re.findall(r"(?:\.peak-lbl|\.col-val|\.col-lbl|\.map \.lbl|\.hh|\.x-axis|\.legend|\.track li)[^{]*\{[^}]*?font-size:(\d+)px", layout)]
+    return {"min_contrast": min(ratios.values()), "ratios": ratios, "chart_text_px": [min(chart), max(chart)]}
 
 
 def run_suite(args):
@@ -326,8 +325,8 @@ def write_docs(d):
           + (f"Last run: {suites['e2e']['summary']}.\n\n" if suites else "Not run this time (pass --suites).\n\n")
           + f"Contrast (WCAG ratio from the CSS colours): lowest {a['min_contrast']}:1, target 4.5:1.\n\n"
           + table(list(a["ratios"].items()), ["Pair", "Ratio"]) + "\n\n"
-          + "Chart label size (14 px at full width) as the page narrows: " + ", ".join(f"{k} {v} px" for k, v in a["chart_label_px_by_viewport"].items())
-          + ". Computed from the SVG scale, not measured in a browser. Below 640 px the labels fall under 13 px.\n\n"
+          + f"Chart text: {a['chart_text_px'][0]} to {a['chart_text_px'][1]} px at every window width, because the charts stretch their shapes and not their text"
+          + " (read from the CSS, not measured in a browser).\n\n"
           + "Automated accessibility check (axe): not run, it could not be vendored offline.")
     text = put_section(text, "Browser tests", br)
     tc = (f"Unit and property: {ct['unit_and_property']} collected ({ct['property_tests']} of them property tests). End to end: {ct['end_to_end']}. Total {ct['total']}.\n"

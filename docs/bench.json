@@ -5,69 +5,71 @@
   "runs": [
    {
     "cases": 1600,
-    "build_seconds": 0.8,
+    "build_seconds": 0.7,
     "db_mb": 5.0,
     "views_ms": {
      "/": {
-      "median": 27.36,
-      "p95": 33.27
+      "median": 44.2,
+      "p95": 54.76
      },
      "/queue": {
-      "median": 20.6,
-      "p95": 25.4
+      "median": 27.68,
+      "p95": 34.25
      },
      "/departments": {
-      "median": 16.79,
-      "p95": 21.01
+      "median": 22.6,
+      "p95": 26.65
      },
      "/pipeline": {
-      "median": 32.55,
-      "p95": 37.75
+      "median": 21.82,
+      "p95": 26.74
      },
      "/policies?q=refund": {
-      "median": 14.97,
-      "p95": 19.77
+      "median": 14.74,
+      "p95": 17.76
      },
      "a case page": {
-      "median": 21.39,
-      "p95": 30.0
+      "median": 32.12,
+      "p95": 37.39
      }
     },
     "misses": []
    },
    {
     "cases": 16000,
-    "build_seconds": 4.7,
+    "build_seconds": 5.0,
     "db_mb": 48.0,
     "views_ms": {
      "/": {
-      "median": 152.98,
-      "p95": 182.55
+      "median": 344.74,
+      "p95": 380.68
      },
      "/queue": {
-      "median": 68.8,
-      "p95": 78.86
+      "median": 80.62,
+      "p95": 93.23
      },
      "/departments": {
-      "median": 72.98,
-      "p95": 83.5
+      "median": 143.59,
+      "p95": 162.94
      },
      "/pipeline": {
-      "median": 175.67,
-      "p95": 194.04
+      "median": 91.62,
+      "p95": 106.34
      },
      "/policies?q=refund": {
-      "median": 23.97,
-      "p95": 27.68
+      "median": 21.19,
+      "p95": 28.99
      },
      "a case page": {
-      "median": 29.25,
-      "p95": 34.5
+      "median": 147.89,
+      "p95": 163.8
      }
     },
     "misses": [
      "/",
-     "/pipeline"
+     "/departments",
+     "/pipeline",
+     "a case page"
     ]
    }
   ],
@@ -76,66 +78,66 @@
  },
  "nine_views": {
   "slowest": "/audit",
-  "slowest_median_ms": 63.79,
+  "slowest_median_ms": 54.98,
   "views_ms": {
    "/": {
-    "median": 27.98,
-    "p95": 32.01
+    "median": 42.88,
+    "p95": 50.96
    },
    "/queue": {
-    "median": 28.9,
-    "p95": 32.56
+    "median": 29.37,
+    "p95": 110.09
    },
    "/cases/AB-2026-00768": {
-    "median": 25.01,
-    "p95": 38.8
+    "median": 31.78,
+    "p95": 35.14
    },
    "/departments": {
-    "median": 22.76,
-    "p95": 26.81
+    "median": 24.34,
+    "p95": 28.06
    },
    "/team": {
-    "median": 24.15,
-    "p95": 45.99
+    "median": 38.0,
+    "p95": 62.08
    },
    "/pipeline": {
-    "median": 32.86,
-    "p95": 44.23
+    "median": 24.61,
+    "p95": 31.18
    },
    "/policies": {
-    "median": 18.19,
-    "p95": 22.35
+    "median": 17.62,
+    "p95": 20.21
    },
    "/audit": {
-    "median": 63.79,
-    "p95": 96.0
+    "median": 54.98,
+    "p95": 68.07
    },
    "/settings": {
-    "median": 20.04,
-    "p95": 55.07
+    "median": 16.33,
+    "p95": 30.28
    }
   }
  },
  "stage_ms": {
   "classify department": {
-   "median": 1.54,
-   "p95": 2.21
+   "median": 1.2,
+   "p95": 1.74
   },
   "classify type": {
-   "median": 1.49,
-   "p95": 2.19
+   "median": 1.17,
+   "p95": 1.69
   },
   "mask": {
-   "median": 0.4,
-   "p95": 0.61
+   "median": 0.33,
+   "p95": 0.47
   },
   "policy search": {
-   "median": 2.57,
-   "p95": 3.53
+   "median": 2.0,
+   "p95": 2.65
   },
   "citation check": {
-   "median": 0.13,
-   "p95": 0.17
+   "median": 0.1,
+   "p95": 0.13
   }
  },
  "accuracy": {
@@ -236,18 +238,16 @@
    "warning chip (accent-dark on tint)": 5.48,
    "links (indigo-dark on white)": 8.48
   },
-  "chart_label_px_by_viewport": {
-   "639px viewport": 13.1,
-   "480px viewport": 9.6,
-   "375px viewport": 7.3
-  },
-  "chart_label_px_at_full_width": 14
+  "chart_text_px": [
+   11,
+   13
+  ]
  },
  "test_counts": {
-  "unit_and_property": 380,
+  "unit_and_property": 424,
   "property_tests": 6,
-  "end_to_end": 43,
-  "total": 423,
+  "end_to_end": 103,
+  "total": 527,
   "refused_action_checks": 38
  },
  "odd_inputs": [
@@ -314,13 +314,13 @@
  ],
  "suites": {
   "unit": {
-   "summary": "380 passed, 1 warning in 98.26s (0:01:38)",
-   "seconds": 101,
+   "summary": "424 passed, 1 warning in 80.27s (0:01:20)",
+   "seconds": 83,
    "exit": 0
   },
   "e2e": {
-   "summary": "43 passed in 187.08s (0:03:07)",
-   "seconds": 189,
+   "summary": "103 passed in 168.28s (0:02:48)",
+   "seconds": 170,
    "exit": 0
   }
  }

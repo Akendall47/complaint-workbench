@@ -32,6 +32,7 @@ Every page fits one laptop screen. "View as" (top right) switches between the th
 - `docs/loop-log.md`: how it was built, what the reviews caught.
 - `docs/superpowers/specs/2026-11-10-complaint-workbench-design.md`: the design.
 - `vault/`: the research and every design decision, as linked notes (open the folder in Obsidian).
+- `docs/graph/`: a knowledge graph of the code made with graphify (open `graph.html`; `GRAPH_REPORT.md` names the main parts).
 - Each page has a **Help** button that says what the page is for and how to use it.
 
 ## Run the tests

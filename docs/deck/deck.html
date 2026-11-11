@@ -2,154 +2,191 @@
 <html lang="en-GB">
 <head>
 <meta charset="utf-8">
-<title>Complaint Workbench: five pages</title>
-<!-- Five slides, 1920 x 1080 each. Render to PDF with: uv run python docs/deck/render.py -->
+<title>Complaint Workbench: AI by Design task submission</title>
+<!-- Five slides, 1920 x 1080. Render to PDF and PNGs with: uv run python docs/deck/render.py
+     Style follows ankura.com (Lora headings, Roboto text, navy, teal and gold). A task submission, not an Ankura document. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lora:wght@500;600;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
 <style>
   @page { size: 1920px 1080px; margin: 0; }
-  :root { --ink:#1f2026; --muted:#5a5b66; --line:#e4e4ec; --indigo:#4338ca; --indigo-tint:#eeedfc; --warm:#c2410c; --warm-tint:#fdebe4; --good:#17663a; --good-tint:#e2f4e8; --paper:#f6f6f9; }
+  :root { --navy:#224d74; --blue:#587da8; --teal:#3e8778; --gold:#e5b922; --ink:#1a272e; --muted:#4f5d63; --line:#dfe5e8; --mist:#f4f6f7; --sage:#e6ecea; --warm:#b3392f; }
   * { box-sizing: border-box; }
-  body { margin: 0; font-family: "Segoe UI", system-ui, -apple-system, sans-serif; color: var(--ink); background: #ccc; }
-  .slide { width: 1920px; height: 1080px; padding: 72px 88px 56px; background: white; display: grid; grid-template-rows: auto 1fr auto; gap: 36px; page-break-after: always; overflow: hidden; margin: 0 auto 24px; }
-  .kicker { font-size: 24px; font-weight: 600; color: var(--indigo); letter-spacing: .5px; }
-  h1 { font-size: 60px; line-height: 1.1; letter-spacing: -1.2px; margin: 10px 0 0; font-weight: 700; max-width: 1600px; }
-  .two { display: grid; grid-template-columns: 640px 1fr; gap: 56px; min-height: 0; }
-  .two.even { grid-template-columns: 1fr 1fr; }
-  .shot { width: 100%; border-radius: 18px; box-shadow: 0 12px 40px rgba(20,20,60,.18); border: 1px solid var(--line); align-self: start; }
-  .diagram { width: 100%; align-self: start; }
-  ul.points { list-style: none; padding: 0; margin: 0; display: grid; gap: 30px; align-content: start; }
-  .points li { font-size: 28px; line-height: 1.35; }
-  .points b { display: block; font-size: 44px; line-height: 1.1; color: var(--indigo); letter-spacing: -.8px; }
-  .points b.warm { color: var(--warm); }
-  table { border-collapse: collapse; width: 100%; font-size: 25px; line-height: 1.3; }
-  th { text-align: left; font-size: 22px; color: var(--muted); font-weight: 600; padding: 0 16px 12px 0; border-bottom: 2px solid var(--line); }
-  td { padding: 14px 16px 14px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
-  td.num { font-weight: 700; color: var(--indigo); white-space: nowrap; }
-  td.num.warm { color: var(--warm); }
-  .foot { font-size: 22px; color: var(--muted); display: flex; justify-content: space-between; gap: 40px; }
-  .roles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; }
-  .role { background: var(--paper); border-radius: 18px; padding: 26px 28px; }
-  .role h2 { font-size: 30px; margin: 0 0 12px; color: var(--indigo); }
-  .role p { font-size: 25px; line-height: 1.35; margin: 0 0 10px; }
-  .stack { display: grid; gap: 36px; align-content: start; min-height: 0; }
-  .tag { display: inline-block; font-size: 20px; font-weight: 700; border-radius: 8px; padding: 2px 10px; background: var(--indigo-tint); color: var(--indigo); }
-  .tag.warm { background: var(--warm-tint); color: var(--warm); }
-  .tag.good { background: var(--good-tint); color: var(--good); }
-  .cols3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; }
-  .box { border: 2px solid var(--line); border-radius: 18px; padding: 24px 28px; }
-  .box h2 { font-size: 28px; margin: 0 0 14px; }
-  .box p { font-size: 24px; line-height: 1.35; margin: 0 0 10px; }
-  .box p:last-child { margin: 0; }
-  .two.wide { grid-template-columns: 860px 1fr; }
-  .two.fourth { grid-template-columns: 1.15fr .85fr; }
-  .two.fourth .box p { font-size: 23px; }
-  .two table td:first-child { white-space: nowrap; }
-  .flowrows { display: grid; grid-template-columns: 220px repeat(4, 1fr); gap: 18px 44px; align-items: center; }
-  .rowname { font-size: 28px; font-weight: 700; color: var(--muted); }
-  .rowname.now { color: var(--indigo); }
-  .step { position: relative; font-size: 25px; line-height: 1.25; text-align: center; padding: 22px 16px; border: 2px solid var(--line); border-radius: 16px; background: white; }
-  .step.now { border-color: var(--indigo); background: var(--indigo-tint); }
-  .step + .step::before { content: ""; position: absolute; left: -44px; top: 50%; width: 32px; border-top: 3px solid var(--muted); }
-  .step.now + .step.now::before { border-color: var(--indigo); }
-  .cols3.top { align-items: start; }
-  .slide:has(.loop) { grid-template-rows: auto auto 1fr auto; }
-  .loop { display: flex; align-self: end; }
-  .loop span { flex: 1; font-size: 24px; text-align: center; padding: 20px 34px; background: var(--indigo-tint); color: var(--indigo); font-weight: 600; clip-path: polygon(0 0, calc(100% - 26px) 0, 100% 50%, calc(100% - 26px) 100%, 0 100%, 26px 50%); margin-right: -14px; }
-  .loop span:first-child { clip-path: polygon(0 0, calc(100% - 26px) 0, 100% 50%, calc(100% - 26px) 100%, 0 100%); }
+  body { margin: 0; font-family: Roboto, "Segoe UI", sans-serif; color: var(--ink); background: #9aa5ab; }
+  .slide { position: relative; width: 1920px; height: 1080px; padding: 64px 96px 0; background: white; display: grid; grid-template-rows: auto auto 1fr 72px; page-break-after: always; overflow: hidden; margin: 0 auto 24px; }
+  .slide::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 14px; background: linear-gradient(var(--navy) 0 55%, var(--teal) 55% 85%, var(--gold) 85%); }
+  .top { display: flex; justify-content: space-between; align-items: center; }
+  .kicker { font-size: 24px; font-weight: 500; letter-spacing: 2.5px; color: var(--teal); text-transform: uppercase; }
+  .logo { height: 40px; }
+  h1 { font-family: Lora, Georgia, serif; font-weight: 600; font-size: 56px; line-height: 1.12; color: var(--navy); margin: 18px 0 36px; max-width: 1600px; }
+  .body { min-height: 0; }
+  .foot { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--line); font-size: 20px; color: var(--muted); }
+  .foot b { color: var(--navy); font-weight: 500; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 56px; height: 100%; min-height: 0; }
+  .g-60 { grid-template-columns: 1.15fr .85fr; }
+  .g-40 { grid-template-columns: .8fr 1.2fr; }
+  .shot { width: 100%; border-radius: 14px; border: 1px solid var(--line); box-shadow: 0 14px 40px rgba(26,39,46,.18); align-self: start; }
+  .stat { margin: 0 0 28px; }
+  .stat b { display: block; font-family: Lora, Georgia, serif; font-size: 52px; line-height: 1; color: var(--navy); margin-bottom: 6px; }
+  .stat span { font-size: 25px; line-height: 1.35; }
+  .stat.alt b { color: var(--teal); }
+  table { border-collapse: collapse; width: 100%; font-size: 24px; line-height: 1.3; align-self: start; }
+  th { text-align: left; font-size: 20px; font-weight: 500; color: var(--muted); letter-spacing: .5px; text-transform: uppercase; padding: 0 18px 12px 0; border-bottom: 3px solid var(--navy); }
+  td { padding: 15px 18px 15px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+  td.m { font-weight: 700; color: var(--teal); }
+  td.m.warn { color: var(--warm); }
+  .card { background: var(--mist); border-radius: 14px; padding: 22px 28px; border-left: 6px solid var(--teal); }
+  .card h2 { font-family: Lora, Georgia, serif; font-size: 29px; color: var(--navy); margin: 0 0 8px; font-weight: 600; }
+  .card p { font-size: 23px; line-height: 1.4; margin: 0 0 8px; }
+  .card p:last-child { margin: 0; }
+  .card.gold { border-left-color: var(--gold); } .card.navy { border-left-color: var(--navy); } .card.blue { border-left-color: var(--blue); }
+  .stack { display: grid; gap: 20px; align-content: start; }
+  .tag { display: inline-block; font-size: 19px; font-weight: 500; border-radius: 6px; padding: 2px 10px; background: var(--sage); color: var(--navy); margin-right: 6px; }
+  .tag.ok { background: #dcefe8; color: #1f6b52; } .tag.no { background: #f6e3e1; color: var(--warm); }
+  .legend { display: flex; gap: 26px; font-size: 21px; color: var(--muted); margin-top: 14px; flex-wrap: wrap; }
+  .legend i { display: inline-block; width: 16px; height: 16px; border-radius: 50%; margin-right: 8px; vertical-align: -2px; }
+  .legend .r { background: #c34756; } .legend .n { background: #224d74; } .legend .t { background: #3e8778; } .legend .g { background: #e5b922; }
+  .graph { width: 100%; height: 640px; background: var(--mist); border-radius: 14px; }
+  .graph img { width: 100%; height: 100%; object-fit: contain; }
+  .steps { display: grid; gap: 22px; align-content: start; counter-reset: s; }
+  .steps div { counter-increment: s; display: grid; grid-template-columns: 56px 1fr; gap: 16px; align-items: start; font-size: 24px; line-height: 1.38; }
+  .steps div::before { content: counter(s); width: 48px; height: 48px; border-radius: 50%; background: var(--navy); color: white; font-weight: 700; display: grid; place-items: center; font-size: 22px; }
+  .steps b { color: var(--navy); }
+  .roles td:first-child { font-family: Lora, Georgia, serif; font-weight: 600; color: var(--navy); font-size: 26px; white-space: nowrap; }
+  .tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
+  .tile { border: 1px solid var(--line); border-top: 6px solid var(--navy); border-radius: 12px; padding: 20px 24px; }
+  .tile:nth-child(3n+2) { border-top-color: var(--teal); } .tile:nth-child(3n) { border-top-color: var(--gold); }
+  .tile h2 { font-family: Lora, Georgia, serif; font-size: 27px; color: var(--navy); margin: 0 0 8px; font-weight: 600; }
+  .tile p { font-size: 22px; line-height: 1.38; margin: 0; }
+  .tile p b { color: var(--teal); }
+  .bench { display: grid; grid-template-columns: repeat(4, 1fr); margin-top: 26px; background: var(--navy); border-radius: 12px; color: white; }
+  .bench div { padding: 18px 24px; border-left: 1px solid rgba(255,255,255,.2); }
+  .bench div:first-child { border-left: 0; }
+  .bench small { display: block; font-size: 18px; letter-spacing: 1.5px; text-transform: uppercase; color: #bcd0e2; margin-bottom: 4px; }
+  .bench span { font-size: 23px; line-height: 1.3; }
+  .thumbs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 22px; margin-top: 22px; }
+  .thumbs figure { margin: 0; }
+  .thumbs img { width: 100%; height: 175px; object-fit: cover; object-position: top left; border-radius: 10px; border: 1px solid var(--line); box-shadow: 0 8px 24px rgba(26,39,46,.14); display: block; }
+  .thumbs figcaption { font-size: 19px; color: var(--muted); margin-top: 6px; }
+  .crop { width: 100%; height: 250px; object-fit: cover; object-position: top left; border-radius: 12px; border: 1px solid var(--line); box-shadow: 0 10px 30px rgba(26,39,46,.16); margin-top: 26px; }
+  .right { display: grid; align-content: start; }
   @media print { body { background: white; } .slide { margin: 0; } }
 </style>
 </head>
 <body>
 
-<!-- 1. Business value -->
+<!-- 1. Method and research -->
 <section class="slide">
-  <header><div class="kicker">ALDER BANK · COMPLAINT WORKBENCH · A PROTOTYPE ON SYNTHETIC DATA</div>
-    <h1>Handlers spend their time on judgement, not on reading and retyping.</h1></header>
-  <div class="two">
-    <ul class="points">
-      <li><b>1.85 million</b>complaints reached UK firms in the first half of 2026, each with an 8-week clock (FCA).</li>
-      <li><b>One window</b>shows every deadline, what is due next and what needs this person, with one click to act.</li>
-      <li><b>90.5%</b>routed to the right team when the model is confident; the 11.3% it is unsure of go to a person.</li>
-      <li><b>8 clicks</b>from the queue to an approved, checked handover on the demo case (filter clicks not counted).</li>
-    </ul>
-    <img class="shot" src="../screenshots/overview.png" alt="The Overview: today's figures, deadlines approaching, new complaints, complaint map, stages, needs attention, workload and AI summary checks.">
-  </div>
-  <div class="foot"><span>Value comes from time saved per case and fewer handovers sent back. Neither is measured on real work yet.</span><span>1 / 5</span></div>
-</section>
-
-<!-- 2. Risks, controls, human oversight -->
-<section class="slide">
-  <header><div class="kicker">RISKS, CONTROLS AND HUMAN OVERSIGHT</div>
-    <h1>The model drafts. A person decides, claim by claim.</h1></header>
-  <div class="two wide">
-    <table>
-      <thead><tr><th>Risk</th><th>Control</th><th>Measured on the test bench</th></tr></thead>
-      <tbody>
-        <tr><td>An invented or wrong claim</td><td>Every claim needs a word-for-word quote from the notes; the handler confirms each one</td><td class="num">42 of 864 claims blocked</td></tr>
-        <tr><td>Personal data reaches the model</td><td>Masked first; unmasking needs a reason and is logged</td><td class="num">21 of 22 test strings caught</td></tr>
-        <tr><td>Sent to the wrong team</td><td>Low-confidence cases wait for a person</td><td class="num">11.3% go to a person</td></tr>
-        <tr><td>Silent changes after the fact</td><td>Every action in a hash-chained audit log</td><td class="num">Tampering detected, not prevented</td></tr>
-      </tbody>
-    </table>
-    <img class="shot" src="../screenshots/case.png" alt="The Case page: the notes on the left, the AI summary on the right, each claim with its quote and a confirm button.">
-  </div>
-  <div class="foot"><span>Also: no bulk approve, urgent reasons shown in words, nothing leaves the machine (no network calls, strict content policy).</span><span>2 / 5</span></div>
-</section>
-
-<!-- 3. Role and workflow change -->
-<section class="slide">
-  <header><div class="kicker">HOW THE WORK CHANGES</div>
-    <h1>Handlers check instead of retype. Specialists get complete handovers.</h1></header>
-  <div class="stack">
-    <div class="flowrows">
-      <span class="rowname">Before</span><span class="step">Reads all the notes</span><span class="step">Searches policy by hand</span><span class="step">Types the handover</span><span class="step">Specialist finds gaps, sends back</span>
-      <span class="rowname now">With the tool</span><span class="step now">Masked draft with quotes</span><span class="step now">Handler checks each claim</span><span class="step now">Pack names missing fields</span><span class="step now">Accept, or return with a reason</span>
+  <div class="top"><span class="kicker">Complaint Workbench · Method and research</span><img class="logo" src="ankura-logo.svg" alt="Ankura"></div>
+  <h1>Research first: 113 linked notes behind every design decision.</h1>
+  <div class="body grid2 g-60">
+    <div>
+      <div class="graph"><img src="vault-graph.svg" alt="The research vault drawn as a graph: 113 notes joined by 916 links."></div>
+      <div class="legend"><span><i class="r"></i>Research, 9 notes</span><span><i class="n"></i>Concepts, 45</span><span><i class="t"></i>Decisions, 39</span><span><i class="g"></i>Features, 15</span></div>
     </div>
-    <div class="roles">
-      <div class="role"><h2>Handler</h2><p>Works a queue in deadline order with a preview and one-click actions.</p><p>New skill: checking AI output, not writing it.</p></div>
-      <div class="role"><h2>Specialist</h2><p>Sees missing fields before accepting.</p><p>Returns need a reason, so the handler learns why.</p></div>
-      <div class="role"><h2>Team lead</h2><p>Sees the whole flow and where cases come back.</p><p>Shares work out. No speed league table.</p></div>
+    <div class="steps">
+      <div><span><b>Read the rules and the evidence.</b> FCA complaint deadlines, AI threats and controls, verification and automation bias, UX evidence, how bank complaint teams work today.</span></div>
+      <div><span><b>Check every fact at its source.</b> Anything not opened is marked unverified and kept off the screens.</span></div>
+      <div><span><b>One note per decision:</b> who made it, the evidence, the trade-off and what would change it. An Obsidian vault in the repo.</span></div>
+      <div><span><b>Spec, then a 13-task plan,</b> then build test-first, each task checked by a separate reviewer.</span></div>
+      <div><span><b>Scope kept small:</b> one bank, one journey, synthetic data only.</span></div>
     </div>
   </div>
-  <div class="foot"><span>The "before" row is our description of a typical process, not a measurement.</span><span>3 / 5</span></div>
+  <div class="foot"><span>Prototype for the Ankura AI by Design task, not an Ankura product. All data synthetic.</span><b>1 / 5</b></div>
 </section>
 
-<!-- 4. Assumptions, limitations, trade-offs, and what the test bench measured -->
+<!-- 2. Business value and how roles change -->
 <section class="slide">
-  <header><div class="kicker">WHAT WE MEASURED, AND WHAT IT DOES NOT PROVE</div>
-    <h1>Every figure comes from one command, with its limit beside it.</h1></header>
-  <div class="two even fourth">
-    <table>
-      <thead><tr><th>Test bench</th><th>Result</th></tr></thead>
+  <div class="top"><span class="kicker">AI strategy · Workforce AI transformation</span><img class="logo" src="ankura-logo.svg" alt="Ankura"></div>
+  <h1>Handlers spend their time on judgement, not on reading and retyping.</h1>
+  <div class="body grid2 g-40">
+    <div>
+      <div class="stat"><b>1.85 million</b><span>complaints reached UK firms in the first half of 2026, each on an 8-week clock (FCA).</span></div>
+      <div class="stat alt"><b>90.5%</b><span>routed to the right team when the model is sure; the 11.3% it is unsure of go to a person.</span></div>
+      <div class="stat"><b>8 clicks</b><span>from the queue to an approved, checked handover on the demo case.</span></div>
+      <div class="stat alt"><b>One window</b><span>every deadline, what falls due next and what needs this person.</span></div>
+    </div>
+    <div class="right">
+    <table class="roles">
+      <thead><tr><th>Role</th><th>Today</th><th>With the workbench</th></tr></thead>
       <tbody>
-        <tr><td>Data handled</td><td class="num">1,600 cases: every page under 100 ms</td></tr>
-        <tr><td>At 10 times the volume</td><td class="num warm">16,000 cases: Overview and Pipeline miss 100 ms</td></tr>
-        <tr><td>Security</td><td class="num">Injection, tamper, cross-site and host checks pass; masking 21 of 22</td></tr>
-        <tr><td>Ease of use</td><td class="num">9 pages x 3 roles fit one laptop screen</td></tr>
-        <tr><td>Routing accuracy</td><td class="num">84.4% overall on held-out data</td></tr>
-        <tr><td>Policy search</td><td class="num warm">13 of 20 right clause in the top five</td></tr>
-        <tr><td>Tests</td><td class="num">TESTCOUNT automated tests, unit and browser</td></tr>
+        <tr><td>Handler</td><td>Reads every note, retypes the handover</td><td>Checks an AI summary claim by claim against its quotes</td></tr>
+        <tr><td>Specialist</td><td>Finds gaps, sends cases back</td><td>Sees missing fields before accepting; a return needs a reason</td></tr>
+        <tr><td>Team lead</td><td>Chases deadlines case by case</td><td>Sees the flow, the rises and the load; no speed league table</td></tr>
+        <tr><td>New skill</td><td>Writing summaries</td><td>Judging AI output: each claim confirmed, never bulk-approved</td></tr>
       </tbody>
     </table>
+    <img class="crop" src="../screenshots/queue.png" alt="The Queue: cases by deadline with a preview of the selected case and its actions.">
+    </div>
+  </div>
+  <div class="foot"><span>Value is time per case and fewer handovers sent back; neither is measured on real work yet. "Today" is our description, not a measurement.</span><b>2 / 5</b></div>
+</section>
+
+<!-- 3. Risks, controls and human oversight -->
+<section class="slide">
+  <div class="top"><span class="kicker">Governance engineering</span><img class="logo" src="ankura-logo.svg" alt="Ankura"></div>
+  <h1>The model drafts. A person decides, claim by claim.</h1>
+  <div class="body grid2">
+    <table>
+      <thead><tr><th>Risk</th><th>Control</th><th>Measured</th></tr></thead>
+      <tbody>
+        <tr><td>Invented or wrong claim</td><td>Each claim needs a word-for-word quote; a person confirms each one</td><td class="m">42 of 864 blocked</td></tr>
+        <tr><td>Personal data reaches the model</td><td>Masked first; unmasking needs a reason and is logged</td><td class="m">21 of 22 caught</td></tr>
+        <tr><td>Sent to the wrong team</td><td>Unsure cases wait for a person</td><td class="m">11.3% to a person</td></tr>
+        <tr><td>Hidden instructions in a complaint</td><td>Notes are fenced as data; output checked</td><td class="m">0 of 1 changed</td></tr>
+        <tr><td>Silent edits afterwards</td><td>Hash-chained audit of every action</td><td class="m warn">Detected, not prevented</td></tr>
+      </tbody>
+    </table>
+    <img class="shot" src="../screenshots/case.png" alt="The Case page: notes on the left, the AI summary on the right, each claim with its quote and Confirm, Edit and Remove.">
+  </div>
+  <div class="foot"><span>Also: urgent reasons shown in words, no bulk approve, nothing leaves the machine (no network calls, strict content policy).</span><b>3 / 5</b></div>
+</section>
+
+<!-- 4. Assumptions, limitations, trade-offs; AI tools used and assessment -->
+<section class="slide">
+  <div class="top"><span class="kicker">Assumptions, limits and the AI used</span><img class="logo" src="ankura-logo.svg" alt="Ankura"></div>
+  <h1>Clear about the limits, and about the AI that built it.</h1>
+  <div class="body grid2">
     <div class="stack">
-      <div class="box"><h2>Assumptions</h2><p>All data is synthetic, shaped by public FCA, ombudsman and UK Finance figures; channel mix and time of day are our guesses. Settings lists each source.</p></div>
-      <div class="box"><h2>Limits</h2><p>A quote check proves the words exist, not that the summary is fair. Masking misses bare first names. The role switch is a demo, not a login.</p></div>
-      <div class="box"><h2>Trade-offs</h2><p>A small local model with drafts recorded in advance: reproducible and private, but not live. Classic models for routing: cheap and explainable.</p></div>
+      <div class="card navy"><h2>Assumptions</h2><p>All data is synthetic, shaped by public FCA, ombudsman and UK Finance figures. Channel mix and time of day are our guesses; Settings lists each source.</p></div>
+      <div class="card"><h2>Limits</h2><p>A quote check proves the words exist, not that the summary is fair. Policy search finds the right clause 13 times in 20. The role switch is a demo, not a login.</p></div>
+      <div class="card gold"><h2>Trade-offs</h2><p>A small local model with drafts recorded in advance: private and repeatable, not live. Classic models for routing: cheap and explainable.</p></div>
+    </div>
+    <div class="stack">
+      <div class="card blue"><h2>AI in the product</h2><p><span class="tag">TF-IDF + logistic regression</span>routing <span class="tag">BM25</span>policy search</p><p><span class="tag">qwen3:4b-instruct</span>drafts, run locally. One stage in ten uses a language model.</p></div>
+      <div class="card blue"><h2>AI in the build</h2><p><span class="tag">Claude Code</span>a controller ran builder and reviewer agents, four builders in parallel at the peak</p><p><span class="tag">Codex</span>the case flow diagram <span class="tag">Local Qwen</span>the recorded drafts</p></div>
+      <div class="card blue"><h2>Assessment</h2><p><span class="tag ok">Worked</span>separate reviewers caught masking leaks, an audit gap and an accuracy figure that flattered itself (0.894 fell to 0.844).</p><p><span class="tag no">Did not</span>an agent read "too busy" as "too many charts"; the owner corrected it. Codex could not commit from its sandbox.</p></div>
     </div>
   </div>
-  <div class="foot"><span>Full results: docs/test-results.md. Run: uv run python tests/bench/bench.py --suites</span><span>4 / 5</span></div>
+  <div class="foot"><span>Full figures and misses: docs/test-results.md. Build log: docs/loop-log.md.</span><b>4 / 5</b></div>
 </section>
 
-<!-- 5. AI tools used and assessment -->
+<!-- 5. Technical features and workflows -->
 <section class="slide">
-  <header><div class="kicker">AI TOOLS USED, AND HOW WELL THEY DID</div>
-    <h1>AI did most of the typing. A person set direction; reviews caught what AI missed.</h1></header>
-  <div class="cols3 top">
-    <div class="box"><h2>In the product</h2><p><span class="tag">TF-IDF + logistic regression</span> routing and type</p><p><span class="tag">SQLite FTS5, BM25</span> policy search</p><p><span class="tag">qwen3:4b-instruct</span> drafts, run locally with Ollama and recorded</p><p>One stage in ten uses a language model.</p></div>
-    <div class="box"><h2>In the build</h2><p><span class="tag">Claude Code</span> a controller (Claude Fable 5.2, then Claude Opus 5.5) ran builder and reviewer agents on cheaper tiers where the task allowed</p><p><span class="tag">Codex</span> the case flow diagram and two second-opinion diagnoses</p><p><span class="tag">Local Qwen</span> the recorded drafts</p></div>
-    <div class="box"><h2>Assessment</h2><p><span class="tag good">Worked</span> separate reviewers caught masking leaks, an audit gap, a page that wrote on read and a self-flattering accuracy (0.894 fell to 0.844).</p><p><span class="tag warm">Did not</span> an agent misread "too busy" as "too many charts"; the owner corrected it. Codex could not commit from its sandbox.</p></div>
+  <div class="top"><span class="kicker">Technical features and workflows</span><img class="logo" src="ankura-logo.svg" alt="Ankura"></div>
+  <h1>Built and tested like a product, not a demo.</h1>
+  <div class="body">
+    <div class="tiles">
+      <div class="tile"><h2>Citation check</h2><p>Every AI claim must quote the notes word for word. <b>42 of 864</b> were blocked.</p></div>
+      <div class="tile"><h2>Mask before the model</h2><p>Names, cards and accounts masked first; unmasking needs a reason, and it is logged.</p></div>
+      <div class="tile"><h2>Tamper-evident audit</h2><p>Every action hash-chained; the log checks itself and flags any edit.</p></div>
+      <div class="tile"><h2>One window, any role</h2><p>9 pages, 3 roles, 2 screen sizes: <b>63 browser checks</b> that nothing runs off the screen.</p></div>
+      <div class="tile"><h2>No build, no network</h2><p>Server-drawn charts, a strict content policy, no outside calls while in use.</p></div>
+      <div class="tile"><h2>Multi-agent build loop</h2><p>A ledger, parallel builders, read-only reviewers, Codex and a local model, each on the cheapest tier that could do the job.</p></div>
+    </div>
+    <div class="bench">
+      <div><small>Data handled</small><span>1,600 cases: every page under 100 ms. At 16,000 the Overview takes 345 ms: a known limit</span></div>
+      <div><small>Security</small><span>Injection, tamper, cross-site and host checks pass; masking 21 of 22</span></div>
+      <div><small>Ease of use</small><span>8 clicks queue to approved; keyboard reachable; one window</span></div>
+      <div><small>Tests</small><span>527 automated tests, 424 unit and 103 browser, all passing</span></div>
+    </div>
+    <div class="thumbs">
+      <figure><img src="../screenshots/overview.png" alt=""><figcaption>Overview</figcaption></figure>
+      <figure><img src="../screenshots/departments.png" alt=""><figcaption>Departments</figcaption></figure>
+      <figure><img src="../screenshots/pipeline.png" alt=""><figcaption>Pipeline</figcaption></figure>
+      <figure><img src="../screenshots/settings.png" alt=""><figcaption>Settings: where the data comes from</figcaption></figure>
+    </div>
   </div>
-  <div class="loop"><span>Plan and spec</span><span>Builder agent: tests, then code</span><span>Read-only reviewer</span><span>Fix rounds</span><span>Owner looks and corrects</span></div>
-  <div class="foot"><span>Build log: docs/loop-log.md. Code and instructions: README.md.</span><span>5 / 5</span></div>
+  <div class="foot"><span>Run it: uv sync, then uv run workbench. Results: uv run python tests/bench/bench.py --suites</span><b>5 / 5</b></div>
 </section>
 
 </body>
