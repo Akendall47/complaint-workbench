@@ -106,7 +106,7 @@ def register(app, x):
         if not (sel and CASE_ID.match(sel)):
             sel = rows[0]["c"]["id"] if rows else None
         nxt = (ids[ids.index(sel) + 1] if ids.index(sel) + 1 < total else None) if sel in ids else (ids[0] if ids else None)
-        return {"rows": rows, "f": f, "page_no": pg, "pages": pages, "total": total, "link": link, "qs": urlencode(keep),
+        return {"rows": rows, "f": f, "page_no": pg, "pages": pages, "total": total, "per_page": PER_PAGE, "link": link, "qs": urlencode(keep),
                 "more_qs": urlencode({**keep, "page": pg + 1}), "state_name": STATE_NAME, "clock": clock, "clock_title": clock_title, "sel": sel,
                 "pv": preview(conn, actor, sel) if sel else None, "next_id": nxt, "filtered": bool(keep.keys() - {"owner"}),
                 "sel_opts": {"departments": list(cfg["departments"]), "types": cfg["types"], "states": list(STATE_NAME)}}

@@ -15,4 +15,4 @@
 {% if page_no < pages %}
 <tr class="q-more"><td colspan="{{ 7 if f.owner != 'me' else 6 }}"><nav class="pager" aria-label="Pages"><a class="load-more" href="{{ link(page=page_no + 1) }}" hx-get="/queue/more?{{ more_qs }}" hx-target="closest tr" hx-swap="outerHTML">Load more</a></nav></td></tr>
 {% endif %}
-{% if appended %}<template><span id="shown" hx-swap-oob="true">Showing {{ "{:,}".format([page_no * 50, total]|min) }} of {{ "{:,}".format(total) }}</span></template>{% endif %}
+{% if appended %}<template><span id="shown" hx-swap-oob="true">Showing {{ "{:,}".format([page_no * per_page, total]|min) }} of {{ "{:,}".format(total) }}</span></template>{% endif %}
