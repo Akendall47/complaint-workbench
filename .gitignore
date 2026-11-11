@@ -20,3 +20,5 @@ data/recordings-dev/
 
 # reference images for the deck style, not ours to publish
 docs/deck/inspo/
+build/
+*.egg-info/
