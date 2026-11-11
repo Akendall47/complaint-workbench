@@ -15,19 +15,24 @@ No `uv`? `pip install -e .` then `python -m workbench.app`.
 
 ## Try it in two minutes
 
-1. Open **Queue**. Under "View as" you are the Handler. Click the first case, AB-2026-00768.
-2. Read the summary. Each claim shows the words it quotes. Confirm the supported claims. A claim marked "Check this" cannot be confirmed until you edit or remove it.
-3. Fill the handover fields that are missing, then approve. The case moves to the specialist.
-4. Under "View as", choose **Specialist**. Open the handed-over case and accept it, or return it with a reason.
-5. Under "View as", choose **Team lead**. Open **Overview**, **Team** and **Departments**, then **Audit log**. Your actions are there, and the chain check says it is intact.
+Every page fits one laptop screen. "View as" (top right) switches between the three roles; it is a demo, not a login.
 
-The same tour with screenshots is in `docs/screenshots/`. The Policy library, Pipeline and Settings (with "Data sources") pages are in the menu.
+1. **Overview**: today's figures with the change since a week earlier, what falls due on each of the next business days, where complaints come from, and what needs you.
+2. **Queue**: select a row to preview it beside the list, then **Open case** or **Assign to me**. Open AB-2026-00768.
+3. **Case**: the notes are on the left, the AI summary on the right. Each claim shows the words it quotes; confirm, edit or remove it. A claim marked "Check this" cannot be confirmed until you edit or remove it. Fill the missing handover fields, then approve. **Previous** and **Next** move through your own list.
+4. Switch to **Specialist**. **Departments** lists waiting handovers with any missing fields named; accept one, or return it with a reason.
+5. Switch to **Team lead**. **Pipeline** shows how cases flow and where they come back; **Team** shares work out without ranking people; **Audit log** shows every action and checks the chain.
+
+**Settings** says where the demo data comes from: it is all synthetic, shaped by public FCA, Financial Ombudsman Service and UK Finance figures, each linked. Screenshots of every page are in `docs/screenshots/`.
 
 ## Where the detail is
 
+- `docs/deck.pdf`: the five-page summary (business value, risks and controls, how the work changes, limits, AI tools used).
 - `docs/test-results.md`: what was tested, the figures, the misses. Machine-readable copy in `docs/bench.json`.
+- `docs/loop-log.md`: how it was built, what the reviews caught.
 - `docs/superpowers/specs/2026-11-10-complaint-workbench-design.md`: the design.
-- Each page has a "How this page works" panel and a "Where these numbers come from" link.
+- `vault/`: the research and every design decision, as linked notes (open the folder in Obsidian).
+- Each page has a **Help** button that says what the page is for and how to use it.
 
 ## Run the tests
 
@@ -53,7 +58,9 @@ Recorded drafts are in `data/recordings/`. The app never calls a model while you
 ## Layout
 
 ```
-workbench/   the app: routes, rules (cases.py), masking, search, classifiers, charts, templates
+workbench/   the app: rules (cases.py), masking, search, classifiers, stats, charts (fluid.py, flow.py)
+  views/     one routes module per page area
+  templates/ pages and partials;  static/ one stylesheet per page area, no build step
 config/      pipeline.yaml, the one configuration file
 data/        workbench.db, recordings/ (models/ is rebuilt on first start)
 tests/       unit, property, e2e (browser) and bench
@@ -75,4 +82,4 @@ vault/       research notes
 
 ## AI tools used
 
-Built with Claude Code (Anthropic) in a plan, build and review loop, and the drafts are written by a local Qwen model through Ollama. The code and tests were written with AI help and checked in review rounds. In the app a person approves every case.
+Built with Claude Code (Anthropic) in a plan, build and review loop: a controller ran builder and reviewer agents, Codex (OpenAI) drew the case flow diagram, and the drafts were written by a local Qwen model through Ollama. The code and tests were written with AI help and checked in review rounds; `docs/loop-log.md` records what the reviews caught. In the app a person approves every case.
