@@ -1,28 +1,42 @@
 {% extends "base.html" %}
 {% from "partials/help.html" import help_panel %}
 {% block title %}Policy library{% endblock %}
-{% block purpose %}{{ content.views.policies.purpose }}{% endblock %}
-{% block hint %}{% endblock %}
+{% block body_class %}fit{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/reference.css">{% endblock %}
+{% block strip %}<form method="get" action="/policies" role="search" class="ref-search">
+  <label for="q" class="sr-only">Search the policy clauses</label>
+  <input id="q" name="q" type="search" value="{{ q }}" maxlength="200" autocomplete="off" placeholder="Search clauses"> <button type="submit" class="primary">Search</button>
+</form>{% endblock %}
 {% block help %}{{ help_panel("policies") }}{% endblock %}
-{% block content %}<form method="get" action="/policies" role="search" class="search-bar">
-  <label for="q">Search the policy clauses</label>
-  <div class="search-row"><input id="q" name="q" type="search" value="{{ q }}" maxlength="200" autocomplete="off"> <button type="submit" class="primary">Search</button></div>
-</form>
-{% if q %}<p class="muted" role="status">{{ n }} clause{{ "" if n == 1 else "s" }} found for “{{ q }}”.{% if n %} <a href="/policies">Show all clauses</a>{% endif %}</p>{% endif %}
-{% if groups %}
-<section class="card" aria-label="Policy clauses">
-  {% for section, items in groups.items() %}
-  <details{% if q %} open{% endif %}>
-    <summary>{{ section }} <span class="muted">({{ items|length }} clause{{ "" if items|length == 1 else "s" }})</span></summary>
-    <ul class="clauses">
-      {% for c in items %}
-      <li id="{{ c.id }}"><b>{{ c.id }}</b> {{ c.title }}{% if q %} <span class="muted">({{ c.section }})</span>{% endif %}<br><span class="muted">{{ c.snippet }}</span></li>
-      {% endfor %}
-    </ul>
-  </details>
-  {% endfor %}
-</section>
-{% else %}
-<p class="empty">No clause matches. Try fewer or different words.</p>
-{% endif %}
+{% block content %}
+<div class="board ref">
+  <section class="panel s4" aria-labelledby="sec-h">
+    <div class="panel-head"><h2 id="sec-h">Sections</h2></div>
+    <div class="panel-body scroll">
+      <ul class="sections">
+        <li><a href="{{ all_href }}"{% if not sec %} aria-current="true"{% endif %}>{{ "Best matches" if q else "All clauses" }} <span class="count">{{ total }}</span></a></li>
+        {% for s in sections %}
+        <li><a href="{{ s.href }}"{% if s.current %} aria-current="true"{% endif %}>{{ s.name }} <span class="count">{{ s.count }}</span></a></li>
+        {% endfor %}
+      </ul>
+    </div>
+  </section>
+
+  <section class="panel s8" aria-labelledby="cl-h">
+    <div class="panel-head"><h2 id="cl-h">Clauses</h2>
+      {% if q %}<span class="aside" role="status">{{ n }} found for “{{ q }}”{% if n %} · <a href="/policies">Show all</a>{% endif %}</span>{% endif %}</div>
+    <div class="panel-body scroll">
+      {% if groups %}
+      <ul class="clause-list">
+        {% for name, items in groups.items() %}
+        {% if name %}<li class="group">{{ name }}</li>{% endif %}
+        {% for c in items %}
+        <li id="{{ c.id }}"><b>{{ c.id }}</b> {{ c.title }}{% if q and not sec %} <span class="muted">({{ c.section }})</span>{% endif %}<br><span class="muted">{{ c.snippet }}</span></li>
+        {% endfor %}
+        {% endfor %}
+      </ul>
+      {% else %}<p class="empty">No clause matches. Try fewer or different words.</p>{% endif %}
+    </div>
+  </section>
+</div>
 {% endblock %}

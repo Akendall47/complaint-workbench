@@ -1,0 +1,15 @@
+<p>Every complaint, customer and member of staff here is synthetic. workbench/generate.py makes them from a fixed seed. No real customer data is used.</p>
+<table class="case-table compact sources">
+  <thead><tr><th scope="col">What the demo follows</th><th scope="col">Public source</th><th scope="col">Date</th><th scope="col">Link</th></tr></thead>
+  <tbody>
+  {% for d in cfg.data_sources.public %}
+  <tr><td>{{ d.follows }}</td><td>{{ d.source }}</td><td>{{ d.date }}</td>
+    <td><a href="{{ d.url }}" target="_blank" rel="noopener noreferrer" title="{{ d.url }}">Open<span class="sr-only"> {{ d.source }}, opens in a new tab</span></a></td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+<p class="muted small-note">Public figures give context. The numbers in this demo are generated, not copies of them.</p>
+<h3>Our assumptions (no public source)</h3>
+<dl class="pairs assumptions">
+  {% for a in cfg.data_sources.assumptions %}<dt>{{ a.what }}</dt><dd>{{ a.note }}</dd>{% endfor %}
+</dl>

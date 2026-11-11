@@ -1,7 +1,6 @@
 """Web app: shell, role switcher, deadline strip and the Queue. Routes never change a case themselves;
 they call workbench.cases and show its NotAllowed and StaleCase messages as plain text."""
 import contextlib
-import json
 import os
 import re
 import socket
@@ -22,8 +21,6 @@ from fastapi.templating import Jinja2Templates
 from . import audit, case_view, cases, charts, drafts, stats
 from .cases import NotAllowed, StaleCase
 from .classify import MODELS_DIR, ensure_models
-from .intake import MAX_TEXT, IntakeError, receive
-from .search import highlight, search_policies
 from .config import load_config
 from .db import connect
 from .deadlines import business_days_left, due_soon_edge
@@ -47,19 +44,6 @@ def safe_path(url: str) -> str | None:
         return None
     ok = u.path in KNOWN_PATHS or (u.path.startswith("/cases/") and CASE_ID.match(u.path.removeprefix("/cases/")))
     return url if ok else None
-
-
-def _plain(r) -> str:
-    """The Detail column in plain words: the reason if there is one, how a complaint came in, else nothing."""
-    try:
-        d = json.loads(r["detail_json"] or "{}")
-    except ValueError:
-        return ""
-    if not isinstance(d, dict):
-        return ""
-    if d.get("reason"):
-        return str(d["reason"])
-    return f'By {d["source"]}' if r["action"] == "received" and d.get("source") else ""
 
 
 def create_app(db_path="data/workbench.db", config_path="config/pipeline.yaml", models_dir=MODELS_DIR) -> FastAPI:
@@ -141,7 +125,7 @@ def create_app(db_path="data/workbench.db", config_path="config/pipeline.yaml", 
                                                           "alerts_on": request.cookies.get("alerts") != "off", **ctx}, status_code=status)
 
     from .views import case, overview, queue, reference, work  # one module per page area; each adds its own routes
-    x = SimpleNamespace(cfg=cfg, today=today, hol=hol, db=db, page=page, edge_of=edge_of, templates=templates)
+    x = SimpleNamespace(cfg=cfg, today=today, hol=hol, db=db, page=page, edge_of=edge_of, templates=templates, models_dir=models_dir)
     overview.register(app, x)
     queue.register(app, x)
 
@@ -218,67 +202,6 @@ def create_app(db_path="data/workbench.db", config_path="config/pipeline.yaml", 
             resp = RedirectResponse((same and safe_path(ref.path + ("?" + ref.query if ref.query else ""))) or "/", status_code=303)
         resp.set_cookie("alerts", "on" if show == "1" else "off", httponly=True, samesite="lax")
         return resp
-
-    # ==== REFERENCE (moves to views/reference.py) ====
-
-    # ---- Policy library, Audit log, Settings ----
-    @app.get("/policies", response_class=HTMLResponse)
-    def policies(request: Request):
-        q = request.query_params.get("q", "").strip()[:200]
-        with db() as conn:
-            found = search_policies(conn, q, k=100 if not q else 20)
-            groups: dict = {}
-            for r in found:
-                groups.setdefault("Best matches" if q else r["section"], []).append({"id": r["id"], "section": r["section"], "title": r["title"], "snippet": highlight(r["snippet"] + ("" if q else "…"), q)})  # the empty-query snippet is cut at 160 characters
-            return page(request, conn, "policies.html", q=q, groups=groups, n=len(found))
-
-    def audit_ctx(conn, q) -> dict:
-        case, actor = q.get("case", ""), q.get("actor", "")
-        people = [r[0] for r in conn.execute("SELECT id FROM staff ORDER BY id")] + ["system"]  # intake writes as "system"
-        where, args = [], []
-        bad = (case and not CASE_ID.match(case)) or (actor and actor not in people)
-        if case:
-            where.append("case_id = ?"); args.append(case)  # noqa: E702
-        if actor:
-            where.append("actor_id = ?"); args.append(actor)  # noqa: E702
-        w = (" WHERE " + " AND ".join(where)) if where else ""
-        total = 0 if bad else conn.execute(f"SELECT COUNT(*) FROM audit{w}", args).fetchone()[0]
-        pages = max(1, -(-total // PER_PAGE))
-        pg = to_int(q.get("page"), 1)
-        pg = min(max(1, pg), pages)
-        got = [] if bad else conn.execute(f"SELECT audit.*, (SELECT name FROM staff WHERE staff.id = audit.actor_id) AS who FROM audit{w} ORDER BY id DESC LIMIT ? OFFSET ?", (*args, PER_PAGE, (pg - 1) * PER_PAGE)).fetchall()
-        broken = audit.verify_chain(conn)
-        everything = conn.execute("SELECT COUNT(*) FROM audit").fetchone()[0]
-        keep = {k: v for k, v in (("case", case), ("actor", actor)) if v}
-        return {"rows": [{**dict(r), "what": _plain(r), "when": r["at"][:16].replace("T", " "),
-                          "by": "System" if r["actor_id"] == "system" else f'{r["who"] or r["actor_id"]}, {r["role"].replace("_", " ").capitalize()}'} for r in got], "people": people, "case": case, "actor": actor,
-                "page_no": pg, "pages": pages, "chain": "Chain verified: " + f"{everything:,} entries" if broken is None else f"Chain broken at entry {broken}",
-                "chain_ok": broken is None, "link": lambda p: "/audit?" + urlencode({**keep, "page": p})}
-
-    @app.get("/audit", response_class=HTMLResponse)
-    def audit_log(request: Request):
-        allowed = current_actor(request).role == "team_lead"  # a notice, not a 403 page, for everyone else
-        with db() as conn:
-            return page(request, conn, "audit.html", allowed=allowed, **(audit_ctx(conn, request.query_params) if allowed else {}))
-
-    def settings_page(request, status=200, **ctx):
-        with db() as conn:
-            return page(request, conn, "settings.html", status=status, **{"max_text": MAX_TEXT, "text": "", "source": "", **ctx})
-
-    @app.get("/settings", response_class=HTMLResponse)
-    def settings(request: Request):
-        return settings_page(request)
-
-    @app.post("/intake", response_class=HTMLResponse)
-    def intake(request: Request, text: str = Form(""), source: str = Form("")):
-        actor = current_actor(request)
-        try:
-            with db() as conn:
-                models = ensure_models(conn, cfg, models_dir if models_dir is not None else MODELS_DIR)
-                cid = receive(conn, text=text, source=source, cfg=cfg, models=models, actor_id=actor.id, role=actor.role)
-        except IntakeError as e:
-            return settings_page(request, status=400, error=str(e), text=text, source=source)
-        return settings_page(request, added=cid)
 
     # ==== QUEUE assign (moves to views/queue.py) ====
 

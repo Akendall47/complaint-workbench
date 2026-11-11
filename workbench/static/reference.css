@@ -1,0 +1,52 @@
+/* Policy library, Audit log and Settings: one row of panels, each scrolling inside itself. Shared board, chip and tab rules live in layout.css. */
+.fit .board.ref{grid-template-rows:minmax(0,1fr)}
+.fit .board.lone{grid-template-rows:auto;align-content:start}
+.fit .board.settings{grid-template-rows:minmax(0,1fr) auto}
+.ds{grid-row:span 2}
+@media (max-width:1099px){.ds{grid-row:auto}}
+.nowrap{white-space:nowrap}
+
+/* Policy library */
+.ref-search{display:flex;gap:8px;flex:0 1 420px}
+.ref-search input{min-height:34px;padding:4px 12px;font-size:14px}
+.ref-search button{min-height:34px;padding:4px 16px}
+.sections{list-style:none;padding:0;margin:0;display:grid;gap:2px}
+.sections a{display:flex;justify-content:space-between;gap:8px;padding:7px 10px;border-radius:9px;color:var(--ink);text-decoration:none;font-size:14px}
+.sections a:hover{background:#f4f4f8}
+.sections a[aria-current]{background:var(--indigo-tint);color:var(--indigo-dark);font-weight:600}
+.count{color:var(--muted);font-variant-numeric:tabular-nums}
+.sections a[aria-current] .count{color:inherit}
+.clause-list{list-style:none;padding:0;margin:0;display:grid;gap:10px;font-size:14px}
+.clause-list li{scroll-margin-top:8px;padding:2px 6px}
+.clause-list li:target{background:var(--tint);border-radius:8px}
+.clause-list .group{padding-top:6px;font-size:13px;font-weight:600;color:var(--indigo-dark)}
+
+/* Audit log */
+.chain-chip{margin-left:auto;font-size:13px;font-weight:600;padding:4px 12px;border-radius:16px;background:var(--good-tint);color:var(--good)}
+.chain-chip.bad{background:var(--tint);color:var(--accent-dark)}
+.filters{display:flex;gap:8px 12px;align-items:center;flex-wrap:wrap;margin:0}
+.filters label{display:flex;align-items:center;gap:6px;font-size:13px}
+.filters input,.filters select{width:auto;min-height:30px;padding:3px 10px;font-size:13px}
+.filters input{width:150px}
+.filters button{min-height:30px;padding:3px 12px}
+.lone-text{margin-bottom:12px}
+
+/* Settings */
+.rules{display:grid;gap:2px}
+.rules dt{margin-top:8px;font-size:13px;font-weight:600}
+.rules dt:first-child{margin-top:0}
+.rules dd{font-size:13px;color:var(--muted)}
+.note-line{margin-top:10px;font-size:12px}
+.ds .panel-body p{font-size:13px;margin-bottom:8px}
+.ds h3{margin:14px 0 6px;font-size:14px}
+.sources{table-layout:fixed}
+.sources th:nth-child(1){width:50%}.sources th:nth-child(2){width:24%}.sources th:nth-child(3){width:17%}.sources th:nth-child(4){width:9%}
+.sources td{vertical-align:top}
+.ds .small-note{margin-top:6px;font-size:12px}
+.model-name{font-size:17px;font-weight:600}
+.assumptions{gap:3px 14px;font-size:13px}
+.add-form{display:grid;gap:6px}
+.add-form textarea{resize:vertical}
+.intake-row{display:flex;gap:8px 12px;align-items:center;flex-wrap:wrap}
+.intake-row label{display:block}
+.intake-row select{min-height:36px}

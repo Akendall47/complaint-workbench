@@ -1,0 +1,7 @@
+{% for r in rows %}
+<tr><td class="nowrap">{{ r.when }}</td><td>{{ r.by }}</td><td>{{ r.action.replace("_", " ").capitalize() }}</td>
+  <td>{% if r.case_id %}<a class="plain-id" href="/cases/{{ r.case_id }}">{{ r.case_id }}</a>{% else %}–{% endif %}</td><td>{{ r.what }}</td></tr>
+{% endfor %}
+{% if page_no < pages %}
+<tr class="more-row"><td colspan="5"><a class="load-more" href="{{ link(page_no + 1) }}" hx-get="{{ more(page_no + 1) }}" hx-target="closest tr" hx-swap="outerHTML">Load older ({{ "{:,}".format(left) }} left)</a></td></tr>
+{% endif %}

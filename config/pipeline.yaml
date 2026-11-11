@@ -74,9 +74,41 @@ paths:
   - {from: returned, to: in_review, kind: returned}
   - {from: returned, to: team lead review, kind: second_return}
 data_sources:
-  - {data: "Cases and case notes", prototype: "SQLite: cases, notes", real_bank: "Complaints case management system", personal_data: "Yes", refresh: "Every 15 minutes"}
-  - {data: "Case events and deadlines", prototype: "SQLite: events", real_bank: "Case management system, event history", personal_data: "No", refresh: "Every 15 minutes"}
-  - {data: "Policy documents", prototype: "SQLite full-text index over synthetic policies", real_bank: "The bank's policy document store, approved versions only", personal_data: "No", refresh: "On publication"}
-  - {data: "AI summaries", prototype: "Recorded answers from a local model, stored as JSON", real_bank: "A model hosted inside the bank's network", personal_data: "Yes, masked before the model sees it", refresh: "On request"}
-  - {data: "Audit log", prototype: "SQLite: audit, append-only", real_bank: "An append-only store the complaints team cannot edit", personal_data: "Yes (staff identifiers)", refresh: "Immediately"}
-  - {data: "Staff", prototype: "SQLite: staff", real_bank: "The staff directory", personal_data: "Yes (staff identifiers)", refresh: "Daily"}
+  # Public sources the demo follows. Only figures checked at source on 11 Nov 2026 (sources-report.md); nothing is fetched at page load.
+  public:
+    - follows: "Complaint clocks: a final response within 8 weeks; for payment services, a response normally within 15 business days and a final response within 35 business days"
+      source: "FCA, How to complain"
+      date: "Updated 20 May 2025"
+      url: "https://www.fca.org.uk/consumers/how-complain"
+    - follows: "UK complaint volume, closure speed and upheld rate: 1.85 million complaints in Jan to Jun 2026, up 6.3% on H2 2025; 44.8% closed within 3 days and 94.5% within 8 weeks; 54.8% upheld. Current accounts were the most complained about"
+      source: "FCA, Complaints data 2026 H1"
+      date: "22 Oct 2026"
+      url: "https://www.fca.org.uk/data/complaints-data-2026-h1"
+    - follows: "Banking's share of complaints: banking and credit cards were 857,757 of 1,740,909 complaints, 49% (share worked out here)"
+      source: "FCA, Aggregate complaints data 2025 H2"
+      date: "H2 2025 data"
+      url: "https://www.fca.org.uk/data/aggregate-complaints-data-2025-h2"
+    - follows: "Fraud and scams are a large share of current-account complaints: 18,900 of 32,900 cases at the ombudsman in 2025/26"
+      source: "Financial Ombudsman Service, Annual complaints data 2025/26"
+      date: "21 May 2026"
+      url: "https://www.financial-ombudsman.org.uk/data-insight/our-insight/annual-complaints-data-and-insight-2025-26"
+    - follows: "Fraud volumes in 2025: authorised push payment fraud £576.4m in 248,070 cases; unauthorised fraud £703.4m in 3.81m cases"
+      source: "UK Finance, Fraud Report 2026"
+      date: "15 Jun 2026"
+      url: "https://www.ukfinance.org.uk/news-and-insight/press-release/fraud-report-2026-press-release"
+    - follows: "Vulnerable customers: “especially susceptible to harm …”, the definition behind the urgent rule"
+      source: "FCA, FG21/1 guidance for firms"
+      date: "23 Feb 2021"
+      url: "https://www.fca.org.uk/publications/finalised-guidance/guidance-firms-fair-treatment-vulnerable-customers"
+    - follows: "Authorised push payment reimbursement: from 7 Oct 2024, a cap of £85,000 and an outcome within 35 business days"
+      source: "Payment Systems Regulator, APP fraud reimbursement"
+      date: "In force 7 Oct 2024"
+      url: "https://www.psr.org.uk/information-for-consumers/app-fraud-reimbursement-protections/"
+  # Our own choices, no public source. The generator and the handover rules use them.
+  assumptions:
+    - {what: "Channel mix", note: "how many complaints come by phone, email, app, secure message, branch and letter"}
+    - {what: "Hour-of-day pattern", note: "busiest from 9 to 11 in the morning"}
+    - {what: "Volume ramp", note: "recent weeks are busier than older ones"}
+    - {what: "Return rate", note: "34% of handovers are sent back for more information"}
+    - {what: "Handover field list", note: "the fields each department needs before it can take a case"}
+    - {what: "Open share", note: "about 80% of cases are still open"}

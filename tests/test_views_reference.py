@@ -12,6 +12,7 @@ from workbench.classify import _save
 from workbench.search import highlight
 
 HDR = {"Origin": "http://127.0.0.1:8000"}
+CLAUSE = r'<li id="POL-[\d.]+"'
 
 
 def as_role(client, role, sid):
@@ -30,7 +31,16 @@ def test_search_for_a_clause_id_returns_it_first_and_every_clause_has_an_anchor(
     html = main_of(client.get("/policies?q=POL-4.2").text)
     assert re.findall(r'<li id="(POL-[\d.]+)"', html)[0] == "POL-4.2"
     everything = main_of(client.get("/policies").text)
-    assert len(re.findall(r'<li id="POL-[\d.]+"', everything)) == 40 and everything.count("<summary>") >= 8  # one closed group per section
+    assert len(re.findall(CLAUSE, everything)) == 40 and everything.count('<span class="count">') == 9  # all clauses, then 8 sections
+
+
+def test_a_section_filters_the_clauses_and_keeps_the_search(client):
+    html = main_of(client.get("/policies?section=Bereavement").text)
+    assert len(re.findall(CLAUSE, html)) == 5 and 'aria-current="true">Bereavement' in html
+    assert len(re.findall(CLAUSE, main_of(client.get("/policies?section=No+such+section").text))) == 40  # unknown section: ignored
+    found = main_of(client.get("/policies?q=death&section=Bereavement").text)
+    assert "<mark>" in found and 'aria-current="true">Bereavement' in found
+    assert 'href="/policies?q=death&amp;section=Bereavement"' in main_of(client.get("/policies?q=death").text)  # a section link keeps the search
 
 
 def test_highlight_escapes_before_it_marks():
@@ -45,13 +55,13 @@ def test_policy_search_odd_input_is_safe(client):
         assert r.status_code == 200 and "<script>alert" not in r.text
 
 
-def test_audit_newest_first_with_verified_line_for_team_lead(writer, app_db):
+def test_audit_newest_first_with_verified_chip_for_team_lead(writer, app_db):
     as_role(writer, "team_lead", "T1")
     for t in ("My card payment was taken twice, please refund it.", "I want to complain about my branch queue."):
         writer.post("/intake", data={"text": t, "source": "phone"})
     html = main_of(writer.get("/audit").text)
     n = sqlite3.connect(app_db).execute("SELECT COUNT(*) FROM audit").fetchone()[0]
-    assert f"Chain verified: {n:,} entries" in text_of(html)
+    assert f"Chain verified, {n:,} entries" in text_of(html)
     ids = re.findall(r'href="/cases/(AB-\d{4}-\d{5})"', html)
     assert ids[0] > ids[1]  # the second complaint came last, so it is listed first
 
@@ -61,7 +71,9 @@ def test_audit_is_for_the_team_lead_only(client):
         as_role(client, role, sid)
         r = client.get("/audit")
         html = main_of(r.text)
-        assert r.status_code == 200 and "for the Team lead" in html and "<table" not in html and "Chain" not in html
+        assert r.status_code == 200 and "The audit log is for the team lead." in html and 'name="role" value="team_lead"' in html
+        assert "<table" not in html and "Chain" not in html
+        assert client.get("/audit/rows").status_code == 403  # the Load older route is closed too
 
 
 def test_audit_filters_validate_and_paging_clamps(client, app_db):
@@ -72,13 +84,17 @@ def test_audit_filters_validate_and_paging_clamps(client, app_db):
         audit.append(c, actor_id="H1", role="handler", action="open", case_id="AB-2026-00001", detail={"reason": f"r{i}"})
     c.commit()
     ok = main_of(client.get("/audit?case=AB-2026-00001&actor=H1").text)
-    assert ok.count("<tr>") == 51 and "Page 1 of 3" in text_of(ok)  # header row plus 50
+    assert ok.count("<tr><td") == 50 and "Load older (70 left)" in text_of(ok) and "/audit/rows?" in ok  # one page, then a button for the rest
+    assert "Newer" not in ok
+    more = client.get("/audit/rows?case=AB-2026-00001&actor=H1&page=2").text
+    assert more.count("<tr><td") == 50 and "Load older (20 left)" in text_of(more)
     for q in ("case=%27%3B+DROP+TABLE+audit%3B--", "case=AB-2026-00001%0A", "actor=nobody", "actor=%3Cb%3E"):
         r = client.get("/audit?" + q)
         assert r.status_code == 200 and "No entries match" in r.text, q
     for q in ("page=abc", "page=-4", "page=0", "page=99999"):
         assert client.get("/audit?" + q).status_code == 200
-    assert "Page 3 of 3" in text_of(main_of(client.get("/audit?actor=H1&case=AB-2026-00001&page=99999").text))
+    last = main_of(client.get("/audit?actor=H1&case=AB-2026-00001&page=99999").text)  # the no-script fallback clamps to the last page
+    assert last.count("<tr><td") == 20 and "Load older" not in last and "Newer" in last
     assert c.execute("SELECT COUNT(*) FROM audit").fetchone()[0] >= 120  # reading changed nothing
 
 
@@ -92,12 +108,18 @@ def test_audit_reason_text_is_escaped(client, app_db):
     assert "<script>alert(1)" not in html and "&lt;script&gt;alert(1)" in html
 
 
-def test_settings_shows_rules_six_data_sources_and_the_anchor(client):
+def test_settings_lists_the_public_sources_the_assumptions_rules_and_model(client):
     html = client.get("/settings").text
     assert 'id="data-sources"' in html
     main = main_of(html)
-    assert len(re.findall(r'<tr><th scope="row">', main)) == 6
-    for word in ("Routing threshold", "Deadlines", "Unusual rise", "Urgent", "qwen3:4b-instruct", "Database notes", "new rows only"):
+    assert "Every complaint, customer and member of staff here is synthetic." in main and "No real customer data is used." in main
+    assert len(re.findall(r"<tr><td>", main)) == 7  # one row per verified public source
+    for want in ("1.85 million", "54.8% upheld", "857,757 of 1,740,909", "18,900 of 32,900", "£576.4m", "£85,000", "23 Feb 2021", "22 Oct 2026"):
+        assert want in main, want
+    links = re.findall(r'<a href="(https://[^"]+)" target="_blank" rel="noopener noreferrer"', main)
+    assert len(links) == 7 and "https://www.fca.org.uk/consumers/how-complain" in links and not any("handbook.fca.org.uk" in u for u in links)
+    assert "Our assumptions (no public source)" in main and "34% of handovers" in main and "Channel mix" in main
+    for word in ("Routing threshold", "Deadlines", "Unusual rise", "Urgent", "qwen3:4b-instruct", "no network call"):
         assert word in main
 
 

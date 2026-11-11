@@ -1,56 +1,52 @@
 {% extends "base.html" %}
 {% from "partials/help.html" import help_panel %}
 {% block title %}Settings{% endblock %}
-{% block purpose %}{{ content.views.settings.purpose }}{% endblock %}
-{% block hint %}{% endblock %}
+{% block body_class %}fit{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/reference.css">{% endblock %}
 {% block help %}{{ help_panel("settings") }}{% endblock %}
-{% block content %}<section class="card" aria-label="Settings">
-  <details>
-    <summary>Rules</summary>
-    <dl class="pairs">
-      <dt>Routing threshold</dt><dd>A complaint goes to a department only when the model is at least {{ cfg.routing_threshold }} sure; otherwise it shows as Needs routing.</dd>
-      <dt>Deadlines</dt><dd>Payment complaints: {{ cfg.deadlines.payment.business_days }} business days, or {{ cfg.deadlines.payment.extended_business_days }} when extended. Other complaints: {{ cfg.deadlines.other.weeks }} weeks.</dd>
-      <dt>Unusual rise</dt><dd>A department and type is flagged when this week has at least {{ cfg.rise.ratio }} times its usual weekly cases (average of the last {{ cfg.rise.baseline_weeks }} weeks) and at least {{ cfg.rise.minimum_cases }} cases.</dd>
-      <dt>Urgent</dt><dd>A case is urgent when its deadline is past or within {{ cfg.urgent.deadline_within_business_days }} business days, or its notes mention a vulnerable customer, money hardship or ongoing fraud. A person can also set it by hand, with a reason.</dd>
-    </dl>
-  </details>
-  <details>
-    <summary>Model</summary>
-    <p>{{ cfg.model }}, prompt version {{ cfg.prompt_version }}.</p>
-  </details>
-  <details id="data-sources">
-    <summary>Data sources</summary>
-    <div class="table-wrap">
-      <table class="case-table">
-        <thead><tr><th scope="col">Data</th><th scope="col">In this prototype</th><th scope="col">In a real bank</th><th scope="col">Personal data</th><th scope="col">Refresh</th></tr></thead>
-        <tbody>
-        {% for d in cfg.data_sources %}
-        <tr><th scope="row">{{ d.data }}</th><td>{{ d.prototype }}</td><td>{{ d.real_bank }}</td><td>{{ d.personal_data }}</td><td>{{ d.refresh }}</td></tr>
-        {% endfor %}
-        </tbody>
-      </table>
+{% block content %}
+<div class="board ref settings">
+  <section class="panel s6 ds" id="data-sources" aria-labelledby="ds-h">
+    <div class="panel-head"><h2 id="ds-h">Where the data comes from</h2></div>
+    <div class="panel-body scroll">{% include "partials/ref_data_sources.html" %}</div>
+  </section>
+
+  <section class="panel s3" aria-labelledby="rules-h">
+    <div class="panel-head"><h2 id="rules-h">Rules</h2></div>
+    <div class="panel-body scroll">
+      <dl class="rules">
+        <dt>Routing threshold</dt><dd>A complaint goes to a department when the model is at least {{ cfg.routing_threshold }} sure, else Needs routing.</dd>
+        <dt>Deadlines</dt><dd>Payment: {{ cfg.deadlines.payment.business_days }} business days, {{ cfg.deadlines.payment.extended_business_days }} when extended. Others: {{ cfg.deadlines.other.weeks }} weeks.</dd>
+        <dt>Unusual rise</dt><dd>At least {{ cfg.rise.ratio }} times the usual weekly cases (last {{ cfg.rise.baseline_weeks }} weeks) and at least {{ cfg.rise.minimum_cases }} cases.</dd>
+        <dt>Urgent</dt><dd>Deadline past or within {{ cfg.urgent.deadline_within_business_days }} business days, or the notes mention vulnerability, money hardship or ongoing fraud. A person can also set it, with a reason.</dd>
+      </dl>
     </div>
-    <p class="muted">The “real bank” column is an assumption about a typical bank, not a description of any actual one.</p>
-    <h3>Database notes</h3>
-    <ul>
-      <li>The tool reads the bank's systems and writes back only the handover it sends.</li>
-      <li>Personal details are masked before any text reaches the model.</li>
-      <li>The audit log accepts new rows only, enforced by a database trigger in the prototype.</li>
-      <li>SQLite suits one demo user. A real deployment would use the bank's own database with access by role.</li>
-      <li>Overview figures show their refresh time so nobody acts on stale counts.</li>
-    </ul>
-  </details>
-  <details{% if added or error %} open{% endif %}>
-    <summary>Add a test complaint</summary>
-    {% if added %}<p class="notice" role="status">Added. <a href="/cases/{{ added }}">Open {{ added }}</a></p>{% endif %}
-    {% if error %}<p class="notice" role="alert">{{ error }}</p>{% endif %}
-    <form method="post" action="/intake" class="intake-form">
-      <label for="text">Complaint text (fictional)</label>
-      <textarea id="text" name="text" rows="4" maxlength="{{ max_text }}" required>{{ text }}</textarea>
-      <label for="source">Where it came from</label>
-      <select id="source" name="source">{% for s in cfg.sources %}<option{% if source == s %} selected{% endif %}>{{ s }}</option>{% endfor %}</select>
-      <button type="submit" class="primary">Add test complaint</button>
-    </form>
-  </details>
-</section>
+  </section>
+
+  <section class="panel s3" aria-labelledby="model-h">
+    <div class="panel-head"><h2 id="model-h">Model</h2></div>
+    <div class="panel-body">
+      <p class="model-name">{{ cfg.model }}</p>
+      <p class="muted">Prompt version {{ cfg.prompt_version }}</p>
+      <p class="muted note-line">Drafts recorded in advance, no network call when you use the app.</p>
+    </div>
+  </section>
+
+  <section class="panel s6" aria-labelledby="add-h">
+    <div class="panel-head"><h2 id="add-h">Add a test complaint</h2></div>
+    <div class="panel-body scroll">
+      {% if added %}<p class="notice" role="status">Added. <a href="/cases/{{ added }}">Open {{ added }}</a></p>{% endif %}
+      {% if error %}<p class="notice" role="alert">{{ error }}</p>{% endif %}
+      <form method="post" action="/intake" class="add-form">
+        <label for="text">Complaint text (fictional)</label>
+        <textarea id="text" name="text" rows="2" maxlength="{{ max_text }}" required>{{ text }}</textarea>
+        <div class="intake-row">
+          <label for="source">Where it came from</label>
+          <select id="source" name="source">{% for s in cfg.sources %}<option{% if source == s %} selected{% endif %}>{{ s }}</option>{% endfor %}</select>
+          <button type="submit" class="primary">Add test complaint</button>
+        </div>
+      </form>
+    </div>
+  </section>
+</div>
 {% endblock %}
