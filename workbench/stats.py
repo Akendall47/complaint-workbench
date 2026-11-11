@@ -2,7 +2,7 @@
 import json
 from datetime import date, timedelta
 
-from .deadlines import due_soon_edge
+from .deadlines import add_business_days, due_soon_edge
 from .handover import missing_fields
 
 OPEN = "state != 'accepted'"
@@ -143,6 +143,24 @@ def needs_attention(conn, actor, limit=5, offset=0) -> list[dict]:
     rows = conn.execute(f"SELECT id, type, department, deadline, urgent, state FROM cases WHERE {where}"
                         " ORDER BY deadline, urgent DESC, id LIMIT ? OFFSET ?", (*args, limit, offset)).fetchall()
     return [dict(r) for r in rows]
+
+
+def due_by_day(conn, today, holidays, days=5) -> list[tuple[str, int]]:
+    """Open cases due on each of the next `days` business days, today first when today is a business day (ISO date, count)."""
+    first = today if add_business_days(today - timedelta(days=1), 1, holidays) == today else add_business_days(today, 1, holidays)
+    dates = [first] + [add_business_days(first, i, holidays) for i in range(1, days)]
+    got = dict(conn.execute(f"SELECT deadline, COUNT(*) FROM cases WHERE {OPEN} AND deadline BETWEEN ? AND ? GROUP BY 1",
+                            (str(dates[0]), str(dates[-1]))).fetchall())
+    return [(str(d), got.get(str(d), 0)) for d in dates]
+
+
+def draft_checks(conn) -> dict:
+    """What the checks found in the AI-drafted claims: the quote was found word for word in the notes ("found"), the claim is an
+    inference marked for the handler to check ("inferred"), or no matching quote was found so the claim is blocked ("missing")."""
+    found, inferred, missing, drafts = conn.execute(
+        "SELECT COALESCE(SUM(supported = 1 AND inferred = 0),0), COALESCE(SUM(supported = 1 AND inferred = 1),0), COALESCE(SUM(supported = 0),0),"
+        " COUNT(DISTINCT case_id) FROM claims").fetchone()
+    return {"found": found, "inferred": inferred, "missing": missing, "drafts": drafts}
 
 
 def attention_count(conn, actor) -> int:

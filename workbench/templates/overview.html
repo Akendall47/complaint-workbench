@@ -1,43 +1,74 @@
 {% extends "base.html" %}
 {% from "partials/help.html" import help_panel %}
-{% from "partials/macros.html" import deadline_chip %}
 {% block title %}Overview{% endblock %}
-{% block strip %}{% include "partials/deadline_strip.html" %}{% endblock %}
-{% block purpose %}{{ content.views.overview.purpose }}{% endblock %}
-{% block hint %}{% endblock %}
+{% block body_class %}fit{% endblock %}
+{% block strip %}<p class="updated">Updated {{ updated }}</p>{% endblock %}
 {% block help %}{{ help_panel("overview") }}{% endblock %}
 {% block content %}
-<ul class="figures">
-  {% for label, value, href in figures %}
-  <li class="figure"><span class="figure-label">{{ label }}</span>
-    <span class="figure-value">{% if href %}<a href="{{ href }}">{{ value }}</a>{% else %}{{ value }}{% endif %}</span></li>
-  {% endfor %}
-</ul>
+<div class="board overview">
+  <section class="panel s9 kpi-panel" aria-label="Today">
+    <ul class="kpis">
+      {% for label, value, href, warm, ch in kpis %}
+      <li class="kpi"><span class="kpi-label">{{ label }}</span>
+        <span class="kpi-value{{ ' bad' if warm }}">{% if href %}<a href="{{ href }}">{{ value }}</a>{% else %}{{ value }}{% endif %}</span>
+        {% if ch %}<span class="change {{ ch[1] }}" title="Lower is better">{{ ch[0] }}</span>{% endif %}</li>
+      {% endfor %}
+    </ul>
+  </section>
 
-<section class="card" aria-labelledby="attention-h">
-  <h2 id="attention-h">Needs attention today</h2>
-  {% if attention %}
-  <ol class="attention">
-    {% for c in attention %}
-    <li><a href="/cases/{{ c.id }}" class="plain-id">{{ c.id }}</a>
-      <span>{{ c.type or "Type not set" }}, {{ c.department or "needs routing" }}</span>
-      {{ deadline_chip(c.days) }}
-      {% if c.urgent %}<span class="urgent-tag">Urgent</span>{% endif %}</li>
-    {% endfor %}
-  </ol>
-  {% else %}<p class="empty">Nothing needs you today.</p>{% endif %}
-</section>
+  <section class="panel s3" aria-labelledby="ahead-h">
+    <div class="panel-head"><h2 id="ahead-h">Deadlines approaching</h2><a class="aside" href="{{ q(due='soon') }}">{{ ahead_total }} due</a></div>
+    <div class="panel-body">{{ ahead }}</div>
+  </section>
 
-{% macro rise_item(r) %}<a href="/queue?{{ r.query }}">{{ r.department }}, {{ r.type }}</a>: {{ r.this_week }} this week against about {{ "%.0f"|format(r.usual) }} in a usual week.{% endmacro %}
-{% if rises %}
-<div class="rise"><b>Unusual rise:</b> {% for r in rises[:3] %}{{ rise_item(r) }} {% endfor %}
-  {% if rises|length > 3 %}<details class="inline"><summary>and {{ rises|length - 3 }} more</summary>{% for r in rises[3:] %}<p>{{ rise_item(r) }}</p>{% endfor %}</details>{% endif %}</div>
-{% endif %}
+  <section class="panel tabs s4" aria-labelledby="trend-h">
+    <input type="radio" name="trend" id="trend-1" class="sr-only" checked><input type="radio" name="trend" id="trend-2" class="sr-only">
+    <div class="panel-head"><h2 id="trend-h">New complaints</h2>
+      <div class="tab-labels"><label for="trend-1">Last 30 days</label><label for="trend-2">By hour</label></div></div>
+    <div class="panel-body pane p1">{{ daily }}</div>
+    <div class="panel-body pane p2">{{ hours }}</div>
+    {% if rise %}<a class="rise" href="/queue?{{ rise_query }}"><b>Unusual rise</b> {{ rise.department }}, {{ rise.type }}: {{ rise.this_week }} this week, usual {{ "%.0f"|format(rise.usual) }}{% if n_rises > 1 %} (+{{ n_rises - 1 }} more){% endif %}</a>{% endif %}
+  </section>
 
-<section class="card" aria-labelledby="chart-h">
-  <h2 id="chart-h">{{ chart_title }}</h2>
-  {{ chart }}
-</section>
+  <section class="panel s5" aria-labelledby="map-h">
+    <div class="panel-head"><h2 id="map-h">Complaint map</h2><span class="aside">open cases, department to type</span></div>
+    <div class="panel-body">{{ cmap }}</div>
+  </section>
 
-<p class="source"><a href="/settings#data-sources">Where these numbers come from</a></p>
+  <section class="panel s3" aria-labelledby="stage-h">
+    <div class="panel-head"><h2 id="stage-h">By stage</h2></div>
+    <div class="panel-body">{{ stages }}</div>
+  </section>
+
+  <section class="panel s5" aria-labelledby="att-h">
+    <div class="panel-head"><h2 id="att-h">Needs attention</h2><span class="aside">{{ n_attention }} cases, soonest deadline first</span></div>
+    <div class="panel-body scroll">
+      {% if attention %}<ol class="att">{% include "partials/attention_items.html" %}</ol>
+      {% else %}<p class="empty">Nothing needs you today.</p>{% endif %}
+    </div>
+  </section>
+
+  <section class="panel tabs s4" aria-labelledby="dep-h">
+    <input type="radio" name="dep" id="dep-1" class="sr-only" checked><input type="radio" name="dep" id="dep-2" class="sr-only"><input type="radio" name="dep" id="dep-3" class="sr-only">
+    <div class="panel-head"><h2 id="dep-h">Workload</h2>
+      <div class="tab-labels"><label for="dep-1">Departments</label><label for="dep-2">Channel</label><label for="dep-3">Type</label></div></div>
+    <div class="panel-body pane p1 scroll">
+      <table class="case-table compact">
+        <thead><tr><th scope="col">Department</th><th scope="col" class="num-col">Past</th><th scope="col" class="num-col" title="Due in 5 business days">Due</th><th scope="col" class="num-col">Open</th><th scope="col">8 weeks</th></tr></thead>
+        <tbody>{% for r in departments %}
+          <tr><th scope="row"><a href="/departments?department={{ r.department|urlencode }}">{{ r.department }}</a></th>
+            <td class="num-col{{ ' deadline-past' if r.past }}">{{ r.past }}</td><td class="num-col">{{ r.soon }}</td><td class="num-col">{{ r.open }}</td><td>{{ r.spark }}</td></tr>
+        {% endfor %}</tbody>
+      </table>
+    </div>
+    <div class="panel-body pane p2">{{ sources }}</div>
+    <div class="panel-body pane p3">{{ types }}</div>
+  </section>
+
+  <section class="panel s3" aria-labelledby="ai-h">
+    <div class="panel-head"><h2 id="ai-h">AI summary checks</h2><span class="aside">{{ checks.found + checks.inferred + checks.missing }} claims in {{ checks.drafts }} drafts</span></div>
+    <div class="panel-body">{{ check_chart }}</div>
+    <p class="foot-note">Every claim needs a word-for-word quote from the notes. Blocked claims cannot be sent.</p>
+  </section>
+</div>
 {% endblock %}

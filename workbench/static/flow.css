@@ -1,0 +1,22 @@
+/* Geometry and label placement come from flow.py; colours use app.css tokens. */
+.chart-svg.flow{display:block;width:100%;height:auto}
+.flow .flow-node{fill:var(--indigo)}
+.flow .lbl{fill:var(--ink);font-family:inherit}
+.flow .flow-stage{font-size:16px;font-weight:700}
+.flow .flow-note{font-size:15px;fill:var(--muted)}
+.flow .band{opacity:.7;transition:opacity 150ms}
+.flow .band.normal{fill:var(--indigo-tint);stroke:var(--indigo)}
+.flow .band.urgent{fill:var(--tint);stroke:var(--accent)}
+.flow .band.returned,.flow .band.second_return{fill:var(--line);stroke:var(--strong)}
+.flow .band:hover,.flow .band:focus-visible,.flow a:hover .band,.flow a:focus-visible .band{opacity:1}
+.flow .band:focus-visible,.flow a:focus-visible .flow-node{stroke:var(--indigo-dark);stroke-width:3}
+.flow .band-count{font-size:15px;font-weight:600;pointer-events:none}
+.flow .band-count-bg{fill:var(--white)}
+.flow .flow-leader{stroke:var(--muted);stroke-width:1;pointer-events:none}
+.flow-legend{display:flex;flex-wrap:wrap;gap:8px 22px;list-style:none;padding:0;margin:12px 0;color:var(--muted);font-size:14px}
+.flow-legend-item{display:flex;align-items:center;gap:8px}
+.flow-legend-item::before{content:"";width:26px;height:10px;border-radius:5px;background:var(--indigo-tint);border:1px solid var(--indigo)}
+.flow-legend-item.urgent::before{background:var(--tint);border-color:var(--accent)}
+.flow-legend-item.returned::before,.flow-legend-item.second_return::before{background:var(--line);border-color:var(--strong)}
+.flow :focus{outline:none}
+.flow a:focus-visible .band,.flow .band:focus-visible{stroke-width:3;opacity:1}

@@ -1,7 +1,13 @@
+<form class="alerts-form" method="post" action="/prefs/alerts" hx-post="/prefs/alerts" hx-swap="none">
+{% if alerts_on %}
 <ul class="strip" aria-label="Deadlines">
   <li><a href="/queue?owner=all&amp;due=past" class="{{ 'bad' if strip.past }}">Past deadline <b>{{ strip.past }}</b></a></li>
   <li><a href="/queue?owner=all&amp;due=soon">Due within {{ strip.limit }} business days <b>{{ strip.soon }}</b></a></li>
   <li><a href="/queue?owner=all&amp;urgent=1">Urgent <b>{{ strip.urgent }}</b></a></li>
   {% if strip.rises %}<li><a href="/queue?{{ strip.rise_query }}">Rises <b>{{ strip.rises }}</b></a></li>{% endif %}
-  <li class="muted">Updated {{ strip.updated }}</li>
+  <li><button type="submit" name="show" value="0" class="strip-toggle" title="Hide the deadline pills on every page">Hide</button></li>
 </ul>
+{% else %}
+<button type="submit" name="show" value="1" class="strip-toggle">Show deadline alerts</button>
+{% endif %}
+</form>

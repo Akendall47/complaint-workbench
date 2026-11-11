@@ -214,3 +214,20 @@ def test_team_due_soon_and_closed_week(twelve):
     got = {r["id"]: (r["open"], r["past_deadline"], r["due_soon"], r["closed_week"]) for r in stats.team(twelve, TODAY)}
     assert got == {"H1": (5, 2, 1, 0), "H2": (2, 0, 1, 0), "S1": (2, 0, 2, 1)}  # S1 owns f, accepted 5 Nov; g (15 Oct) is too old
     assert [r["id"] for r in stats.team(twelve, TODAY)] == ["H1", "H2", "S1"]  # ties on open go by id
+
+
+def test_due_by_day_counts_open_cases_on_each_of_the_next_five_business_days(twelve):
+    # Tue 10 (c), Wed 11 (none), Thu 12 (d), Fri 13 (j), Mon 16 (none): b is past deadline and the weekend is skipped
+    assert stats.due_by_day(twelve, TODAY, set()) == [("2026-11-10", 1), ("2026-11-11", 0), ("2026-11-12", 1), ("2026-11-13", 1), ("2026-11-16", 0)]
+
+
+def test_due_by_day_starts_on_the_next_business_day_at_a_weekend(twelve):
+    # Sunday 8 Nov: the first day is Monday 9, when b is due
+    assert stats.due_by_day(twelve, date(2026, 11, 8), set(), days=2) == [("2026-11-09", 1), ("2026-11-10", 1)]
+
+
+def test_draft_checks_sorts_each_claim_into_one_group(conn):
+    for i, (inferred, supported) in enumerate([(0, 1), (0, 1), (1, 1), (0, 0), (1, 0)]):
+        conn.execute("INSERT INTO claims(case_id, seq, text, quote, inferred, supported, status) VALUES (?,?,?,?,?,?,'draft')",
+                     ("a" if i < 3 else "b", i, "t", "q", inferred, supported))
+    assert stats.draft_checks(conn) == {"found": 2, "inferred": 1, "missing": 2, "drafts": 2}

@@ -5,7 +5,6 @@ uv run python -m workbench.record --db data/workbench.db --limit 150 [--dev 10]
 import argparse
 import hashlib
 import json
-import shutil
 import statistics
 import time
 import urllib.request

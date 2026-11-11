@@ -1,0 +1,10 @@
+{% from "partials/macros.html" import due_chip, stage_chip %}
+{% for c in attention %}
+<li><a href="/cases/{{ c.id }}" class="plain-id">{{ c.id }}</a>
+  <span class="what">{{ c.type or "Type not set" }} · {{ c.department or "Needs routing" }}</span>
+  <span class="tags">{% if c.urgent %}<span class="urgent-tag">Urgent</span>{% endif %}{{ stage_chip(c.state) }}{{ due_chip(c.days) }}</span>
+  {% if c.why %}<span class="why">{{ c.why|join(" · ") }}</span>{% endif %}</li>
+{% endfor %}
+{% if next < n_attention %}
+<li class="more-row"><a class="load-more" href="/queue" hx-get="/overview/attention?offset={{ next }}" hx-target="closest li" hx-swap="outerHTML">Load more ({{ n_attention - next }} left)</a></li>
+{% endif %}

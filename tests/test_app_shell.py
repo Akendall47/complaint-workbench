@@ -24,7 +24,7 @@ def test_settings_has_the_data_sources_anchor(client):
 def test_navigation_order_and_skip_link_first(client):
     html = client.get("/queue").text
     assert html.index('class="skip"') < html.index("<nav")
-    labels = re.findall(r'<a class="nav-link"[^>]*>\s*([^<]+?)\s*<', html)
+    labels = re.findall(r'<a class="nav-link[^"]*"[^>]*>\s*([^<]+?)\s*<', html)
     assert labels[:2] == ["Overview", "Queue"]
     assert labels[-6:] == ["Departments", "Team", "Pipeline", "Policy library", "Audit log", "Settings"]
 
@@ -43,7 +43,6 @@ def test_deadline_strip_counts_equal_direct_counts(client, app_db):
     assert f"Past deadline <b>{past}</b>" in strip
     assert f"Due within 5 business days <b>{soon}</b>" in strip
     assert f"Urgent <b>{urgent}</b>" in strip
-    assert "Updated 12:30" in strip
     assert "Rises" not in strip  # none in a 200-case set
 
 
@@ -81,7 +80,7 @@ def test_current_actor():
 def test_post_role_stays_on_page(client):
     r = client.post("/role", data={"role": "team_lead"}, headers={"HX-Request": "true", "Referer": "http://127.0.0.1:8000/queue?due=past"})
     assert r.status_code == 200 and r.headers["HX-Refresh"] == "true"
-    assert "Demo only" in r.text
+    assert "not a login" in r.text
     assert client.cookies.get("role") == "team_lead" and client.cookies.get("staff_id") == "T1"
     r = client.post("/role", data={"role": "specialist"}, headers={"Referer": "http://127.0.0.1:8000/queue?due=past"}, follow_redirects=False)
     assert r.status_code == 303 and r.headers["location"] == "/queue?due=past"

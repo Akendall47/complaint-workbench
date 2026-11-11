@@ -255,7 +255,7 @@ def test_page_has_live_region_outside_case_history_off_and_hint_dismiss(client, 
     html = client.get(f"/cases/{cid}").text
     assert html.index('id="live"') < html.index('id="case"') and 'role="status"' in html.split('id="live"')[0][-80:]
     assert 'hx-history="false"' in html
-    assert "Dismiss" in html
+    assert "New here?" not in html  # no first-visit banner: Help is one click away
 
 
 def test_no_deadline_strip_on_case_and_not_found_but_on_queue(client, app_db):
@@ -278,14 +278,14 @@ def test_header_prints_no_deadline_reason_and_set_by_hand_only_when_set(client, 
 def test_nav_names_the_case_being_viewed_without_cookie(client, app_db):
     cid = pick(app_db)
     nav = client.get(f"/cases/{cid}").text.split("<nav")[1].split("</nav>")[0]
-    assert f"<small>{cid}</small>" in nav
+    assert f'href="/cases/{cid}"' in nav
 
 
 def test_nav_shows_case_id_after_visit(client, app_db):
     cid = pick(app_db)
     client.get(f"/cases/{cid}")
     nav = client.get("/queue").text.split("<nav")[1].split("</nav>")[0]
-    assert f"<small>{cid}</small>" in nav
+    assert f'href="/cases/{cid}"' in nav
 
 
 def test_specialist_decide_card_has_no_claim_repeat_and_bar_has_link(client, app_db):

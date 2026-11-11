@@ -8,49 +8,39 @@
 <meta name="htmx-config" content='{"includeIndicatorStyles": false, "allowEval": false}'>
 <title>{% block title %}{% endblock %} · Alder Bank complaints</title>
 <link rel="stylesheet" href="/static/app.css">
+<link rel="stylesheet" href="/static/layout.css">
+{% block head %}{% endblock %}
 <script src="/static/htmx.min.js" defer></script>
 <script src="/static/app.js" defer></script>
 </head>
-<body>
+<body class="{% block body_class %}{% endblock %}">
 <a class="skip" href="#main">Skip to content</a>
-<aside class="sidebar">
-  <div class="brand">Alder Bank</div>
-  <div class="product">Complaints workbench</div>
+<header class="topbar">
+  <a class="brand" href="/">Alder Bank <span>Complaint workbench</span></a>
   <nav aria-label="Main">
     <ul class="app-nav">
-      {% for n in nav %}
-      <li>{% if n.href %}<a class="nav-link" href="{{ n.href }}"{% if n.current %} aria-current="page"{% endif %}>{{ n.label }}{% if n.sub %} <small>{{ n.sub }}</small>{% endif %}{% if n.home %} <small class="home">Home</small>{% endif %}</a>
-      {% else %}<span class="nav-link off">Case <small>none open</small></span>{% endif %}</li>
+      {% for n in nav if n.href %}
+      <li><a class="nav-link{{ ' minor' if n.minor }}" href="{{ n.href }}"{% if n.current %} aria-current="page"{% endif %}{% if n.sub %} title="Last case opened: {{ n.sub }}"{% endif %}>{{ n.label }}</a></li>
       {% endfor %}
     </ul>
   </nav>
-  <div class="sidebar-foot">
-    <form class="role-form" hx-post="/role" hx-swap="none" method="post" action="/role">
-      <p class="role-label" id="role-label">View as (demo)</p>
-      <div class="role-switch" role="group" aria-labelledby="role-label">
-        {% for r, sid in roles.items() %}<button type="submit" name="role" value="{{ r }}" aria-pressed="{{ 'true' if actor.role == r else 'false' }}">{{ role_name[r] }}</button>{% endfor %}
-      </div>
-    </form>
-    {% include "partials/role_notice.html" %}
-  </div>
-</aside>
-<div class="app-main">
-  <header class="topbar">
-    {% block strip %}{% endblock %}
-    <button type="button" class="help-button" data-open="help" aria-expanded="false" aria-controls="help">How this page works</button>
-  </header>
-  <main id="main" class="page" tabindex="-1">
-    {% block hint %}<p id="hint" class="hint" hidden>New here? Select “How this page works” at the top right. <button type="button" id="hint-dismiss">Dismiss</button></p>{% endblock %}
-    <div class="page-heading">
-      <div>
-        <h1 class="view-title">{% block title_h %}{{ self.title() }}{% endblock %}</h1>
-        <p>{% block purpose %}{% endblock %}</p>
-      </div>
+  <form class="role-form" hx-post="/role" hx-swap="none" method="post" action="/role">
+    <span class="role-label" id="role-label">View as</span>
+    <div class="role-switch" role="group" aria-labelledby="role-label">
+      {% for r, sid in roles.items() %}<button type="submit" name="role" value="{{ r }}" aria-pressed="{{ 'true' if actor.role == r else 'false' }}">{{ role_name[r] }}</button>{% endfor %}
     </div>
-    {% block help %}{% endblock %}
-    {% block content %}{% endblock %}
-  </main>
-  <footer class="footer">Prototype built for the Ankura AI by Design task. Not an Ankura product. All data synthetic. See Settings, Data sources.</footer>
-</div>
+    {% include "partials/role_notice.html" %}
+  </form>
+  <button type="button" class="help-button" data-open="help" aria-expanded="false" aria-controls="help">Help</button>
+</header>
+<main id="main" class="page" tabindex="-1">
+  <div class="page-head">
+    <h1 class="view-title">{% block title_h %}{{ self.title() }}{% endblock %}</h1>
+    {% block strip %}{% endblock %}
+  </div>
+  {% block help %}{% endblock %}
+  {% block content %}{% endblock %}
+</main>
+<footer class="footer">Prototype for the Ankura AI by Design task. Not an Ankura product. All data synthetic. <a href="/settings#data-sources">Where the data comes from</a></footer>
 </body>
 </html>

@@ -8,6 +8,7 @@ import socket
 import sys
 import threading
 import webbrowser
+from types import SimpleNamespace
 from datetime import date, datetime
 from pathlib import Path
 from urllib.parse import parse_qs, urlencode, urlparse
@@ -19,22 +20,19 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from . import audit, case_view, cases, charts, drafts, stats
-from .cases import Actor, NotAllowed, StaleCase
+from .cases import NotAllowed, StaleCase
 from .classify import MODELS_DIR, ensure_models
 from .intake import MAX_TEXT, IntakeError, receive
 from .search import highlight, search_policies
 from .config import load_config
 from .db import connect
 from .deadlines import business_days_left, due_soon_edge
-from .stats import rise_pairs
+from .views.shared import DEMO, HOME, ROLE_NAME, STATE_NAME, current_actor, strip  # noqa: F401  (tests import them from here)
 
 HERE = Path(__file__).parent
-DEMO = {"handler": "H1", "specialist": "S1", "team_lead": "T1"}
-ROLE_NAME = {"handler": "Handler", "specialist": "Specialist", "team_lead": "Team lead"}
-HOME = {"handler": "/queue", "specialist": "/departments", "team_lead": "/"}
-STATE_NAME = {"new": "New", "in_review": "In review", "handed_over": "Handed over", "returned": "Returned", "accepted": "Accepted"}
 NAV = [("Overview", "/"), ("Queue", "/queue"), ("Case", None), ("Departments", "/departments"), ("Team", "/team"),
        ("Pipeline", "/pipeline"), ("Policy library", "/policies"), ("Audit log", "/audit"), ("Settings", "/settings")]
+MINOR = {"/policies", "/audit", "/settings"}  # reference pages: quieter links at the end of the nav
 LOCAL_HOSTS = {"127.0.0.1", "localhost"}
 KNOWN_PATHS = {p for _, p in NAV if p}
 CASE_ID = re.compile(r"^AB-\d{4}-\d{5}\Z")  # \Z: a trailing newline does not match
@@ -49,25 +47,6 @@ def safe_path(url: str) -> str | None:
         return None
     ok = u.path in KNOWN_PATHS or (u.path.startswith("/cases/") and CASE_ID.match(u.path.removeprefix("/cases/")))
     return url if ok else None
-
-
-def current_actor(request) -> Actor:
-    role, sid = request.cookies.get("role"), request.cookies.get("staff_id")
-    if role in DEMO and sid == DEMO[role]:
-        return Actor(sid, role)
-    return Actor("H1", "handler")
-
-
-def strip(conn, cfg, edge: str) -> dict:
-    limit = cfg["urgent"]["deadline_within_business_days"]
-    one = lambda q, *a: conn.execute(q, a).fetchone()[0]  # noqa: E731
-    open_ = "state != 'accepted' AND "
-    rises = rise_pairs(conn, cfg)
-    return {"past": one(f"SELECT COUNT(*) FROM cases WHERE {open_}deadline < ?", cfg["today"]),
-            "soon": one(f"SELECT COUNT(*) FROM cases WHERE {open_}deadline >= ? AND deadline <= ?", cfg["today"], edge),
-            "urgent": one(f"SELECT COUNT(*) FROM cases WHERE {open_}urgent = 1"),
-            "rises": len(rises), "rise_query": urlencode({"owner": "all", "department": rises[0][0], "type": rises[0][1]}) if rises else "",
-            "limit": limit, "updated": audit.now()[11:16]}
 
 
 def _plain(r) -> str:
@@ -156,9 +135,14 @@ def create_app(db_path="data/workbench.db", config_path="config/pipeline.yaml", 
         nav = [{"label": label, "href": href or (f"/cases/{last}" if CASE_ID.match(last) else None),
                 "sub": last if href is None and CASE_ID.match(last) else "",
                 "current": request.url.path.startswith("/cases/") if href is None else request.url.path == href,
-                "home": href == HOME[actor.role]} for label, href in NAV]
+                "home": href == HOME[actor.role], "minor": href in MINOR} for label, href in NAV]
         return templates.TemplateResponse(request, name, {"actor": actor, "role_name": ROLE_NAME, "roles": DEMO, "nav": nav,
-                                                          "strip": strip(conn, cfg, edge_of(request)), "cfg": cfg, **ctx}, status_code=status)
+                                                          "strip": strip(conn, cfg, edge_of(request)), "cfg": cfg,
+                                                          "alerts_on": request.cookies.get("alerts") != "off", **ctx}, status_code=status)
+
+    from .views import overview  # one module per page area; each adds its own routes
+    x = SimpleNamespace(cfg=cfg, today=today, hol=hol, db=db, page=page, edge_of=edge_of, templates=templates)
+    overview.register(app, x)
 
     def queue_ctx(conn, actor, q: dict, edge: str) -> dict:
         one = lambda k: (q.get(k) or [""])[0] if isinstance(q.get(k), list) else (q.get(k) or "")  # noqa: E731
@@ -211,24 +195,17 @@ def create_app(db_path="data/workbench.db", config_path="config/pipeline.yaml", 
         with db() as conn:
             return page(request, conn, "queue.html", **queue_ctx(conn, current_actor(request), parse_qs(request.url.query), edge_of(request)))
 
-    # ---- Overview: what needs me today ----
-    @app.get("/", response_class=HTMLResponse)
-    def overview(request: Request):
-        actor = current_actor(request)
-        with db() as conn:
-            h = stats.headline(conn, today, hol, cfg["urgent"]["deadline_within_business_days"])
-            attention = [{**r, "days": business_days_left(date.fromisoformat(r["deadline"]), today, hol)}
-                         for r in stats.needs_attention(conn, actor)]
-            rises = [{**r, "query": urlencode({"owner": "all", "department": r["department"], "type": r["type"]})} for r in stats.rises(conn, today, cfg)]
-            weeks = stats.trend(conn, today)
-            items = [(f"{date.fromisoformat(w['week']).day} {date.fromisoformat(w['week']):%b}", w["new"]) for w in weeks]
-            title = "Complaints per week, last 8 weeks"
-            figures = [("Open complaints", f"{h['open']:,}", "/queue?owner=all"),
-                       ("Typical days open", "–" if h["avg_days_open"] is None else str(int(h["avg_days_open"] + .5)), None),
-                       ("Handovers returned", "–" if h["returned_share"] is None else f"{h['returned_share']:.0%}", None)]
-            return page(request, conn, "overview.html", figures=figures, attention=attention, rises=rises,
-                        chart=charts.columns(items, summary=stats.sentence("columns", {"title": title, "items": items}) if items else "", axis="Week starting"),
-                        chart_title=title, state_name=STATE_NAME)
+    @app.post("/prefs/alerts")
+    def alerts(request: Request, show: str = Form("")):
+        """Show or hide the deadline pills at the top of each page: a viewer preference kept in a cookie, like the demo role."""
+        if request.headers.get("HX-Request"):
+            resp = HTMLResponse("", headers={"HX-Refresh": "true"})
+        else:  # no script: go back to the same page
+            ref = urlparse(request.headers.get("referer", ""))
+            same = ref.netloc == request.headers.get("host") and ref.scheme == request.url.scheme
+            resp = RedirectResponse((same and safe_path(ref.path + ("?" + ref.query if ref.query else ""))) or "/", status_code=303)
+        resp.set_cookie("alerts", "on" if show == "1" else "off", httponly=True, samesite="lax")
+        return resp
 
     # ---- Departments, Team, Pipeline ----
     @app.get("/departments", response_class=HTMLResponse)
