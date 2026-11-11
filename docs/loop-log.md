@@ -31,6 +31,8 @@ The owner looked at the running app and said the screens were "horrible" and "to
 - **A researcher checked the data sources at source.** Only figures it could open are on the Settings page. DISP rule text could not be opened, so no DISP quote appears.
 - **A read-only reviewer checked the screens against the research vault.** Its gaps became features: urgent reasons in lists, missing handover fields before accepting, the clock type, and the AI summary checks panel.
 - **Codex drew the case flow diagram** but its sandbox could not write to git. The controller reviewed its three files, ran its nine tests, and committed them with a note saying so.
+- **A network outage stopped every agent mid-task.** All four builders had already pushed their pages, because each committed and pushed after every working step; only a two-line change was lost, and the controller judged it wrong anyway.
+- **The final review (Opus, read-only) found 0 critical, 1 important and 8 minor issues.** The important one: Departments counted handovers returned differently from the Overview (40% against 34%). Fixed, with the cheap minors.
 - **A speed check caught a regression.** The new Overview took 90 ms against a 27 ms before. Reusing counts it already had and one compiled pattern per urgency group brought it to 70 ms.
 
 ## What the loop caught
@@ -43,7 +45,7 @@ The owner looked at the running app and said the screens were "horrible" and "to
 
 ## What it cost
 
-- Tokens: the ledger has figures only for some agents. Task 4 review 87k (Sonnet), Task 11 builder 183k, Task 12 builder 170k, Task 13a builder 76k, stats builder 244k, vault reviewer 145k, source researcher 61k, Codex 59k over three runs. There is no total, so this page gives none.
+- Tokens: the ledger has figures only for some agents. Task 4 review 87k (Sonnet), Task 11 builder 183k, Task 12 builder 170k, Task 13a builder 76k, stats builder 244k, vault reviewer 145k, source researcher 61k, Codex 59k over three runs, the four page builders about 155k to 190k each, final review 112k, graphify 111k. There is no total, so this page gives none.
 - Time: not recorded per task.
 - Rounds: Task 2 needed the most, three. Some rounds were shared between tasks, so a total would double count and none is given. No task was stopped and sent to the owner.
 - Side costs the ledger names: one parallel-writer incident overwrote a Task 2 edit and was redone; six hung test processes had to be killed by hand.
