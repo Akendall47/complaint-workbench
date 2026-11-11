@@ -1,63 +1,45 @@
 {% extends "base.html" %}
 {% from "partials/help.html" import help_panel %}
-{% from "partials/macros.html" import deadline_chip %}
-{% from "partials/source.html" import source_link %}
 {% block title %}Queue{% endblock %}
+{% block body_class %}fit{% endblock %}
+{% block head %}<link rel="stylesheet" href="/static/queue.css">{% endblock %}
 {% block strip %}{% include "partials/deadline_strip.html" %}{% endblock %}
-{% block purpose %}{{ content.views.queue.purpose }}{% endblock %}
 {% block help %}{{ help_panel("queue") }}{% endblock %}
 {% block content %}
 {% if message %}<p class="notice" role="alert">{{ message }}</p>{% endif %}
-<section class="table-card">
-  <div class="toolbar">
-    <nav class="segmented" aria-label="Whose cases">
-      {% for k, label in [("me", "Mine"), ("unassigned", "Unassigned"), ("all", "All")] %}
-      <a href="{{ link(owner=k) }}"{% if f.owner == k %} aria-current="page"{% endif %}>{{ label }}</a>
-      {% endfor %}
-    </nav>
-    {% if filtered %}<a class="clear" href="/queue?owner={{ f.owner }}">Clear filters</a>{% endif %}
-    <details class="filters">
-      <summary>Filters</summary>
-      <form method="get" action="/queue" class="filter-form">
-        <input type="hidden" name="owner" value="{{ f.owner }}">
-        <label>Department <select name="department"><option value="">Any</option>{% for d in sel.departments %}<option{% if f.department == d %} selected{% endif %}>{{ d }}</option>{% endfor %}</select></label>
-        <label>Type <select name="type"><option value="">Any</option>{% for d in sel.types %}<option{% if f.type == d %} selected{% endif %}>{{ d }}</option>{% endfor %}</select></label>
-        <label>State <select name="state"><option value="">Open</option>{% for d in sel.states %}<option value="{{ d }}"{% if f.state == d %} selected{% endif %}>{{ state_name[d] }}</option>{% endfor %}</select></label>
-        <label>Deadline <select name="due"><option value="">Any</option><option value="past"{% if f.due == "past" %} selected{% endif %}>Past deadline</option><option value="soon"{% if f.due == "soon" %} selected{% endif %}>Due soon</option></select></label>
-        <label class="check"><input type="checkbox" name="urgent" value="1"{% if f.urgent %} checked{% endif %}> Urgent only</label>
-        <button type="submit">Apply</button>
-      </form>
-    </details>
-  </div>
-  {% if rows %}
-  <div class="table-wrap">
-    <table class="case-table">
-      <thead><tr><th scope="col">Case</th><th scope="col">Deadline</th><th scope="col">Type</th><th scope="col">Department</th><th scope="col">State</th>{% if f.owner != "me" %}<th scope="col">Owner</th>{% endif %}</tr></thead>
-      <tbody>
-      {% for r in rows %}{% set c = r.c %}
-      <tr class="case-row" data-case="{{ c.id }}" data-days="{{ r.days }}">
-        <td><a class="plain-id" href="/cases/{{ c.id }}">{{ c.id }}</a></td>
-        <td>{{ deadline_chip(r.days) }}</td>
-        <td>{{ c.type or "–" }}</td>
-        <td>{{ c.department or "Needs routing" }}</td>
-        <td><span class="status-label">{{ state_name[c.state] }}</span></td>
-        {% if f.owner != "me" %}<td>{% if c.owner_name %}{{ c.owner_name }}{% else %}
-          <form method="post" action="/cases/{{ c.id }}/assign"><input type="hidden" name="version" value="{{ c.version }}"><input type="hidden" name="next" value="{{ here }}"><button type="submit">Assign to me</button></form>{% endif %}</td>{% endif %}
-      </tr>
-      {% endfor %}
-      </tbody>
-    </table>
-  </div>
-  {% if pages > 1 %}
-  <nav class="pager" aria-label="Pages">
-    {% if page_no > 1 %}<a href="{{ link(page=page_no - 1) }}">Previous</a>{% endif %}
-    Page {{ page_no }} of {{ pages }}
-    {% if page_no < pages %}<a href="{{ link(page=page_no + 1) }}">Next</a>{% endif %}
-  </nav>
-  {% endif %}
-  {% else %}
-  <p class="empty">No cases match these filters. <a href="/queue?owner=all">Clear filters</a></p>
-  {% endif %}
-</section>
-{{ source_link("queue") }}
+<div class="board queue">
+  <section class="panel s8" aria-labelledby="cases-h">
+    <div class="panel-head"><h2 id="cases-h">Cases</h2>
+      <nav class="segmented" id="owners" aria-label="Whose cases">
+        {% for k, label in [("me", "Mine"), ("unassigned", "Unassigned"), ("all", "All")] %}<a href="{{ link(owner=k) }}"{% if f.owner == k %} aria-current="page"{% endif %}>{{ label }}</a>{% endfor %}
+      </nav>
+    </div>
+    {# Submits on change with htmx: only the list, the owner tabs and the preview are redrawn, so focus stays on the select. Apply is for no script. #}
+    <form class="q-filters" method="get" action="/queue" hx-get="/queue" hx-trigger="change, submit" hx-target="#case-list" hx-select="#case-list"
+          hx-select-oob="#owners,#preview" hx-swap="outerHTML" hx-push-url="true">
+      <input type="hidden" name="owner" value="{{ f.owner }}">
+      <label><span class="sr-only">Department</span><select name="department"><option value="">All departments</option>{% for d in sel_opts.departments %}<option{% if f.department == d %} selected{% endif %}>{{ d }}</option>{% endfor %}</select></label>
+      <label><span class="sr-only">Type</span><select name="type"><option value="">All types</option>{% for d in sel_opts.types %}<option{% if f.type == d %} selected{% endif %}>{{ d }}</option>{% endfor %}</select></label>
+      <label><span class="sr-only">Stage</span><select name="state"><option value="">Open stages</option>{% for d in sel_opts.states %}<option value="{{ d }}"{% if f.state == d %} selected{% endif %}>{{ state_name[d] }}</option>{% endfor %}</select></label>
+      <label><span class="sr-only">Deadline</span><select name="due"><option value="">Any deadline</option><option value="past"{% if f.due == "past" %} selected{% endif %}>Past deadline</option><option value="soon"{% if f.due == "soon" %} selected{% endif %}>Due soon</option></select></label>
+      <label class="check"><input type="checkbox" name="urgent" value="1"{% if f.urgent %} checked{% endif %}> Urgent only</label>
+      <button type="submit">Apply</button>
+    </form>
+    <div class="panel-body" id="case-list">
+      {% if rows %}
+      <p class="q-count"><span id="shown">Showing {% if page_no > 1 %}{{ (page_no - 1) * 50 + 1 }} to {% endif %}{{ "{:,}".format([page_no * 50, total]|min) }} of {{ "{:,}".format(total) }}</span>
+        {% if filtered %}<a href="/queue?owner={{ f.owner }}">Clear filters</a>{% endif %}</p>
+      <div class="scroll q-scroll">
+        <table class="case-table compact q-table">
+          <thead><tr><th scope="col">Case</th><th scope="col">Deadline</th><th scope="col">Type</th><th scope="col">Department</th><th scope="col">Stage</th><th scope="col">Flags</th>{% if f.owner != "me" %}<th scope="col">Owner</th>{% endif %}</tr></thead>
+          <tbody>{% include "partials/queue_rows.html" %}</tbody>
+        </table>
+      </div>
+      {% else %}
+      <p class="empty">No cases match these filters. <a href="/queue?owner=all">Clear filters</a></p>
+      {% endif %}
+    </div>
+  </section>
+  {% include "partials/queue_preview.html" %}
+</div>
 {% endblock %}

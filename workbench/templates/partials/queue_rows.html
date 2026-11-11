@@ -1,0 +1,18 @@
+{% from "partials/macros.html" import due_chip, stage_chip %}
+{% from "partials/queue_pick.html" import pick %}
+{% for r in rows %}{% set c = r.c %}
+<tr class="case-row" data-case="{{ c.id }}" data-days="{{ r.days }}">
+  <td>{{ pick(c.id, qs, c.id == sel) }}<label for="pk-{{ c.id }}" class="q-hit" aria-hidden="true"></label><a class="plain-id" href="/cases/{{ c.id }}">{{ c.id }}</a></td>
+  <td>{{ due_chip(r.days) }}{% if c.product_kind == "payment" %} <span class="clock" title="{{ clock_title }}">{{ clock }}</span>{% endif %}</td>
+  <td class="q-wrap">{{ c.type or "–" }}</td>
+  <td class="q-wrap">{% if c.department %}{{ c.department }}{% else %}<span class="routing">Needs routing</span>{% endif %}</td>
+  <td>{{ stage_chip(c.state) }}</td>
+  <td>{% if c.urgent %}<span class="urgent-tag">Urgent</span>{% endif %}{% if c.return_count %} <span class="ret-tag" title="Sent back by a specialist {{ c.return_count }} time{{ 's' if c.return_count != 1 }}">Returned {{ c.return_count }}×</span>{% endif %}</td>
+  {% if f.owner != "me" %}<td>{% if c.owner_name %}{{ c.owner_name }}{% elif r.assign %}
+    <form method="post" action="/cases/{{ c.id }}/assign"><input type="hidden" name="version" value="{{ c.version }}"><input type="hidden" name="next" value="{{ link(page=page_no if page_no > 1 else '', case=c.id) }}"><button type="submit">Assign to me</button></form>{% else %}<span class="muted">Unassigned</span>{% endif %}</td>{% endif %}
+</tr>
+{% endfor %}
+{% if page_no < pages %}
+<tr class="q-more"><td colspan="{{ 7 if f.owner != 'me' else 6 }}"><nav class="pager" aria-label="Pages"><a class="load-more" href="{{ link(page=page_no + 1) }}" hx-get="/queue/more?{{ more_qs }}" hx-target="closest tr" hx-swap="outerHTML">Load more</a></nav></td></tr>
+{% endif %}
+{% if appended %}<template><span id="shown" hx-swap-oob="true">Showing {{ "{:,}".format([page_no * 50, total]|min) }} of {{ "{:,}".format(total) }}</span></template>{% endif %}

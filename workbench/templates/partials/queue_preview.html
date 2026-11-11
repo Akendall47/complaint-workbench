@@ -1,0 +1,28 @@
+{% from "partials/macros.html" import due_chip, stage_chip %}
+{% from "partials/queue_pick.html" import pick %}
+<section class="panel s4 q-preview" id="preview" aria-labelledby="pv-h">
+  <div class="panel-head"><h2 id="pv-h">Preview</h2></div>
+  {% if pv %}{% set c = pv.c %}
+  <div class="panel-body scroll">
+    <p class="pv-top"><span class="pv-id">{{ c.id }}</span>{{ stage_chip(c.state) }}{% if c.urgent %}<span class="urgent-tag">Urgent</span>{% endif %}</p>
+    <p class="pv-top">{{ due_chip(pv.days) }}<span class="muted">{{ pv.due }}</span>{% if c.product_kind == "payment" %}<span class="clock">{{ clock }}</span>{% endif %}</p>
+    {% if pv.reasons %}<p class="pv-why">{{ pv.reasons|join(" · ") }}</p>{% endif %}
+    <dl class="pv-facts">
+      <dt>Type</dt><dd>{{ c.type or "Not set" }}{% if c.type %} <span class="muted">set by the model</span>{% endif %}</dd>
+      <dt>Department</dt><dd>{% if c.department %}{{ c.department }} <span class="muted">set by {{ pv.dept_by }}</span>{% else %}<span class="routing">Needs routing</span>{% endif %}</dd>
+      <dt>Received</dt><dd>{{ pv.received }}, {{ c.source or "unknown channel" }}</dd>
+      <dt>AI summary</dt><dd>{{ pv.summary }}</dd>
+      {% if pv.missing is not none %}<dt>Handover</dt><dd>{% if pv.missing %}Missing {{ pv.missing|join(", ") }}{% else %}Complete{% endif %}</dd>{% endif %}
+    </dl>
+    {% if pv.last %}<figure class="pv-note"><figcaption>Last note, {{ pv.last.at }}</figcaption><p>{{ pv.last.body }}</p></figure>{% endif %}
+  </div>
+  <div class="pv-actions">
+    <a class="pv-btn primary" href="/cases/{{ c.id }}">Open case</a>
+    {% if pv.assign %}<form method="post" action="/cases/{{ c.id }}/assign"><input type="hidden" name="version" value="{{ c.version }}"><input type="hidden" name="next" value="{{ link(case=c.id) }}"><button type="submit">Assign to me</button></form>{% endif %}
+    {% if next_id %}<a class="pv-btn" href="/queue/preview/{{ next_id }}?{{ qs }}" hx-get="/queue/preview/{{ next_id }}?{{ qs }}" hx-target="#preview" hx-swap="outerHTML">Next case</a>{% endif %}
+  </div>
+  {% else %}
+  <p class="empty">No case to preview.</p>
+  {% endif %}
+</section>
+{% if oob and pv %}{{ pick(pv.c.id, qs, True, oob=True) }}{% endif %}

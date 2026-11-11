@@ -1,0 +1,2 @@
+{# The row selector: one radio per row. A click anywhere on the row (its label covers the row) or the arrow keys load that case's preview. #}
+{% macro pick(id, qs, on, oob=False) %}<input type="radio" name="pick" class="q-pick sr-only" id="pk-{{ id }}" aria-label="Preview {{ id }}" hx-get="/queue/preview/{{ id }}?{{ qs }}" hx-target="#preview" hx-swap="outerHTML"{% if on %} checked{% endif %}{% if oob %} hx-swap-oob="true"{% endif %}>{% endmacro %}

@@ -136,59 +136,6 @@ def create_app(db_path="data/workbench.db", config_path="config/pipeline.yaml", 
     case.register(app, x)
 
 
-    # ==== QUEUE (moves to views/queue.py) ====
-
-    def queue_ctx(conn, actor, q: dict, edge: str) -> dict:
-        one = lambda k: (q.get(k) or [""])[0] if isinstance(q.get(k), list) else (q.get(k) or "")  # noqa: E731
-        owner = one("owner")
-        if owner not in ("me", "unassigned", "all"):
-            owner = "me" if actor.role == "handler" else "all"
-        due = one("due") if one("due") in ("past", "soon") else ""
-        urgent = one("urgent") == "1"
-        state = one("state") or one("stage")
-        f = {"owner": owner, "department": one("department"), "type": one("type"), "state": state, "urgent": "1" if urgent else "",
-             "due": due}
-        where, args = [], []
-        if state:
-            where.append("c.state = ?"); args.append(state)  # noqa: E702
-        else:
-            where.append("c.state != 'accepted'")
-        for col in ("department", "type"):
-            if f[col]:
-                where.append(f"c.{col} = ?"); args.append(f[col])  # noqa: E702
-        if owner == "me":
-            where.append("c.owner_id = ?"); args.append(actor.id)  # noqa: E702
-        elif owner == "unassigned":
-            where.append("c.owner_id IS NULL")
-        if urgent:
-            where.append("c.urgent = 1")
-        if due:
-            where.append("c.state != 'accepted'")
-            if due == "past":
-                where.append("c.deadline < ?"); args.append(cfg["today"])  # noqa: E702
-            else:
-                where.append("c.deadline >= ? AND c.deadline <= ?"); args += [cfg["today"], edge]  # noqa: E702
-        w = " AND ".join(where)
-        total = conn.execute(f"SELECT COUNT(*) FROM cases c WHERE {w}", args).fetchone()[0]
-        pages = max(1, -(-total // PER_PAGE))
-        try:
-            pg = min(max(1, int(one("page"))), pages)
-        except ValueError:
-            pg = 1
-        got = conn.execute(f"SELECT c.*, s.name AS owner_name FROM cases c LEFT JOIN staff s ON s.id = c.owner_id WHERE {w} ORDER BY c.deadline, c.urgent DESC, c.id LIMIT ? OFFSET ?",
-                           (*args, PER_PAGE, (pg - 1) * PER_PAGE)).fetchall()
-        rows = [{"c": r, "days": business_days_left(date.fromisoformat(r["deadline"]), today, hol)} for r in got]
-        keep = {k: v for k, v in f.items() if v}
-        link = lambda **kw: "/queue?" + urlencode({**keep, **{k: v for k, v in kw.items() if v}})  # noqa: E731
-        sel = {"departments": list(cfg["departments"]), "types": cfg["types"], "states": list(STATE_NAME)}
-        return {"rows": rows, "f": f, "page_no": pg, "pages": pages, "link": link, "state_name": STATE_NAME,
-                "filtered": bool(keep.keys() - {"owner"}), "here": link(page=str(pg) if pg > 1 else ""), "sel": sel}
-
-    @app.get("/queue", response_class=HTMLResponse)
-    def queue(request: Request):
-        with db() as conn:
-            return page(request, conn, "queue.html", **queue_ctx(conn, current_actor(request), parse_qs(request.url.query), edge_of(request)))
-
     # ==== SHELL (stays here) ====
 
     @app.post("/prefs/alerts")
@@ -202,28 +149,6 @@ def create_app(db_path="data/workbench.db", config_path="config/pipeline.yaml", 
             resp = RedirectResponse((same and safe_path(ref.path + ("?" + ref.query if ref.query else ""))) or "/", status_code=303)
         resp.set_cookie("alerts", "on" if show == "1" else "off", httponly=True, samesite="lax")
         return resp
-
-    # ==== QUEUE assign (moves to views/queue.py) ====
-
-    def back_to(nxt: str) -> str:
-        return safe_path(nxt) or "/queue"
-
-    @app.post("/cases/{case_id}/assign")
-    def assign(request: Request, case_id: str, version: str = Form(""), next: str = Form("/queue")):
-        actor, nxt = current_actor(request), back_to(next)
-        try:
-            try:
-                ver = int(version)
-            except ValueError:
-                raise NotAllowed("That form was not valid. Reload the page.")
-            with db() as conn:
-                cases.assign(conn, case_id, actor, ver, actor.id)
-                return RedirectResponse(nxt, status_code=303)
-        except (NotAllowed, StaleCase) as e:
-            with db() as conn:
-                q = parse_qs(urlparse(nxt).query)
-                return page(request, conn, "queue.html", status=409 if isinstance(e, StaleCase) else 403,
-                            message=str(e), **queue_ctx(conn, actor, q, edge_of(request)))
 
 
     # ==== SHELL (stays here) ====

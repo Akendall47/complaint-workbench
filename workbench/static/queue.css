@@ -1,0 +1,47 @@
+/* Queue: the work list on the left, a preview of the selected case on the right. Only the list and the preview scroll. */
+.fit .board.queue{grid-template-rows:minmax(0,1fr)}
+.queue .panel-head .segmented{margin-left:auto;padding:3px}
+.queue .panel-head .segmented a{min-height:28px;padding:3px 12px;font-size:13px}
+
+/* Filters: one compact row; the first option of each select names it */
+.q-filters{display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center;margin:2px 0 6px}
+.q-filters select{min-height:30px;max-width:180px;padding:2px 8px;font-size:13px;border-color:#d3d3dc;border-radius:8px}
+.q-filters .check{display:flex;align-items:center;gap:6px;font-size:13px;white-space:nowrap}
+.q-filters button{min-height:30px;padding:2px 12px;font-size:13px;border-radius:8px}
+.q-count{display:flex;gap:12px;font-size:12px;color:var(--muted);margin-bottom:2px}
+
+/* Table: a click anywhere on a row selects it (the row's label covers it); links and buttons stay on top */
+.q-scroll{flex:1;min-height:0}
+.q-table td{white-space:nowrap}
+.q-table td.q-wrap{white-space:normal;line-height:1.3}
+.q-table tbody tr{position:relative}
+.q-hit{position:absolute;inset:0;cursor:pointer}
+.q-table a,.q-table form,.q-table [title]{position:relative;z-index:1}
+.q-table td button{min-height:26px;padding:2px 9px;font-size:12px}
+.q-table tbody tr:has(.q-pick:checked){background:var(--indigo-tint)}
+.q-table tbody tr:has(.q-pick:checked) td:first-child{box-shadow:inset 3px 0 0 var(--indigo-dark)}
+.q-table tbody tr:has(.q-pick:focus-visible){outline:3px solid var(--indigo-dark);outline-offset:-3px}
+.q-table .urgent-tag,.ret-tag{font-size:11px;padding:1px 7px}
+.ret-tag{display:inline-block;border-radius:7px;background:var(--st-returned-tint);color:var(--st-returned-ink);font-weight:600;white-space:nowrap}
+.clock{display:inline-block;margin-left:4px;font-size:11px;color:var(--muted);border:1px solid #d3d3dc;border-radius:6px;padding:0 5px;white-space:nowrap}
+.routing{color:var(--st-returned-ink);font-weight:600}
+.q-more td{border-bottom:0;padding:2px}
+.q-more .pager{margin:0}
+
+/* Preview */
+.q-preview .panel-body{gap:8px}
+.pv-top{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:13px}
+.pv-id{font-size:17px;font-weight:650;font-variant-numeric:tabular-nums;margin-right:4px}
+.pv-why{font-size:13px;color:var(--accent-dark)}
+.pv-facts{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:4px 12px;font-size:13px}
+.pv-facts dt{color:var(--muted)}
+.pv-note{margin:0;padding:8px 10px;border-radius:10px;background:#f6f6f9;font-size:13px}
+.pv-note figcaption{font-size:12px;color:var(--muted)}
+.pv-note p{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.pv-actions{display:flex;flex-wrap:wrap;gap:8px;padding-top:10px;margin-top:6px;border-top:1px solid var(--line)}
+.pv-actions form{margin:0}
+.pv-btn,.pv-actions button{display:inline-flex;align-items:center;min-height:36px;padding:6px 14px;border-radius:10px;font-size:14px;font-weight:600;text-decoration:none}
+.pv-btn{background:#ececf1;color:var(--ink)}
+.pv-btn.primary{background:var(--indigo-dark);color:white}
+.pv-actions button{background:var(--indigo-tint);color:var(--indigo-dark)}
+@media (max-width:1099px){.q-scroll{max-height:70vh}}
