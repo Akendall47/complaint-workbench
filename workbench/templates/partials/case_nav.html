@@ -8,7 +8,7 @@
     {% if near.prev %}<a href="/cases/{{ near.prev }}" rel="prev">Previous</a>{% else %}<span class="off">Previous</span>{% endif %}
     <span class="pos">{{ near.pos }} of {{ "{:,}".format(near.n) }}</span>
     {% if near.next %}<a href="/cases/{{ near.next }}" rel="next">Next</a>{% else %}<span class="off">Next</span>{% endif %}
-    {% elif near.next %}<span class="pos">Not in your {{ "{:,}".format(near.n) }}</span><a href="/cases/{{ near.next }}" rel="next">First</a>
+    {% elif near.next %}<span class="pos">Not in your list</span><a href="/cases/{{ near.next }}" rel="next">First of {{ "{:,}".format(near.n) }}</a>
     {% endif %}
   </div>
 </nav>
